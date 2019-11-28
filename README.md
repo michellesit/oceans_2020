@@ -3,16 +3,7 @@
 ### Installation/Setting up Environment
 Shenge's wifi environment requries Kinetic and Gazebo 9. You can just use the docker image called ros-kinetic-gazebo9
 
-The src libraries should be included in this repo. From `~/oceans_2020`, run :
-
-``` 
-cd ~/oceans_2020
-catkin build
-```
-
-Otherwise, if there are any errors, follow these steps:
-
-#### Building from sources
+#### Building from source
 Info on how to install to set-up the lake environment: https://uuvsimulator.github.io/installation/#installation
 ```
 sudo apt install ros-kinetic-uuv-simulator
@@ -28,6 +19,13 @@ Then download the rexrov2 simulator into `~/catkin_ws/src`: https://github.com/u
 
 Download the uuv-simulator into `~/catkin_ws/src`: https://github.com/uuvsimulator/uuv_simulation_evaluation
 
+From https://github.com/CogRob/cogrob_ros, clone the whole repo and link the folders to src:
+```
+(after you clone CogRob outside of Oceans_2020)
+cd /oceans_2020/src
+ln -s ~/cogrob_ros/fetch_gazebo_wifi/ .
+ln -s ~/cogrob_ros/gazebo_wifi_plugin/ .
+```
 
 Then in your ~/catkin_ws do:
 ```
