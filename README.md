@@ -27,6 +27,19 @@ ln -s ~/cogrob_ros/fetch_gazebo_wifi/ .
 ln -s ~/cogrob_ros/gazebo_wifi_plugin/ .
 ```
 
+You should have the following structure:
+```
+catkin_ws/
+    src/
+        fetch_gazebo_wifi/
+        gazebo_wifi_plugin/
+        rexrov2/
+        trash_finder/
+        trash_worlds/
+        uuv_simulation_evaluation/
+        uuv_simulator/
+```
+
 Then in your ~/catkin_ws do:
 ```
 catkin build
@@ -37,7 +50,7 @@ catkin build
 To run the heatmap:
 1. Open a terminal and run the launch file:
 ```
-cd /oceans_2020/src/
+cd /catkin_ws/src/
 roslaunch fetch_gazebo_wifi simulation.launch
 ```
 
@@ -51,7 +64,19 @@ rviz
 python gazebo_wifi_plugin/publish_heatmap.py
 ```
 
+### Follow Waypoints Simulation:
+There is a hardcoded mowing-the-lawn example pattern available at `/trash_finder/config/mowing_lawn_waypts.yaml`
+
+To get the AUV to follow the pattern:
+```
+roslaunch trash_finder oceans2020_demo.launch
+roslaunch trash_finder send_waypoints_file.launch uuv_name:=rexrov2 interpolator:=linear 
+```
+
+**TODO:** Make waypoint filename a parameter from send_waypoints_file.launch instead of hardcode.
+
 ### Current work:
+<!--
 Currently, the only files of interest are at:
 ```
 /catkin_ws/src/uuv_simulator/uuv_gazebo_worlds/launch/trash_lake.launch
@@ -60,14 +85,15 @@ Currently, the only files of interest are at:
 /catkin_ws/src/gazebo_wifi_plugin/
 /catkin_ws/src/fetch_gazebo_wifi/
 ```
+-->
 
-To replicate my steps:
+I can't get the heatmap from the wifi boxes in gazebo here. To replicate my steps:
 
 ```
-cd /oceans_2020/src/
+cd /catkin_ws/src/
 roslaunch rexrov2_gazebo oceans2020_demo.launch
 ```
-There is a small batch of coke cans in the middle of the lake. I'll add more trash, but I wanted to make sure the heatmap worked first before making it look presentable. The wifi boxes are on one side of the lake. Zoom allll the way out and then look for a white square on one of the flat surfaces around the edge. That is where the boxes should be. I wanted to make sure the problem wasn't that the wifi signal was underwater.
+The wifi boxes are on one side of the lake. Zoom allll the way out and then look for a white square on one of the flat surfaces around the edge. That is where the boxes should be. I wanted to make sure the problem wasn't that the wifi signal was underwater.
 
 I have a feeling that the error is something small. The following error message is from the roslaunch output. Maybe we just have to move the src code from fetch_gazebo_wifi so it can find the sensor?
 ```
