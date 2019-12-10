@@ -1,0 +1,12 @@
+intertial_frame_id: world
+waypoints:
+  -
+    point: [12, -130, -80]
+    max_forward_speed: 0.4
+    heading: 0
+    use_fixed_heading: False
+  -
+    point: [12, -200, -80]
+    max_forward_speed: 0.4
+    heading: 0
+    use_fixed_heading: False
