@@ -4,10 +4,35 @@
 Shenge's wifi environment requries Kinetic and Gazebo 9. You can just use the docker image called ros-kinetic-gazebo9
 
 #### Building from source
+After you've downloaded this github repo, the [uuv_simulator](https://github.com/uuvsimulator/uuv_simulator), [rexrov2](https://github.com/uuvsimulator/rexrov2), [uuv_simulation_evaluation](https://github.com/uuvsimulator/uuv_simulation_evaluation) folders will be empty:
+
+```
+cd /oceans_2020/src/
+git clone https://github.com/uuvsimulator/uuv_simulator.git
+git clone https://github.com/uuvsimulator/uuv_simulation_evaluation.git
+git clone https://github.com/uuvsimulator/rexrov2.git
+```
+
+Initialize the oceans_2020 folder as a catkin space:
+```
+cd /oceans_2020/
+catkin init
+```
+
+Lastly:
+```
+cd /oceans_2020/src
+catkin build
+```
+
+
+
 Info on how to install to set-up the lake environment: https://uuvsimulator.github.io/installation/#installation
 ```
 sudo apt install ros-kinetic-uuv-simulator
 ```
+
+Note: You may have to install some dependencies:
 
 Make sure you install catkin_tools:
 ```
@@ -15,9 +40,7 @@ sudo apt-get update
 sudo apt-get install python-catkin-tools
 ```
 
-Then download the rexrov2 simulator into `~/catkin_ws/src`: https://github.com/uuvsimulator/rexrov2
-
-Download the uuv-simulator into `~/catkin_ws/src`: https://github.com/uuvsimulator/uuv_simulation_evaluation
+To install Shenge's wifi plugins:
 
 From https://github.com/CogRob/cogrob_ros, clone the whole repo and link the folders to src:
 ```
@@ -38,11 +61,6 @@ catkin_ws/
         trash_worlds/
         uuv_simulation_evaluation/
         uuv_simulator/
-```
-
-Then in your ~/catkin_ws do:
-```
-catkin build
 ```
 
 ### Adaptive Information Sampling
