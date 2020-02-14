@@ -10,12 +10,24 @@ import numpy as np
 from haversine_dist import calc_dist_lat_lon
 from scipy.interpolate import interpn
 
+from uuv_world_ros_plugins_msgs.srv import SetCurrentModel, SetCurrentVelocity
+import math
+
 import pdb
 
 def callback(msg):
 	position = msg.pose.position
-	rospy.loginfo("Point position: [%f, %f, %f]" %(position.x, position.y, position.z))
+	uuv_pos = [position.x, position.y, abs(position.z)]
+	print ("UUV_POS: ", uuv_pos)
+	# rospy.loginfo("Point position: [%f, %f, %f]" %(position.x, position.y, position.z))
 
+	uuv_u, uuv_v = convert_to_xy(lajolla, lajolla_20, coronado, coronado_20, current_file, uuv_pos)
+
+	print ("UUV_U: ", uuv_u)
+	print ("UUV_V: ", uuv_v)
+
+	##send data via ROS
+	update_hydrodynamic(uuv_u, uuv_v, "something")
 
 def listener():
 	rospy.init_node('get_robot_pose', anonymous=True)
@@ -116,6 +128,7 @@ def convert_to_xy(loc1, loc2, loc3, loc4, current_file, uuv_pos):
 
     ##3D interpolate the values from the coordinates here
     ##get the individual u,v coordiantes based off of these things
+    ##Also need a horizontal component (z direction)
     lat_box = np.array([lat_ycoords[lat_idx_pt[0]], lat_ycoords[lat_idx_pt[1]]])
     lon_box = np.array([lon_xcoords[lon_idx_pt[0]], lon_xcoords[lon_idx_pt[1]]])
     depth_box = np.array([d[depth_idx_pt[0]], d[depth_idx_pt[1]+1]])
@@ -127,14 +140,36 @@ def convert_to_xy(loc1, loc2, loc3, loc4, current_file, uuv_pos):
     ##Coordinate space, the actual values, the pts you're trying to interpolate
     uuv_u = interpn((lon_box, lat_box, depth_box), u_box, np.array([uuv_x, uuv_y, uuv_z]).T)
     uuv_v = interpn((lon_box, lat_box, depth_box), v_box, np.array([uuv_x, uuv_y, uuv_z]).T)
+    uuv_z = interpn((lon_box, lat_box, depth_box), v_box, np.array([uuv_x, uuv_y, uuv_z]).T)
 
     print ("uuv_u: ", uuv_u)
     print ("uuv_v: ", uuv_v)
 
-    pdb.set_trace()
-
-    return uuv_u[0], uu_v[0]
+    return uuv_u[0], uuv_v[0]
     
+##What do we want to send this topic?
+def update_hydrodynamic(input_u, input_v, topic_name):
+	rospy.wait_for_service('/rexrov/set_current_velocity/')
+
+	##Calculate the magnitude and use for uv value
+	uv = np.hypot(input_u, input_v)
+	print ("uv: ", uv)
+
+	##Calculate the horizontal angle of this vector:
+	uv_angle = math.atan2(input_u, input_v)
+	print ("uv_angle: ", uv_angle)
+
+	# uv_min = 0.0
+	# uv_max = 10.0
+	# uv_noise = 0.10
+	# uv_mu = 0.10
+
+	# send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity_model', SetCurrentModel)
+	send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity', SetCurrentVelocity)
+	response = send_uv(uv, uv_angle, 0)
+	print ("response: ", response)
+
+
 
 
 ##Helper method
@@ -144,7 +179,9 @@ def find_idx_boundary(find_value, data_arr):
 
 	return max(min_idx), min(max_idx)
 
+
 if __name__ == '__main__':
+	##Calculate the current at that position
 	current_file = netcdf.NetCDFFile('/home/msit/Desktop/oceans_2020/src/trash_finder/scripts/ca_subCA_das_2020010615.nc')
 
 	##we'll pretend that this info is being fed in:
@@ -153,16 +190,20 @@ if __name__ == '__main__':
 	coronado = [32.66, -117.343]
 	coronado_20 = [32.66, -117.543]
 
-	uuv_pos = [5000, 6000, 150]
-	uuv_u, uuv_v = convert_to_xy(lajolla, lajolla_20, coronado, coronado_20, current_file, uuv_pos)
 
-	##send data via ROS
+	##Get robot position in Gazebo
+	uuv_pos = listener()
+	# print ("UUV_POS: ", uuv_pos)
 
+	# # uuv_pos = [5000, 6000, 150]
+	# uuv_u, uuv_v = convert_to_xy(lajolla, lajolla_20, coronado, coronado_20, current_file, uuv_pos)
 
+	# print ("UUV_U: ", uuv_u)
+	# print ("UUV_V: ", uuv_v)
 
+	# ##send data via ROS
+	# update_hydrodynamic(uuv_u, uuv_v, "something")
 
-	# listener()
 
 
 ##Get the current velocity and direction at that depth
-
