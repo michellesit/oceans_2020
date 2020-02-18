@@ -1,0 +1,10 @@
+<launch>
+	<arg name="uuv_name" default="rexrov"/>
+
+	<node pkg="trash_finder"
+		  type="uuv_local_current.py"
+		  name="publish_hydroforecast"
+		  output="screen">
+	</node>
+
+</launch>

@@ -10,8 +10,8 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-#catkin_install_python(PROGRAMS scripts/send_waypoint_file.py
-#                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS scripts/uuv_local_current.py
+                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch config scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

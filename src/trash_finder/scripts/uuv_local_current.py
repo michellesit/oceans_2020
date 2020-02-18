@@ -15,19 +15,25 @@ import math
 
 import pdb
 
+# def __init__(self):
+
+
 def callback(msg):
 	position = msg.pose.position
 	uuv_pos = [position.x, position.y, abs(position.z)]
 	print ("UUV_POS: ", uuv_pos)
 	# rospy.loginfo("Point position: [%f, %f, %f]" %(position.x, position.y, position.z))
 
-	uuv_u, uuv_v = convert_to_xy(lajolla, lajolla_20, coronado, coronado_20, current_file, uuv_pos)
+	uuv_u, uuv_v = convert_to_xy(current_file, uuv_pos)
 
 	print ("UUV_U: ", uuv_u)
 	print ("UUV_V: ", uuv_v)
 
+	# rospy.loginfo("UUV_U, UUV_V: ", uuv_u, uuv_v)
+
 	##send data via ROS
 	update_hydrodynamic(uuv_u, uuv_v, "something")
+
 
 def listener():
 	rospy.init_node('get_robot_pose', anonymous=True)
@@ -36,31 +42,16 @@ def listener():
 	rospy.spin()
 
 
-##Get the current velocity and direction at that depth
-def get_current_data(data_file, uuv_x, uuv_y, uuv_z):
-	##convert the lat-lon info into x,y coordinates
-
-	# data_file[]
-	pass
-
 ##TODO: Unit test to make sure this makes sense for all data points (all edge cases)
 ##CASE: Data point has no info
 ##CASE: None of the data points have info
 ##CASE: At the edge of the map
 ##CASE: At the very bottom of the ground
 
-def convert_to_xy(loc1, loc2, loc3, loc4, current_file, uuv_pos):
-    ##loc1 to loc2 (width)
-    width = calc_dist_lat_lon(loc1[0], loc1[1], loc2[0], loc2[1])
-    ##loc2 to loc 3 (height)
-    height = calc_dist_lat_lon(loc2[0], loc2[1], loc3[0], loc3[1])
+##TODO: Need to reformat file
+##TODO: Need to convert some coordinates into negative so they can be found (y coords are negative)
 
-    min_lat = min(loc1[0], loc2[0], loc3[0], loc4[0])
-    max_lat = max(loc1[0], loc2[0], loc3[0], loc4[0])
-    min_lon = min(loc1[1], loc2[1], loc3[1], loc4[1])
-    max_lon = max(loc1[1], loc2[1], loc3[1], loc4[1])
-
-
+def convert_to_xy(current_file, uuv_pos):
     lon = current_file.variables['lon']
     lon = lon[:] - 360
     lat = current_file.variables['lat']
@@ -70,6 +61,8 @@ def convert_to_xy(loc1, loc2, loc3, loc4, current_file, uuv_pos):
     v = current_file.variables['v']
 
     [uuv_x, uuv_y, uuv_z] = uuv_pos
+    uuv_x += width/2
+    uuv_y += height/2
 
     ##get the idx values from lat, lon arrays
     lon_idx = np.where((lon[:]>=min_lon) & (lon[:]<=max_lon))[0]
@@ -147,6 +140,7 @@ def convert_to_xy(loc1, loc2, loc3, loc4, current_file, uuv_pos):
 
     return uuv_u[0], uuv_v[0]
     
+
 ##What do we want to send this topic?
 def update_hydrodynamic(input_u, input_v, topic_name):
 	rospy.wait_for_service('/rexrov/set_current_velocity/')
@@ -159,17 +153,10 @@ def update_hydrodynamic(input_u, input_v, topic_name):
 	uv_angle = math.atan2(input_u, input_v)
 	print ("uv_angle: ", uv_angle)
 
-	# uv_min = 0.0
-	# uv_max = 10.0
-	# uv_noise = 0.10
-	# uv_mu = 0.10
-
 	# send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity_model', SetCurrentModel)
 	send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity', SetCurrentVelocity)
 	response = send_uv(uv, uv_angle, 0)
 	print ("response: ", response)
-
-
 
 
 ##Helper method
@@ -178,6 +165,21 @@ def find_idx_boundary(find_value, data_arr):
 	min_idx = np.where(find_value >= data_arr[:])[0]
 
 	return max(min_idx), min(max_idx)
+
+
+def calc_param(loc1, loc2, loc3, loc4):
+
+    ##loc1 to loc2 (width)
+    width = calc_dist_lat_lon(loc1[0], loc1[1], loc2[0], loc2[1])
+    ##loc2 to loc 3 (height)
+    height = calc_dist_lat_lon(loc2[0], loc2[1], loc3[0], loc3[1])
+
+    min_lat = min(loc1[0], loc2[0], loc3[0], loc4[0])
+    max_lat = max(loc1[0], loc2[0], loc3[0], loc4[0])
+    min_lon = min(loc1[1], loc2[1], loc3[1], loc4[1])
+    max_lon = max(loc1[1], loc2[1], loc3[1], loc4[1])
+
+    return width, height, min_lat, max_lat, min_lon, max_lon
 
 
 if __name__ == '__main__':
@@ -190,7 +192,9 @@ if __name__ == '__main__':
 	coronado = [32.66, -117.343]
 	coronado_20 = [32.66, -117.543]
 
+        width, height, min_lat, max_lat, min_lon, max_lon = calc_param(lajolla, lajolla_20, coronado, coronado_20)
 
+	print ("RUNNING THE THING!!!!!!!!!!!!!!!!!!")
 	##Get robot position in Gazebo
 	uuv_pos = listener()
 	# print ("UUV_POS: ", uuv_pos)
@@ -204,6 +208,3 @@ if __name__ == '__main__':
 	# ##send data via ROS
 	# update_hydrodynamic(uuv_u, uuv_v, "something")
 
-
-
-##Get the current velocity and direction at that depth
