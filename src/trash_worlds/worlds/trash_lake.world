@@ -100,6 +100,7 @@
       </constant_current>
     </plugin>
 
+<!-- This plugin must remain for the global topic -->
     <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
       <namespace>hydrodynamics</namespace>
       <constant_current>
@@ -132,12 +133,44 @@
 
     <plugin name="sc_interface" filename="libuuv_sc_ros_interface_plugin.so"/>
 
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can1</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+        <velocity>
+          <mean>0</mean>
+          <min>0</min>
+          <max>50</max>
+          <mu>0.10</mu>
+          <noiseAmp>0.10</noiseAmp>
+        </velocity>
+
+        <horizontal_angle>
+          <mean>1.0</mean>
+          <min>-3.141592653589793238</min>
+          <max>3.141592653589793238</max>
+          <mu>0.0</mu>
+          <noiseAmp>0.0</noiseAmp>
+        </horizontal_angle>
+
+        <vertical_angle>
+          <mean>0</mean>
+          <min>-3.141592653589793238</min>
+          <max>3.141592653589793238</max>
+          <mu>0.0</mu>
+          <noiseAmp>0.0</noiseAmp>
+        </vertical_angle>
+      </constant_current>
+    </plugin>
+
+
 <!--     <population name="can_population">
       <model name="can1">
         <include>
           <static>false</static>
           <uri>model://coke_can</uri>
         </include>
+
       </model>
       <pose>20 -100 0.5 0 0 0</pose>
       <box>
@@ -147,9 +180,9 @@
       <distribution>
         <type>random</type>
       </distribution>
-    </population>
+    </population> -->
 
-    <population name="tire_population">
+<!--     <population name="tire_population">
       <model name="tire">
         <include>
           <static>false</static>
@@ -199,6 +232,46 @@
         <type>random</type>
       </distribution>
     </population> -->
+
+<!--     <model name="can1">
+      <include>
+        <uri>model://coke_can</uri>
+        <pose> 20 -100 0.5 0 0 0 </pose>
+      </include>
+      <static>false</static>
+
+      <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+        <namespace>can1</namespace>
+        <constant_current>
+          <topic>current_velocity2</topic>
+          <velocity>
+            <mean>0</mean>
+            <min>0</min>
+            <max>5</max>
+            <mu>0.0</mu>
+            <noiseAmp>0.0</noiseAmp>
+          </velocity>
+
+          <horizontal_angle>
+            <mean>0</mean>
+            <min>-3.141592653589793238</min>
+            <max>3.141592653589793238</max>
+            <mu>0.0</mu>
+            <noiseAmp>0.0</noiseAmp>
+          </horizontal_angle>
+
+          <vertical_angle>
+            <mean>0</mean>
+            <min>-3.141592653589793238</min>
+            <max>3.141592653589793238</max>
+            <mu>0.0</mu>
+            <noiseAmp>0.0</noiseAmp>
+          </vertical_angle>
+        </constant_current>
+      </plugin>
+
+    </model> -->
+
 
 <!--
     <model name="box1">
