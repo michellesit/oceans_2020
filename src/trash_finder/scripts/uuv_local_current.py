@@ -12,24 +12,33 @@ from scipy.interpolate import interpn
 
 from uuv_world_ros_plugins_msgs.srv import SetCurrentModel, SetCurrentVelocity
 import math
+import sys
 
 import pdb
 
 class UUV_local_current():
 
-    def __init__(self, current_file, bbox1, bbox2, bbox3, bbox4):
+    def __init__(self, current_file, loc1, loc2, loc3, loc4):
         self.current_file = current_file
+        self.uuv_name = sys.argv[2]
 
-        self.lon = current_file.variables['lon']
+        self.lon = current_file.variables['lon'][:].copy()
         self.lon = self.lon[:] - 360
-        self.lat = current_file.variables['lat']
+        self.lat = current_file.variables['lat'][:].copy()
 
-        self.d = current_file.variables['depth']
-        self.u = current_file.variables['u']
-        self.v = current_file.variables['v']
+        self.d = current_file.variables['depth'][:].copy()
+        self.u = current_file.variables['u'][:].copy()
+        self.v = current_file.variables['v'][:].copy()
 
-        self.width, self.height, self.min_lat, self.max_lat, self.min_lon, self.max_lon = \
-                self.calc_param(bbox1, bbox2, bbox3, bbox4)
+        ##loc1 to loc2 (width)
+        self.width = calc_dist_lat_lon(loc1[0], loc1[1], loc2[0], loc2[1])
+        ##loc2 to loc 3 (height)
+        self.height = calc_dist_lat_lon(loc2[0], loc2[1], loc3[0], loc3[1])
+
+        self.min_lat = min(loc1[0], loc2[0], loc3[0], loc4[0])
+        self.max_lat = max(loc1[0], loc2[0], loc3[0], loc4[0])
+        self.min_lon = min(loc1[1], loc2[1], loc3[1], loc4[1])
+        self.max_lon = max(loc1[1], loc2[1], loc3[1], loc4[1])
 
         ##get the idx values from lat, lon arrays
         self.lon_idx = np.where((self.lon[:]>=self.min_lon) & (self.lon[:]<=self.max_lon))[0]
@@ -52,16 +61,13 @@ class UUV_local_current():
 
     	uuv_u, uuv_v = self.convert_to_xy(self.current_file, uuv_pos)
 
-    	print ("UUV_U: ", uuv_u)
-    	print ("UUV_V: ", uuv_v)
-
     	##send data via ROS
-    	self.update_hydrodynamic(uuv_u, uuv_v, "something")
+    	self.update_hydrodynamic(uuv_u, uuv_v)
 
 
     def listener(self):
     	rospy.init_node('get_robot_pose', anonymous=True)
-    	rospy.Subscriber("rexrov/ground_truth_to_tf_rexrov/pose", PoseStamped, self.callback)
+    	rospy.Subscriber("{0}/ground_truth_to_tf_rexrov/pose".format(self.uuv_name), PoseStamped, self.callback)
 
     	rospy.spin()
 
@@ -82,13 +88,13 @@ class UUV_local_current():
         lon_idx_pt = self.find_idx_boundary(uuv_x, self.lon_xcoords)
         lat_idx_pt = self.find_idx_boundary(uuv_y, self.lat_ycoords)
 
-        print( "depth shape: ", self.d.shape)
-        print ("lat_idx shape: ", self.lat_idx.shape)
-        print ("lon_idx shape: ", self.lon_idx.shape)
+        # print( "depth shape: ", self.d.shape)
+        # print ("lat_idx shape: ", self.lat_idx.shape)
+        # print ("lon_idx shape: ", self.lon_idx.shape)
 
-        print ("depth_idx_pt: ", depth_idx_pt)
-        print ("lat_idx_pt: ", lat_idx_pt)
-        print ("lon_idx_pt: ", lon_idx_pt)
+        # print ("depth_idx_pt: ", depth_idx_pt)
+        # print ("lat_idx_pt: ", lat_idx_pt)
+        # print ("lon_idx_pt: ", lon_idx_pt)
 
         ##Use those idx values to get depth values from u and v
         ##U and V are read-only(?). Hence, copy the values
@@ -101,13 +107,13 @@ class UUV_local_current():
         u_below = self.u[:, depth_idx_pt[0], self.lat_idx[lat_idx_pt[0]]:self.lat_idx[lat_idx_pt[1]+1], self.lon_idx[lon_idx_pt[0]]:self.lon_idx[lon_idx_pt[1]+1]].copy()
         v_below = self.v[:, depth_idx_pt[0], self.lat_idx[lat_idx_pt[0]]:self.lat_idx[lat_idx_pt[1]+1], self.lon_idx[lon_idx_pt[0]]:self.lon_idx[lon_idx_pt[1]+1]].copy()
 
-        print ("u")
-        print (u_above)
-        print (u_below)
+        # print ("u")
+        # print (u_above)
+        # print (u_below)
 
-        print ("v")
-        print (v_above)
-        print (v_below)
+        # print ("v")
+        # print (v_above)
+        # print (v_below)
 
         u_box = np.vstack((u_below, u_above))
         v_box = np.vstack((v_below, v_above))
@@ -135,19 +141,19 @@ class UUV_local_current():
         
 
     ##What do we want to send this topic?
-    def update_hydrodynamic(self, input_u, input_v, topic_name):
-    	rospy.wait_for_service('/rexrov/set_current_velocity/')
+    def update_hydrodynamic(self, input_u, input_v):
+    	rospy.wait_for_service('/{0}/set_current_velocity/'.format(self.uuv_name))
 
     	##Calculate the magnitude and use for uv value
     	uv = np.hypot(input_u, input_v)
-    	print ("uv: ", uv)
+    	# print ("uv: ", uv)
 
     	##Calculate the horizontal angle of this vector:
     	uv_angle = math.atan2(input_u, input_v)
     	print ("uv_angle: ", uv_angle)
 
     	# send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity_model', SetCurrentModel)
-    	send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity', SetCurrentVelocity)
+    	send_uv = rospy.ServiceProxy('/{0}/set_current_velocity'.format(self.uuv_name), SetCurrentVelocity)
     	response = send_uv(uv, uv_angle, 0)
     	print ("response: ", response)
 
@@ -160,24 +166,11 @@ class UUV_local_current():
     	return max(min_idx), min(max_idx)
 
 
-    def calc_param(self, loc1, loc2, loc3, loc4):
-
-        ##loc1 to loc2 (width)
-        width = calc_dist_lat_lon(loc1[0], loc1[1], loc2[0], loc2[1])
-        ##loc2 to loc 3 (height)
-        height = calc_dist_lat_lon(loc2[0], loc2[1], loc3[0], loc3[1])
-
-        min_lat = min(loc1[0], loc2[0], loc3[0], loc4[0])
-        max_lat = max(loc1[0], loc2[0], loc3[0], loc4[0])
-        min_lon = min(loc1[1], loc2[1], loc3[1], loc4[1])
-        max_lon = max(loc1[1], loc2[1], loc3[1], loc4[1])
-
-        return width, height, min_lat, max_lat, min_lon, max_lon
-
-
 if __name__ == '__main__':
 	##Calculate the current at that position
-	current_db = netcdf.NetCDFFile('/home/msit/Desktop/oceans_2020/src/trash_finder/scripts/ca_subCA_das_2020010615.nc')
+	filepath = sys.argv[1]
+	current_db = netcdf.NetCDFFile(filepath, "r")
+	# current_db = netcdf.NetCDFFile('/home/msit/Desktop/oceans_2020/src/trash_finder/scripts/ca_subCA_das_2020010615.nc')
 
 	##we'll pretend that this info is being fed in:
 	lajolla = [32.838, -117.343]
@@ -189,15 +182,4 @@ if __name__ == '__main__':
 	C = UUV_local_current(current_db, lajolla, lajolla_20, coronado, coronado_20)
 	C.listener()
 
-
-	# print ("UUV_POS: ", uuv_pos)
-
-	# # uuv_pos = [5000, 6000, 150]
-	# uuv_u, uuv_v = convert_to_xy(lajolla, lajolla_20, coronado, coronado_20, current_file, uuv_pos)
-
-	# print ("UUV_U: ", uuv_u)
-	# print ("UUV_V: ", uuv_v)
-
-	# ##send data via ROS
-	# update_hydrodynamic(uuv_u, uuv_v, "something")
-
+	current_db.close()
