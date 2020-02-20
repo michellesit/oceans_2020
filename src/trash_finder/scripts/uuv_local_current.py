@@ -154,7 +154,15 @@ class UUV_local_current():
 
     	# send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity_model', SetCurrentModel)
     	send_uv = rospy.ServiceProxy('/{0}/set_current_velocity'.format(self.uuv_name), SetCurrentVelocity)
-    	response = send_uv(uv, uv_angle, 0)
+    	
+        # ##publish updates to monitor the system:
+        # current_pub = rospy.Publisher('/{0}/pub_current_velocity'.format(self.uuv_name), String)
+        # rospy.init_node('/{0}pub_current_velocity'.format(self.uuv_name))
+        # r = rospy.Rate(50)
+        # pub.publish("{0} uv value: {1}".format(self.uuv_name, uv))
+
+
+        response = send_uv(uv, uv_angle, 0)
     	print ("response: ", response)
 
 
