@@ -33,6 +33,10 @@
       <pose>0 0 0 0 0 0</pose>
     </include>
 
+    <plugin name="sc_interface" filename="libuuv_sc_ros_interface_plugin.so"/>
+
+<!-- All the hydrodynamic forecast topics -->
+    <!-- This is required for the model to run -->
     <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
       <namespace>hydrodynamics</namespace>
       <constant_current>
@@ -40,7 +44,7 @@
         <velocity>
           <mean>0</mean>
           <min>0</min>
-          <max>5</max>
+          <max>50</max>
           <mu>0.0</mu>
           <noiseAmp>0.0</noiseAmp>
         </velocity>
@@ -63,7 +67,17 @@
       </constant_current>
     </plugin>
 
-    <plugin name="sc_interface" filename="libuuv_sc_ros_interface_plugin.so"/>
+    <!-- For the UUV -->
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>rexrov</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <!-- All the trash (20 in total) -->
+
+
 
   </world>
 </sdf>
