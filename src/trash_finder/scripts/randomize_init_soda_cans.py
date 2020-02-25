@@ -1,44 +1,54 @@
-import rospy
-import xml.etree.ElementTree as e
-
 from lxml import etree
+from numpy.random import randint, normal
 
-# rospy.wait_for_service(f'/{self.uuv_name}/set_current_velocity/')
+from sys import argv
+##Instead of rewriting the whole file, just add to the section at the end
 
-##lxml attempt
-tree = e.parse("./../../trash_worlds/launch/lajolla_demo.launch")
+num_soda_cans = int(argv[1])
+
+##randomly generate positions
+sc_pos = randint(300, size=(num_soda_cans, 3))
+
+##Gaussian distribution/Centered around a point
+# mu = sys.argv[2]
+# sigma = sys.argv[3]
+# sc_pos = normal(mu, sigma, size=(num_soda_cans, 3))
+
+sc_pos[:, 2] *= -1  ##Make depth negative
+
+##Edit the launch file to create some number of soda cans "robots"
+parser = etree.XMLParser(remove_blank_text=True)
+tree = etree.parse("./../../trash_worlds/launch/lajolla_demo.launch", parser)
 launch = tree.getroot()
 
-sc_pos = [10, 40, 10, 0.5, 1]
-
-include_file = e.SubElement(launch, "include")
-include_file.set("file", "$(find trash_worlds)/launch/single_soda.launch")
-
-num_soda_cans = 3
 for i in range (num_soda_cans):
-	sc_x = e.SubElement(include_file, "arg")
-	sc_x.set("default", str(sc_pos[0]))
+	include_file = etree.SubElement(launch, "include")
+	include_file.set("file", "$(find trash_worlds)/launch/single_soda.launch")
+
+	sc_x = etree.SubElement(include_file, "arg")
 	sc_x.set("name", "x")
+	sc_x.set("default", str(sc_pos[i, 0]))
 
-	sc_y = e.SubElement(include_file, "arg")
-	sc_y.set("default", str(sc_pos[1]))
+	sc_y = etree.SubElement(include_file, "arg")
 	sc_y.set("name", "y")
+	sc_y.set("default", str(sc_pos[i, 1]))
 
-	sc_z = e.SubElement(include_file, "arg")
-	sc_y.set("default", str(sc_pos[2]))
+	sc_z = etree.SubElement(include_file, "arg")
 	sc_z.set("name", "z")
+	sc_z.set("default", str(sc_pos[i, 2]))
 
-	sc_yaw = e.SubElement(include_file, "arg")
-	sc_y.set("default", str(sc_pos[3]))
+	sc_yaw = etree.SubElement(include_file, "arg")
 	sc_yaw.set("name", "yaw")
+	sc_yaw.set("default", "0")
 
-	sc_ns = e.SubElement(include_file, "arg")
-	sc_y.set("default", "soda_can{0}".format(i))
+	sc_ns = etree.SubElement(include_file, "arg")
 	sc_ns.set("name", "namespace")
-
+	sc_ns.set("default", "soda_can{0}".format(i))
 
 ##write the xml file
 ##begin generating the text to write into the file
-tree.write("test.launch")
+tree.write("./../../trash_worlds/launch/lajolla_demo_with_sc.launch", pretty_print=True)
 
-##Instead of rewriting the whole file, just add to the section at the end
+
+##TODO: Also update the lj.world file so the hydrodynamics forecasts match the number of soda cans created here
+
