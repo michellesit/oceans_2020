@@ -1,0 +1,20 @@
+<launch>
+	<arg name="x" default="0"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="-50"/>
+    <arg name="yaw" default="0"/>
+    <arg name="soda_name" default="soda_can1"/>
+
+    <include file="$(find soda_can_description)/launch/upload.launch">
+        <arg name="x" default="$(arg x)"/>
+        <arg name="y" default="$(arg y)"/>
+        <arg name="z" default="$(arg z)"/>
+        <arg name="yaw" default="$(arg yaw)"/>
+        <arg name="namespace" default="$(arg soda_name)"/>
+    </include>
+
+    <include file="$(find trash_finder)/launch/produce_hydrodynamic_forces.launch">
+        <arg name="uuv_name" value="$(arg soda_name)"/>
+        <arg name="current_file_path" value="$(find trash_finder)/scripts/ca_subCA_das_2020010615.nc"/>
+    </include>
+</launch>

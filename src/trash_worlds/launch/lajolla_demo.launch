@@ -1,0 +1,219 @@
+<launch>
+<!-- Global params -->
+    <arg name="set_timeout" default="false"/>
+    <arg name="timeout" default="1005"/>
+
+    <!-- Controller parameters -->
+    <arg name="K" default="5,5,5,5,5,5"/>
+    <arg name="Kd" default="4118.98,4118.98,4118.98,8000.0,8000.0,8000.0"/>
+    <arg name="Ki" default="0.06144,0.06144,0.06144,0.078,0.078,0.078"/>
+    <arg name="slope" default="0.182,0.182,0.182,3.348,3.348,3.348"/>
+
+    <include file="$(find lajolla_world)/launch/lj.launch">
+        <arg name="set_timeout" value="true"/>
+        <arg name="timeout" value="$(arg timeout)"/>
+    </include>
+
+<!-- For the UUV: -->
+    <arg name="uuv_x" default="0"/>
+    <arg name="uuv_y" default="0"/>
+    <arg name="uuv_z" default="-20"/>
+    <arg name="uuv_yaw" default="0"/>
+    <arg name="uuv_name" default="rexrov"/>
+
+    <include file="$(find uuv_descriptions)/launch/upload_rexrov.launch">
+        <arg name="x" default="$(arg uuv_x)"/>
+        <arg name="y" default="$(arg uuv_y)"/>
+        <arg name="z" default="$(arg uuv_z)"/>
+        <arg name="yaw" default="$(arg uuv_yaw)"/>
+        <arg name="namespace" default="$(arg uuv_name)"/>
+    </include>
+
+    <include file="$(find uuv_trajectory_control)/launch/rov_nmb_sm_controller.launch">
+        <arg name="uuv_name" value="$(arg uuv_name)"/>
+        <arg name="model_name" value="rexrov"/>
+        <arg name="K" value="$(arg K)"/>
+        <arg name="Kd" value="$(arg Kd)"/>
+        <arg name="Ki" value="$(arg Ki)"/>
+        <arg name="slope" value="$(arg slope)"/>
+    </include>
+
+    <include file="$(find trash_finder)/launch/produce_hydrodynamic_forces.launch">
+        <arg name="uuv_name" value="$(arg uuv_name)"/>
+        <arg name="current_file_path" value="$(find trash_finder)/scripts/ca_subCA_das_2020010615.nc"/>
+    </include>
+
+<!-- All the trash (20 cans in total) -->
+<!--     <arg name="soda_x" default="0"/>
+    <arg name="soda_y" default="0"/>
+    <arg name="soda_z" default="-50"/>
+    <arg name="soda_yaw" default="0"/>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can1"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can2"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can3"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can4"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can5"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can6"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can7"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can8"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can9"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can10"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can11"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can12"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can13"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can14"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can15"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can16"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can17"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can18"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can19"/>
+    </include>
+
+    <include file="$(find trash_worlds)/launch/single_soda.launch">
+        <arg name="x" default="$(arg soda_x)"/>
+        <arg name="y" default="$(arg soda_y)"/>
+        <arg name="z" default="$(arg soda_z)"/>
+        <arg name="yaw" default="$(arg soda_yaw)"/>
+        <arg name="namespace" default="soda_can20"/>
+    </include> -->
+
+<!-- Launch plugin that will change all the soda can positions -->
+<!--     <node pkg="trash_finder"
+          type="randomize_init_soda_pos.py"
+          name="randomize_init_soda_pos"
+          output="screen">
+    </node> -->
+
+</launch>
