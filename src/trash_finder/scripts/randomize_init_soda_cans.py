@@ -51,4 +51,5 @@ tree.write("./../../trash_worlds/launch/lajolla_demo_with_sc.launch", pretty_pri
 
 
 ##TODO: Also update the lj.world file so the hydrodynamics forecasts match the number of soda cans created here
-
+world_tree = etree.parse("./../../lajolla_world/launch/lj.world", parser)
+launch = world_tree.getroot()

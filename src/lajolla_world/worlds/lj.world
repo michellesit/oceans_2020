@@ -76,8 +76,145 @@
     </plugin>
 
     <!-- All the trash (20 in total) -->
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can1</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
 
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can2</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
 
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can3</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
 
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can4</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can5</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can6</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can7</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can8</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can9</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can10</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can11</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can12</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can13</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can14</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can15</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can16</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can17</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can18</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can19</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+
+    <plugin name="underwater_current_plugin" filename="libuuv_underwater_current_ros_plugin.so">
+      <namespace>soda_can20</namespace>
+      <constant_current>
+        <topic>current_velocity</topic>
+      </constant_current>
+    </plugin>
+            
   </world>
 </sdf>
