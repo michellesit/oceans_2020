@@ -50,6 +50,22 @@ for i in range (num_soda_cans):
 tree.write("./../../trash_worlds/launch/lajolla_demo_with_sc.launch", pretty_print=True)
 
 
-##TODO: Also update the lj.world file so the hydrodynamics forecasts match the number of soda cans created here
-world_tree = etree.parse("./../../lajolla_world/launch/lj.world", parser)
-launch = world_tree.getroot()
+##Also update the lj.world file so the hydrodynamics forecasts match the number of soda cans created here
+world_tree = etree.parse("./../../lajolla_world/worlds/lj.world", parser)
+sdf = world_tree.getroot()
+world = sdf.getchildren()[0]
+
+for i in range (num_soda_cans):
+	plugin_file = etree.SubElement(world, "plugin")
+	plugin_file.set("name", "underwater_current_plugin")
+	plugin_file.set("filename", "libuuv_underwater_current_ros_plugin.so")
+
+	ns = etree.SubElement(plugin_file, "namespace")
+	ns.text = "soda_can{0}".format(i)
+
+	cc = etree.SubElement(plugin_file, "constant_current")
+
+	topic = etree.SubElement(cc, "topic")
+	topic.text = "current_velocity"
+
+world_tree.write("./../../lajolla_world/worlds/lj_demo.world", pretty_print=True)
