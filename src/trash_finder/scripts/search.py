@@ -7,15 +7,62 @@ Goal: discretizes the map into a lawn mower pattern in the direction of interest
 '''
 
 import numpy as np
+##Allow for polygons
+import shapely.geometry as sh
 
-##Get the global map dimension
-##  Suppose this is given because in search and rescue, this would be the global bbox
-g_height = 260
-g_width = 300
-g_depth = -100
+##Global decomposition is difficult. Do we need to calculate the gradient of the lines?
+##For now, assume the given bbox is rectangular
 
-search_radius = 10
-longest_search_length = 100
+global_bbox = sh.Polygon([[0,0], [155,0], [155,100], [0,155]])
+def global_decomp(bbox):
+	minx, miny, maxx, maxy = global_bbox.bounds
+	g_height = maxy - miny
+	g_width = maxx - minx
+
+	search_radius = 103
+	search_width = 500
+
+	##Break arbitrarily into solid boxes
+	print (g_height//search_radius)
+	print (g_width//search_width)
+
+	if g_height//search_radius <= 0:
+		x_bbox = np.array([minx, maxx])
+	else:
+		x_bbox = np.linspace(minx, maxx, (g_height//search_radius)+2)
+
+	if g_width//search_width <= 0:
+		y_bbox = np.array([miny, maxy])
+	else:
+		y_bbox = np.linspace(miny, maxy, (g_width//search_width)+2)
+
+	print ("x_bbox: ", x_bbox)
+	print ("y_bbox: ", y_bbox)
+
+	##Figure out all the bbox waypoints:
+	all_bbox = np.zeros((len(x_bbox)-1*len(y_bbox)-1, 4))
+	
+
+
+
+global_decomp(global_bbox)
+	# ##Take the longest direction
+	# ##Arbitrarily: if we want to minimize the number of turns, then we want to keep the longest dimension
+	# ## and cut across the shortest dimension
+	# ##Also cut the long dimension by some arbitrary length
+
+	# height_rows = g_height/search_radius
+	# width_rows = g_width/search_radius
+
+	# if height_rows > width_rows:
+	# 	height_pts = np.arange(0, g_height + height_rows, search_radius)
+	# 	width_pts = np.arange(0, g_width+longest_search_length, longest_search_length)
+	# 	create_waypoints(height_pts, width_pts)
+
+	# else:
+	# 	height_pts = np.arange(0, g_height + longest_search_length, longest_search_length)
+	# 	width_pts = np.arange(0, g_width + width_rows, search_radius)
+	# 	create_waypoints(width_pts, height_pts)
 
 ##orient it in the correct direction
 # rot_global_dim = 
@@ -83,59 +130,20 @@ def create_waypoints(long_side_arr, short_side_arr):
 	return waypoints
 
 
-##Take the longest direction
-##Arbitrarily: if we want to minimize the number of turns, then we want to keep the longest dimension
-## and cut across the shortest dimension
-##Also cut the long dimension by some arbitrary length
-
-height_rows = g_height/search_radius
-width_rows = g_width/search_radius
-
-if height_rows > width_rows:
-	height_pts = np.arange(0, g_height + height_rows, search_radius)
-	width_pts = np.arange(0, g_width+longest_search_length, longest_search_length)
-	create_waypoints(height_pts, width_pts)
-
-else:
-	height_pts = np.arange(0, g_height + longest_search_length, longest_search_length)
-	width_pts = np.arange(0, g_width + width_rows, search_radius)
-	create_waypoints(width_pts, height_pts)
-
-
-
-
-
-
-## Get global map dimensions
-## Get the search_radius
-
-
-
-
-## Split into traversable squares
-## What do the map dimensions mean? Is it in mi or is it km?
-## Save in an array as bbox coordinates
-
 
 '''
 	Make sure here that the boxes are odd rows with odd number of boxes
 '''
 
-##for the first square:
-##Get the bbox of it
-##Do the lawn mower pattern
 
+def calc_lawn_mower_waypoints(self, bbox, search_radius):
+	'''
+	Input:
+	bbox = [upper left, upper right, bottom right, bottom left coords]
+	search_radius = height of the search rows
+	overlap = percentage of each search_radius that needs to overlap
 
+	Generic mowing the lawn algorithm
 
-
-# def calc_lawn_mower_waypoints(self, bbox, search_radius):
-# 	'''
-# 	Input:
-# 	bbox = [upper left, upper right, bottom right, bottom left coords]
-# 	search_radius = height of the search rows
-# 	overlap = percentage of each search_radius that needs to overlap
-
-# 	Generic mowing the lawn algorithm
-
-# 	'''
+	'''
 
