@@ -8,8 +8,10 @@ Goal: discretizes the map into a lawn mower pattern in the direction of interest
 
 import numpy as np
 import shapely.geometry as sh
+import shapely.affinity as sa
 
 import pdb
+import matplotlib.pyplot as plt
 
 ##Global decomposition is difficult. Do we need to calculate the gradient of the lines?
 ##For now, assume the given bbox is rectangular
@@ -18,60 +20,50 @@ class Mowing_Lawn_BBox_Search():
 
 	def __init__(self):
 		self.global_bbox_height_max = 50
-		self.global_bbox_width_max = 500
+		self.global_bbox_width_max = 50
 
 		self.search_radius = 10
-		self.search_width = 500
+		self.search_width = 10
 		self.global_bbox = global_bbox
 
 	def global_decomp(self, bbox):
-		# minx, miny, maxx, maxy = global_bbox.bounds
-		# g_height = maxy - miny
-		# g_width = maxx - minx
-
-		# # self.search_radius = 10
-		# # self.search_width = 500
-
-		# ##Break arbitrarily into solid boxes
-		# print (g_height//self.search_radius)
-		# print (g_width//self.search_width)
-
-		# if g_height//self.search_radius <= 0:
-		# 	x_bbox = np.array([minx, maxx])
-		# else:
-		# 	x_bbox = np.linspace(minx, maxx, (g_height//self.search_radius)+2)
-
-		# if g_width//self.search_width <= 0:
-		# 	y_bbox = np.array([miny, maxy])
-		# else:
-		# 	y_bbox = np.linspace(miny, maxy, (g_width//self.search_width)+2)
-
+		##Break down the global bbox into smaller more managable boxes
 		x_bbox, y_bbox = self.calc_bbox_lines(global_bbox, self.global_bbox_height_max, self.global_bbox_width_max)
 
 		print ("x_bbox: ", x_bbox)
 		print ("y_bbox: ", y_bbox)
 
-		##Figure out all the bbox waypoints:
-		##Append all the polygon waypoints to the list
 		all_bbox = []
 		for i in range(x_bbox.shape[0]-1):
 			for j in range(y_bbox.shape[0]-1):
 				bbox = sh.Polygon([ [x_bbox[i], y_bbox[j]], [x_bbox[i+1], y_bbox[j]], [x_bbox[i+1], y_bbox[j+1]], [x_bbox[i], y_bbox[j+1]] ])
 				all_bbox.append(bbox)
 
-		# print (all_bbox)
 
-
-		##Calculate waypoints for each bbox
+		##Calculate waypoints for each of the smaller bbox areas
 		##for each bbox in all_bbox:
+			##Rotate by some amount
 			##Calculate the waypoints for each
+			##Calculate the cost of traveling that path
+			##Keep the best cost and rotation
+
+		rotation = 10
+		rotated_bbox = sa.rotate(all_bbox[0], 10) ##By default, takes in rotation by degrees
 		print ("all_bbox[0]: ")
 		print(all_bbox[0])
-		x_bbox0, y_bbox0 = self.calc_bbox_lines(all_bbox[0], self.search_radius, self.search_width)
+
+		print ("rotated bbox: ")
+		print (rotated_bbox)
+
+		pdb.set_trace()
+		x_bbox0, y_bbox0 = self.calc_bbox_lines(rotated_bbox, self.search_radius, self.search_width)
 		print ("x_bbox0: ", x_bbox0)
 		print ("y_bbox0: ", y_bbox0)
 
-		self.calc_mowing_lawn(all_bbox[0], x_bbox0)
+		waypts = self.calc_mowing_lawn(all_bbox[0], y_bbox0, start_end="left")
+
+		##Calculate the cost of traveling that path:
+		##TODO
 
 
 		# ##Take the longest direction
@@ -95,75 +87,6 @@ class Mowing_Lawn_BBox_Search():
 	##orient it in the correct direction
 	# rot_global_dim = 
 
-	##Create the waypoints, starting from the bottom left side
-	def create_waypoints(long_side_arr, short_side_arr):
-		print ("len long_side_arr: ", len(long_side_arr))
-		waypoints = np.zeros((2, len(long_side_arr)*2))
-		# waypoints[1][0] = short_side_arr[0]
-
-
-		long_idx = np.arange(0, len(long_side_arr)*2, 2)
-		long_idx_plus = long_idx + 1
-
-		print ("long_idx: ", long_idx)
-		print ("long_idx_plus: ", long_idx_plus)
-		waypoints[1][long_idx] = long_side_arr
-		waypoints[1][long_idx_plus] = long_side_arr
-
-
-		##TODO: Will need to figure out how to incorporate multiple boxes
-		##Convert this to a for loop:
-
-
-
-
-		short_idx = np.arange(1, len(long_side_arr)*2, 4)
-		short_idx_ext = short_idx + 1
-		short_idx_ext = short_idx_ext[:-1]
-
-		short_idx_plus = np.arange(3, len(long_side_arr)*2-1, 4)
-		short_idx_plus_ext = short_idx_plus + 1
-
-		print (short_side_arr)
-		print ("short_idx: ", short_idx)
-		print ("short_idx: ", short_idx_ext)
-		print ("short_idx_plus: ", short_idx_plus)
-		print ("short_idx_plus: ", short_idx_plus_ext)
-
-		waypoints[0][short_idx] = short_side_arr[1]
-		waypoints[0][short_idx_ext] = short_side_arr[1]
-		waypoints[0][short_idx_plus] = short_side_arr[0]
-		waypoints[0][short_idx_plus+1] = short_side_arr[0]
-
-		print (waypoints)
-
-
-		# print ("waypoints starting arr: \n", waypoints)
-		# print ("long_side_arr: \n", long_side_arr)
-		# print ("short_side_arr: \n", short_side_arr)
-		# long_counter = 0
-		# short_counter = 1
-		# for i in range(len(long_side_arr)):
-		# 	print ("long_counter: \n", long_counter)
-		# 	print ("short_counter: \n", short_counter	)
-
-		# 	waypoints[0][long_counter:long_counter+2] = long_side_arr[i]
-		# 	waypoints[1][short_counter:short_counter+2] = short_side_arr[i]
-
-		# 	print ("waypoints: \n", waypoints)
-
-		# 	long_counter += 2
-		# 	short_counter += 2
-
-		return waypoints
-
-
-
-	'''
-		Make sure here that the boxes are odd rows with odd number of boxes
-	'''
-
-
 	def calc_bbox_lines(self, bbox, height_radius, width_radius):
 		'''
 		Input:
@@ -172,6 +95,8 @@ class Mowing_Lawn_BBox_Search():
 
 		Output:
 		x_bbox, y_bbox = 
+
+		Make sure the boxes are odd rows with odd number of boxes?
 
 		'''
 		minx, miny, maxx, maxy = bbox.bounds
@@ -184,56 +109,47 @@ class Mowing_Lawn_BBox_Search():
 		print (num_height_lines)
 		print (num_width_lines)
 
-		if num_height_lines <= 0:
+		if num_width_lines <= 0:
 			x_bbox = np.array([minx, maxx])
 		else:
-			x_bbox = np.linspace(minx, maxx, (num_height_lines)+2)
+			x_bbox = np.linspace(minx, maxx, (num_width_lines)+2)
 
-		if num_width_lines <= 0:
+		if num_height_lines <= 0:
 			y_bbox = np.array([miny, maxy])
 		else:
-			y_bbox = np.linspace(miny, maxy, (num_width_lines)+2)
+			y_bbox = np.linspace(miny, maxy, (num_height_lines)+2)
 
 		return x_bbox, y_bbox
 
 
-	def calc_mowing_lawn(self, bbox, x_bbox):
+	def calc_mowing_lawn(self, bbox, y_bbox, start_end):
 		##Calculate the intersection of the lines with the bbox:
 		##For each pair of x_bbox lines, calculate intersection with bbox
-		print(bbox)
-		
-		#lines = np.zeros((x_bbox.shape[0], 2, 2))
-		#lines[:, 0, 0] = bbox.bounds[0]
-		#lines[:, 1, 0] = bbox.bounds[2]
-		#lines[:, 0, 1] = x_bbox
-		#lines[:, 1, 1] = x_bbox
-			
-		#lines = lines.reshape((-1, 2))
-		#print ('lines: ', lines)
-		start_end = "left"
 
 		all_lines = []
-		for i in range(x_bbox.shape[0]):
-			lines = sh.LineString([ [bbox.bounds[0], x_bbox[i]], [bbox.bounds[2], x_bbox[i]] ])
+		for i in range(y_bbox.shape[0]):
+			lines = sh.LineString([ [bbox.bounds[0]-(bbox.bounds[0]*0.4), y_bbox[i]], [bbox.bounds[2]+(bbox.bounds[2]*0.4), y_bbox[i]] ])
 			all_lines.append(lines)
 
+		##TODO: Should add in a check here to make sure there are intersecting lines
 		all_lines = sh.MultiLineString(all_lines)
+		print ("all lines:")
+		print(all_lines)
 
-		intersections = bbox.intersection(all_lines)
+		# intersections = bbox.intersection(all_lines)
+		intersections = all_lines.intersection(bbox)
 		print ("intersections: ")
 		print (intersections)
 
-		##append that to to the bbox waypts
+		##TODO: add in logic to make sure the coordinates make sense?
+		##order the waypoints accordingly
 		waypoints = []
 		for i in range(len(intersections)):
 			line_pts = intersections[i].coords		
-		
-			print ("i: ", i)	
-			print ('i%2: ', i%2)
+
 			if start_end == "right":
 				if i%2 == 0:
 					waypoints.extend((line_pts[1], line_pts[0]))
-					#waypoints.append(line_pts[0])
 				else:
 					waypoints.extend((line_pts[0], line_pts[1]))
 
@@ -243,16 +159,10 @@ class Mowing_Lawn_BBox_Search():
 				else:
 					waypoints.extend((line_pts[1], line_pts[0]))
 			
-			print ("waypoints: ", waypoints)
-			pdb.set_trace()		
+		print ("waypoints: ", waypoints)
+		pdb.set_trace()		
 
-		##order the waypoints accordingly
-
-
-	def rotate_bbox(self):
-		'''
-		rotate both the bbox and lines
-		'''
+		return waypoints
 
 
 if __name__ == '__main__':
