@@ -200,22 +200,51 @@ class Mowing_Lawn_BBox_Search():
 	def calc_mowing_lawn(self, bbox, x_bbox):
 		##Calculate the intersection of the lines with the bbox:
 		##For each pair of x_bbox lines, calculate intersection with bbox
-		lines = np.zeros((x_bbox.shape[0], 4))
-		lines[:, 0] = bbox.bounds[1]
-		lines[:, 2] = bbox.bounds[2]
-		lines[:, 1] = x_bbox
-		lines[:, 3] = x_bbox
+		print(bbox)
+		
+		#lines = np.zeros((x_bbox.shape[0], 2, 2))
+		#lines[:, 0, 0] = bbox.bounds[0]
+		#lines[:, 1, 0] = bbox.bounds[2]
+		#lines[:, 0, 1] = x_bbox
+		#lines[:, 1, 1] = x_bbox
+			
+		#lines = lines.reshape((-1, 2))
+		#print ('lines: ', lines)
+		start_end = "left"
 
-		print ('lines: ', lines)
+		all_lines = []
+		for i in range(x_bbox.shape[0]):
+			lines = sh.LineString([ [bbox.bounds[0], x_bbox[i]], [bbox.bounds[2], x_bbox[i]] ])
+			all_lines.append(lines)
 
-		intersections = bbox.intersection(x_bbox)
-		print ("intersections: ", intersections)
+		all_lines = sh.MultiLineString(all_lines)
 
-		pdb.set_trace()
-
+		intersections = bbox.intersection(all_lines)
+		print ("intersections: ")
+		print (intersections)
 
 		##append that to to the bbox waypts
+		waypoints = []
+		for i in range(len(intersections)):
+			line_pts = intersections[i].coords		
+		
+			print ("i: ", i)	
+			print ('i%2: ', i%2)
+			if start_end == "right":
+				if i%2 == 0:
+					waypoints.extend((line_pts[1], line_pts[0]))
+					#waypoints.append(line_pts[0])
+				else:
+					waypoints.extend((line_pts[0], line_pts[1]))
 
+			elif start_end == "left":
+				if i%2 == 0:
+					waypoints.extend((line_pts[0], line_pts[1]))
+				else:
+					waypoints.extend((line_pts[1], line_pts[0]))
+			
+			print ("waypoints: ", waypoints)
+			pdb.set_trace()		
 
 		##order the waypoints accordingly
 
