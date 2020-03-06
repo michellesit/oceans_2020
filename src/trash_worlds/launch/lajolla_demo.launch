@@ -9,7 +9,7 @@
     <arg name="Ki" default="0.06144,0.06144,0.06144,0.078,0.078,0.078"/>
     <arg name="slope" default="0.182,0.182,0.182,3.348,3.348,3.348"/>
 
-    <include file="$(find lajolla_world)/launch/lj.launch">
+    <include file="$(find lajolla_world)/launch/lj_demo.launch">
         <arg name="set_timeout" value="true"/>
         <arg name="timeout" value="$(arg timeout)"/>
     </include>
