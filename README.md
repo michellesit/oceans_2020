@@ -18,7 +18,6 @@ git clone https://github.com/michellesit/oceans_2020.git
 cd /oceans_docker/
 chmod +x install_uuv_pkgs.sh
 ./install_uuv_pkgs.sh
-
 ```
 
 Otherwise you can go through the individual steps below if you run into any trouble.
@@ -73,6 +72,22 @@ catkin build
 Test that your environment works by following the 'Follow Waypoints Simulation' section below.
 
 
+### Follow Waypoints Simulation:
+There is a hardcoded mowing-the-lawn example pattern available at `/trash_finder/config/mowing_lawn_waypts.yaml`
+
+To get the AUV to follow the pattern:
+```
+roslaunch trash_finder oceans2020_demo.launch
+roslaunch trash_finder send_waypoints_file.launch uuv_name:=rexrov2 interpolator:=linear 
+```
+
+### To run La Jolla environment:
+To test if the La Jolla map works:
+
+```
+roslaunch lajolla_world lj.launch
+```
+
 ### (OPTIONAL) Adaptive Information Sampling
 
 To run the heatmap:
@@ -90,20 +105,4 @@ rviz
 3. Open another terminal and run publish_heatmap.py
 ```
 python gazebo_wifi_plugin/publish_heatmap.py
-```
-
-### Follow Waypoints Simulation:
-There is a hardcoded mowing-the-lawn example pattern available at `/trash_finder/config/mowing_lawn_waypts.yaml`
-
-To get the AUV to follow the pattern:
-```
-roslaunch trash_finder oceans2020_demo.launch
-roslaunch trash_finder send_waypoints_file.launch uuv_name:=rexrov2 interpolator:=linear 
-```
-
-### To run La Jolla environment:
-To test if the La Jolla map works:
-
-```
-roslaunch lajolla_world lj.launch
 ```
