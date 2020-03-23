@@ -1,9 +1,30 @@
 # oceans_2020 abstract demo
 
 ### Installation/Setting up Environment
-Shenge's wifi environment requries Kinetic and Gazebo 9. You can just use the docker image called ros-kinetic-gazebo9
+Shengye's wifi environment requries Kinetic and Gazebo 9. I have setup a dockerfile to install the environment and necessary packages. It uses Shengye's ros-kinetic-gazebo9 image as its base. The image is built assuming you will mount the files from the home desktop to the container.
+
+```
+cd /oceans_2020/oceans_docker/
+sudo docker build -t oceans_demo:mar23 .
+```
+
+Please shoot me an email if you run into any issues!
+
+
+#### Building from script
+I have included a script (./oceans_docker/install_uuv_pkgs.sh) to install the environment.
+```
+git clone https://github.com/michellesit/oceans_2020.git
+cd /oceans_docker/
+chmod +x install_uuv_pkgs.sh
+./install_uuv_pkgs.sh
+
+```
+
+Otherwise you can go through the individual steps below if you run into any trouble.
 
 #### Building from source
+
 Info on how to install to set-up the lake environment: https://uuvsimulator.github.io/installation/#installation
 ```
 sudo apt install ros-kinetic-uuv-simulator
@@ -19,7 +40,7 @@ Then download the rexrov2 simulator into `~/catkin_ws/src`: https://github.com/u
 
 Download the uuv-simulator into `~/catkin_ws/src`: https://github.com/uuvsimulator/uuv_simulation_evaluation
 
-From https://github.com/CogRob/cogrob_ros, clone the whole repo and link the folders to src:
+(OPTIONAL) From https://github.com/CogRob/cogrob_ros, clone the whole repo and link the folders to src:
 ```
 (after you clone CogRob outside of Oceans_2020)
 cd /oceans_2020/src
@@ -30,10 +51,14 @@ ln -s ~/cogrob_ros/gazebo_wifi_plugin/ .
 You should have the following structure:
 ```
 catkin_ws/
+    current_data_files/
+    oceans_docker/
     src/
         fetch_gazebo_wifi/
         gazebo_wifi_plugin/
+        lajolla_world/
         rexrov2/
+        soda_can_description/
         trash_finder/
         trash_worlds/
         uuv_simulation_evaluation/
@@ -45,7 +70,10 @@ Then in your ~/catkin_ws do:
 catkin build
 ```
 
-### Adaptive Information Sampling
+Test that your environment works by following the 'Follow Waypoints Simulation' section below.
+
+
+### (OPTIONAL) Adaptive Information Sampling
 
 To run the heatmap:
 1. Open a terminal and run the launch file:
@@ -73,31 +101,9 @@ roslaunch trash_finder oceans2020_demo.launch
 roslaunch trash_finder send_waypoints_file.launch uuv_name:=rexrov2 interpolator:=linear 
 ```
 
-**TODO:** Make waypoint filename a parameter from send_waypoints_file.launch instead of hardcode.
-
-### Current work:
-<!--
-Currently, the only files of interest are at:
-```
-/catkin_ws/src/uuv_simulator/uuv_gazebo_worlds/launch/trash_lake.launch
-/catkin_ws/src/uuv_simulator/uuv_gazebo_worlds/world/trash_lake.world
-/catkin_ws/src/rexrov2/rexrov2_gazebo/launch/oceans2020_demo.launch
-/catkin_ws/src/gazebo_wifi_plugin/
-/catkin_ws/src/fetch_gazebo_wifi/
-```
--->
-
-I can't get the heatmap from the wifi boxes in gazebo here. To replicate my steps:
+### To run La Jolla environment:
+To test if the La Jolla map works:
 
 ```
-cd /catkin_ws/src/
-roslaunch rexrov2_gazebo oceans2020_demo.launch
-```
-The wifi boxes are on one side of the lake. Zoom allll the way out and then look for a white square on one of the flat surfaces around the edge. That is where the boxes should be. I wanted to make sure the problem wasn't that the wifi signal was underwater.
-
-I have a feeling that the error is something small. The following error message is from the roslaunch output. Maybe we just have to move the src code from fetch_gazebo_wifi so it can find the sensor?
-```
-Error:
-[Wrn] [msgs.cc:1852] Conversion of sensor type[wireless_transmitter] not supported.
-[Wrn] [msgs.cc:1852] Conversion of sensor type[wireless_receiver] not supported.
+roslaunch lajolla_world lj.launch
 ```
