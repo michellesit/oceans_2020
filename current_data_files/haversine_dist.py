@@ -22,7 +22,6 @@ def calc_dist_lat_lon(lat1, lon1, lat2, lon2):
 	'''
 
 	##assert that the values are valid within limits
-
 	if not ((0 <= abs(lat1) <= 90) and (0 <= abs(lat2) <= 90)):
 		raise Exception ("INVALID LAT INPUT")
 	if not ((0 <= abs(lon1) <= 180) and (0 <= abs(lon2) <= 180)):
@@ -44,4 +43,5 @@ def calc_dist_lat_lon(lat1, lon1, lat2, lon2):
 	c = 2*atan2(sqrt(a), sqrt(1-a))
 
 	dist = R*c
+
 	return (dist)/1000
