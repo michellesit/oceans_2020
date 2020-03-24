@@ -7,6 +7,7 @@ Shengye's wifi environment requries Kinetic and Gazebo 9. I have setup a dockerf
 cd /oceans_2020/oceans_docker/
 sudo docker build -t oceans_demo:mar23 .
 ```
+ROS Kinetic works best with python2.7 so all the scripts are written for python2.7.
 
 Please shoot me an email if you run into any issues!
 
@@ -23,16 +24,15 @@ chmod +x install_uuv_pkgs.sh
 Otherwise you can go through the individual steps below if you run into any trouble.
 
 #### Building from source
+Build dependencies first:
+```
+sudo apt-get update
+sudo apt-get install python-catkin-tools
+```
 
 Info on how to install to set-up the lake environment: https://uuvsimulator.github.io/installation/#installation
 ```
 sudo apt install ros-kinetic-uuv-simulator
-```
-
-Make sure you install catkin_tools:
-```
-sudo apt-get update
-sudo apt-get install python-catkin-tools
 ```
 
 Then download the rexrov2 simulator into `~/catkin_ws/src`: https://github.com/uuvsimulator/rexrov2
