@@ -1,10 +1,9 @@
 # Oceans Docker
-Creates a docker image to run this simulation in
+Creates a docker image to run this simulation in.
 
 ## Creating Image
 ```
 sudo docker build -t oceans20_demo:mar24 .
-
 ```
 
 Note: This docker assumes the oceans_2020 repo is mounted on your local computer. Uncomment the install_uuv_pkgs.sh lines in the Dockerfile to automatically have it installed in the docker container (not recommended). OR run the same script on your local computer to have it install all the packages and folders as needed (recommended).
@@ -22,9 +21,10 @@ sudo docker images
 Find the oceans20_demo docker imageID:
 ```
 REPOSITORY                              TAG                 IMAGE ID            CREATED             SIZE
-test_oceans                             mar23               fdd193ad7b39        23 hours ago        10.5GB
+oceans20_demo                           mar24               fdd193ad7b39        23 hours ago        10.5GB
 ```
 
+Run:
 ```
 ./run_interactive_docker.sh fdd193ad7b39 run_demo
 ```
