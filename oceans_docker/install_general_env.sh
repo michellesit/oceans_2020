@@ -10,6 +10,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install --yes vim
 
+## Switches default python to python3
 # apt-get install --yes python3.7
 # update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
@@ -18,3 +19,6 @@ apt-get install --yes python-pip \
 	python-catkin-tools
 
 pip install numpy-stl
+
+## Optional python3 packages:
+apt-get install --yes python3-numpy python3-scipy python3-matplotlib
