@@ -102,6 +102,7 @@ def parse_data(topological_path, places):
 	xclip -= min(xclip)
 	xclip /= np.max(np.abs(xclip), axis=0)
 	xclip *= width
+	xclip -= np.max(xclip)/2
 
 	min_lat = min(places[:,0])
 	max_lat = max(places[:,0])
@@ -110,6 +111,7 @@ def parse_data(topological_path, places):
 	yclip -= min(yclip)
 	yclip /= np.max(np.abs(yclip), axis=0)
 	yclip *= height
+	yclip -= np.max(yclip)/2
 
 	x, y = np.meshgrid(xclip, yclip)
 	z = zog[yfilter[0][0]:yfilter[-1][0]+1, xfilter[0][0]:xfilter[-1][0]+1].flatten()
@@ -201,18 +203,18 @@ def generate_stl(x, y, z, savefile_name):
 	        seabed_mesh.vectors[i][j] = output[f[j]]
 
 	# Store the seabed as a STL file
-	seabed_mesh.save(savefile_name)
+	# seabed_mesh.save(savefile_name)
 
 
 def main():
-	topological_path = './data/southern_calif_crm_v1.nc'
+	topological_path = './../data/southern_calif_crm_v1.nc'
 	loc1 = [32.858, -117.466]
 	loc2 = [32.858, -117.265]
 	loc3 = [32.66, -117.265]
 	loc4 = [32.66, -117.466]
 	bbox_coords = np.array([loc1, loc2, loc3, loc4])
 
-	savefile_name = 'lajolla100.stl'
+	savefile_name = 'lajolla1000_half.stl'
 
 	x, y, z = parse_data(topological_path, bbox_coords)
 	generate_stl(x, y, z, savefile_name)
