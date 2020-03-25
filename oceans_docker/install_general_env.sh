@@ -21,4 +21,5 @@ apt-get install --yes python-pip \
 pip install numpy-stl
 
 ## Optional python3 packages:
-apt-get install --yes python3-numpy python3-scipy python3-matplotlib
+apt-get install --yes python3-numpy python3-scipy python3-matplotlib python3-pip
+pip3 install numpy-stl
