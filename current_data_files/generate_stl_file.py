@@ -1,18 +1,21 @@
 import sys
 import numpy as np
+
 from scipy.interpolate import griddata
 import scipy.ndimage as ndimage
 from scipy.ndimage import gaussian_filter
+from scipy.io import netcdf
 # from scipy.misc import imsave
 # import imageio
+
 from matplotlib import cm
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from stl import mesh, Mode
 import matplotlib.tri as mtri
-from mpl_toolkits.mplot3d.axes3d import get_test_data
+# from mpl_toolkits.mplot3d.axes3d import get_test_data
 
-from scipy.io import netcdf
+sys.path.append('./../utils/')
 from haversine_dist import calc_dist_lat_lon
 
 '''

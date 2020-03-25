@@ -14,5 +14,4 @@ Hydrodynamic data files:
 
 ## Files:
  - **generate_stl_file.py** - Generates a topological map (STL file) that can be used for the bottom of a Gazebo environment
- - **haversine_dist.py** - Helper file for calculating km distances between two lat/lon coords
  - **topological_and_hydro_visualization** Jupyter notebook for visualizing regions of topological and hydrodynamic data
