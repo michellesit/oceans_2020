@@ -66,10 +66,10 @@ def get_total_area(loc1, loc2, loc3, loc4):
     total_search_days = total_area/(9.26*24)
     total_search_hours = total_area/9.26
     
-    print (total_area/(9.26*24) % 24)
     print ("Total search time (days): ", total_search_days)
     print ("Total search time (hours): ", total_search_hours)
-    return width*100, height*100
+    
+    return width*1000, height*1000
 
 
 def parse_data(topological_path, places):
@@ -88,10 +88,9 @@ def parse_data(topological_path, places):
 	'''
 
 	socal = netcdf.NetCDFFile(topological_path)
-	temp = socal.variables.keys()
-	xog = np.copy(socal.variables['x'][:])
-	yog = np.copy(socal.variables['y'][:])
-	zog = np.copy(socal.variables['z'][:])
+	xog = np.copy(socal.variables['lon'][:])
+	yog = np.copy(socal.variables['lat'][:])
+	zog = np.copy(socal.variables['Band1'][:])
 	socal.close()
 
 	loc1, loc2, loc3, loc4 = places
@@ -122,7 +121,7 @@ def parse_data(topological_path, places):
 	return x,y,z
 
 
-def generate_stl(x, y, z, savefile_name):
+def generate_stl(x, y, z, savefile_name, savefig=False):
 	'''
 	Generates the meshes needed for the stl file
 
@@ -133,6 +132,7 @@ def generate_stl(x, y, z, savefile_name):
 		y (np.ndarray): n x m array y coord in lat zeroed to origin
 		z (np.ndarray): (n*m) x 1 array depth value (m) for each x,y coordinate
 		savefile_name (String): path and name to save file
+		savefig (bool): saves the 3d mesh or not
 
 	'''
 
@@ -206,20 +206,79 @@ def generate_stl(x, y, z, savefile_name):
 	        seabed_mesh.vectors[i][j] = output[f[j]]
 
 	# Store the seabed as a STL file
-	# seabed_mesh.save(savefile_name)
+	if savefig:
+		seabed_mesh.save(savefile_name)
 
 
 def main():
-	topological_path = './../data/southern_calif_crm_v1.nc'
-	loc1 = [32.858, -117.466]
-	loc2 = [32.858, -117.265]
-	loc3 = [32.66, -117.265]
-	loc4 = [32.66, -117.466]
+	# topological_path = './../data/southern_calif_crm_v1.nc'
+	topological_path = './../data/crm_socal_1as_vers2.nc'
+	# loc1 = [32.858, -117.466]
+	# loc2 = [32.858, -117.265]
+	# loc3 = [32.66, -117.265]
+	# loc4 = [32.66, -117.466]
+
+	##Above but cut in half
+	# loc1 = [32.858, -117.365]
+	# loc2 = [32.858, -117.265]
+	# loc3 = [32.66, -117.265]
+	# loc4 = [32.66, -117.365]
+
+	##3km
+	# loc1 = [32.771, -117.288]
+	# loc2 = [32.771, -117.254]
+	# loc3 = [32.739, -117.254]
+	# loc4 = [32.739, -117.288]
+
+	##2km
+	# loc1 = [32.765, -117.278]
+	# loc2 = [32.765, -117.253]
+	# loc3 = [32.745, -117.253]
+	# loc4 = [32.745, -117.278]
+
+	##Pt La Jolla deep
+	# loc1 = [32.875, -117.289]
+	# loc2 = [32.875, -117.266]
+	# loc3 = [32.857, -117.266]
+	# loc4 = [32.857, -117.289]
+
+	##Pt la jolla shore
+	# loc1 = [32.871, -117.284]
+	# loc2 = [32.871, -117.263]
+	# loc3 = [32.851, -117.263]
+	# loc4 = [32.851, -117.284]
+
+	##MBay
+	# loc1 = [32.766, -117.287]
+	# loc2 = [32.766, -117.264]
+	# loc3 = [32.747, -117.264]
+	# loc4 = [32.747, -117.287]
+
+	##MBay flatter
+	loc1 = [32.766, -117.279]
+	loc2 = [32.766, -117.256]
+	loc3 = [32.747, -117.256]
+	loc4 = [32.747, -117.279]
+
+
+	# topological_path = './../data/san_francisco_13_navd88_2010.nc'
+	##SF shoal
+	# loc1 = [37.772, -123.113]
+	# loc2 = [37.772, -123.089]
+	# loc3 = [37.754, -123.089]
+	# loc4 = [37.754, -123.113]
+
+	##SF shoal south
+	# loc1 = [37.760, -123.094]
+	# loc2 = [37.760, -123.071]
+	# loc3 = [37.742, -123.071]
+	# loc4 = [37.742, -123.094]
 	bbox_coords = np.array([loc1, loc2, loc3, loc4])
 
-	savefile_name = 'lajolla1000_half.stl'
+	savefile_name = 'nosave.stl'
+	savefig = False
 
 	x, y, z = parse_data(topological_path, bbox_coords)
-	generate_stl(x, y, z, savefile_name)
+	generate_stl(x, y, z, savefile_name, savefig)
 
 main()
