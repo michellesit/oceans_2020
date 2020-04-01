@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+<model name="lajolla_cove_shore">
+  <static>true</static>
+  <link name="lajolla_cove_shore">
+
+  <visual name="surface">
+    <cast_shadows>false</cast_shadows>
+    <pose>0 0 0 0 0 0</pose>
+    <geometry>
+      <box>
+        <size>1867.798 2112.704 .1</size>
+      </box>
+    </geometry>
+    <material>
+      <script>
+        <uri>file://Media/materials/scripts/water.material</uri>
+        <name>UUVSimulator/StaticWater</name>
+      </script>
+    </material>
+  </visual>
+
+  <visual name="seafloor">
+    <pose>0 0 0 0 0 0</pose>
+    <geometry>
+      <mesh><uri>model://lajolla_cove_shore/meshes/ptlj_shore.stl</uri><scale>1 1 1</scale></mesh>
+    </geometry>
+    <material>
+      <script>
+        <uri>file://Media/materials/scripts/sand.material</uri>
+        <name>UUVSimulator/SandAndStones</name>
+      </script>
+    </material>
+  </visual>
+
+  <collision name="seafloor">
+    <pose>0 0 0 0 0 0</pose>
+    <geometry>
+      <mesh><uri>model://lajolla_cove_shore/meshes/ptlj_shore.stl</uri><scale>1 1 1</scale></mesh>
+    </geometry>
+  </collision>
+
+  </link>
+</model>
+</sdf>
