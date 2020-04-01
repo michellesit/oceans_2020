@@ -14,6 +14,8 @@ Hydrodynamic data files:
 
 - ca_subCA_das_2020010615.nc: Data of all of California. Source: the [Joint Institution for Regional Earth System Science and Engineering](https://www.sccoos.org/data/roms-3km/)
 
+The files can also be downloaded from [my google drive](https://drive.google.com/drive/folders/1g5Tb7GLEEwtDrnyy7451mAkIhyG9xuWl?usp=sharing)
+
 ## Files:
  - **generate_stl_file.py** - Generates a topological map (STL file) that can be used for the bottom of a Gazebo environment
  - **topological_and_hydro_visualization** Jupyter notebook for visualizing regions of topological and hydrodynamic data
