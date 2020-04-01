@@ -5,15 +5,12 @@ from scipy.interpolate import griddata
 import scipy.ndimage as ndimage
 from scipy.ndimage import gaussian_filter
 from scipy.io import netcdf
-# from scipy.misc import imsave
-# import imageio
 
 from matplotlib import cm
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from stl import mesh, Mode
 import matplotlib.tri as mtri
-# from mpl_toolkits.mplot3d.axes3d import get_test_data
 
 sys.path.append('./../utils/')
 from haversine_dist import calc_dist_lat_lon
@@ -27,27 +24,23 @@ To see the generated 3D map, run this file using python3
 
 '''
 
-def get_total_area(loc1, loc2, loc3, loc4):
+def get_total_area(bbox):
     '''
-	loc1-4 should be the bbox of interest. Should go clockwise starting from top left
 	Calculates the width, height, total search area, and approximate time to search
 		entire area at 5 knots (9.26 km/hr)
 
     Arguments:
-    	loc1 List[float, float] = top left
-    	loc2 List[float, float] = top right
-    	loc3 List[float, float] = bottom right
-    	loc4 List[float, float] = bottom left
+		bbox (np.ndarray) = 4x2 np array filled with float coordinate values
 
     Returns:
-		width (float) = in km
-		height (float) = in km
+		width (float) = in meters
+		height (float) = in meters
     '''
     
-    [lat1, lon1] = loc1
-    [lat2, lon2] = loc2
-    [lat3, lon3] = loc3
-    [lat4, lon4] = loc4
+    [lat1, lon1] = bbox[0, :]
+    [lat2, lon2] = bbox[1, :]
+    [lat3, lon3] = bbox[2, :]
+    [lat4, lon4] = bbox[3, :]
     
     ##Calculate the haversine dist between all the points:
     ##loc1 to loc2 (width)
@@ -72,13 +65,14 @@ def get_total_area(loc1, loc2, loc3, loc4):
     return width*1000, height*1000
 
 
-def parse_data(topological_path, places):
+def parse_data(topological_path, bbox_coords):
 	'''
 	Grabs depth data from the topological file using the bbox coords
 
 	Arguments:
 		topological_path (String): path to the NetCDFFile containing the topological data
-		bbox_coords (np.ndarray): 
+		bbox_coords (np.ndarray): 4x2 numpy array with float lat/lon coordinates for the
+								  search area
 
 	Return:
 		x (np.ndarray): n x m array x coord in lon zeroed to origin
@@ -93,12 +87,10 @@ def parse_data(topological_path, places):
 	zog = np.copy(socal.variables['Band1'][:])
 	socal.close()
 
-	loc1, loc2, loc3, loc4 = places
+	width, height = get_total_area(bbox_coords)
 
-	width, height = get_total_area(loc1, loc2, loc3, loc4)
-
-	min_lon = min(places[:,1])
-	max_lon = max(places[:,1])
+	min_lon = min(bbox_coords[:,1])
+	max_lon = max(bbox_coords[:,1])
 	xfilter = np.argwhere((xog <= max_lon) & (xog >= min_lon))
 	xclip = xog[xfilter].flatten()
 	xclip -= min(xclip)
@@ -106,8 +98,8 @@ def parse_data(topological_path, places):
 	xclip *= width
 	xclip -= np.max(xclip)/2
 
-	min_lat = min(places[:,0])
-	max_lat = max(places[:,0])
+	min_lat = min(bbox_coords[:,0])
+	max_lat = max(bbox_coords[:,0])
 	yfilter = np.argwhere((yog >= min_lat) & (yog<= max_lat))
 	yclip = yog[yfilter].flatten()
 	yclip -= min(yclip)
@@ -211,8 +203,16 @@ def generate_stl(x, y, z, savefile_name, savefig=False):
 
 
 def main():
+	'''
+	loc1-4 should be the bbox of interest. Should go clockwise starting from top left
+	loc1 List[float, float] = top left
+	loc2 List[float, float] = top right
+	loc3 List[float, float] = bottom right
+	loc4 List[float, float] = bottom left
+	'''
+
 	# topological_path = './../data/southern_calif_crm_v1.nc'
-	topological_path = './../data/crm_socal_1as_vers2.nc'
+	# topological_path = './../data/crm_socal_1as_vers2.nc'
 	# loc1 = [32.858, -117.466]
 	# loc2 = [32.858, -117.265]
 	# loc3 = [32.66, -117.265]
@@ -236,13 +236,13 @@ def main():
 	# loc3 = [32.745, -117.253]
 	# loc4 = [32.745, -117.278]
 
-	##Pt La Jolla deep
+	##Pt La Jolla deep/La Jolla Cove
 	# loc1 = [32.875, -117.289]
 	# loc2 = [32.875, -117.266]
 	# loc3 = [32.857, -117.266]
 	# loc4 = [32.857, -117.289]
 
-	##Pt la jolla shore
+	##Pt la jolla shore/La Jolla Cove Shore
 	# loc1 = [32.871, -117.284]
 	# loc2 = [32.871, -117.263]
 	# loc3 = [32.851, -117.263]
@@ -255,13 +255,13 @@ def main():
 	# loc4 = [32.747, -117.287]
 
 	##MBay flatter
-	loc1 = [32.766, -117.279]
-	loc2 = [32.766, -117.256]
-	loc3 = [32.747, -117.256]
-	loc4 = [32.747, -117.279]
+	# loc1 = [32.766, -117.279]
+	# loc2 = [32.766, -117.256]
+	# loc3 = [32.747, -117.256]
+	# loc4 = [32.747, -117.279]
 
 
-	# topological_path = './../data/san_francisco_13_navd88_2010.nc'
+	topological_path = './../data/san_francisco_13_navd88_2010.nc'
 	##SF shoal
 	# loc1 = [37.772, -123.113]
 	# loc2 = [37.772, -123.089]
@@ -269,10 +269,10 @@ def main():
 	# loc4 = [37.754, -123.113]
 
 	##SF shoal south
-	# loc1 = [37.760, -123.094]
-	# loc2 = [37.760, -123.071]
-	# loc3 = [37.742, -123.071]
-	# loc4 = [37.742, -123.094]
+	loc1 = [37.760, -123.094]
+	loc2 = [37.760, -123.071]
+	loc3 = [37.742, -123.071]
+	loc4 = [37.742, -123.094]
 	bbox_coords = np.array([loc1, loc2, loc3, loc4])
 
 	savefile_name = 'nosave.stl'
