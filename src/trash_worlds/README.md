@@ -9,9 +9,11 @@ All of the environments are off the coast of San Diego, CA or San Francisco, CA.
  - **lajolla_cove_shore** [(32.854, -117.268)](https://goo.gl/maps/qyhWW7pjaEEg9oSE9) - Off-shore area north of La Jolla Cove in San Diego, CA. Contains a 300m canyon.
  - **san_fran_shoal_south** [(37.755, -123.094)](https://goo.gl/maps/PndBzpvahDt7cUiMA) - Small shoal far off the coast of San Francisco, CA. Same as san_fran_shoal but slightly more south. Contains a small mountain ridge and more flat land.
 
+Misc environments:
+ - **single_soda.launch** - launch file for a coke can. Used for subscribing each coke can to its own hydrodynamic topic.
+ - **trash_lake** - a modified test environment from uuv_simulator. A lake filled with soda cans. For testing purposes only!
 
 ## To launch environments:
 ```
-roslaunch trash_worlds lajolla_cove_shore
-
+roslaunch trash_worlds lajolla_cove_shore.launch
 ```
