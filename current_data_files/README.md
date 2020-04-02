@@ -1,21 +1,16 @@
-# Topological and Current data
+# Analyzes the topological and current data
 
-Contains the topological and hydrodynamic data used for the experiment and files to parse/visualize the data
+Analyzes the topological and hydrodynamic data for the demo. Mostly used for exploring through the data and creating the stl files needed for the gazebo environment. Start here to create the stl topological file for an area off the coast of California.
 
-## Data Folder:
-
-Topological data files:
-
-- southern_calif_crm_v1.nc: Data of Southern California. Source: the [NOAA Bathymetry maps](https://maps.ngdc.noaa.gov/viewers/bathymetry/?layers=dem)
-- crm_socal_1as_vers2.nc: Most up to date data of Southern California. Source: [U.S. Coastal Relief Model - Southern California Version 2](https://data.noaa.gov/metaview/page?xml=NOAA/NESDIS/NGDC/MGG/DEM/iso/xml/4970.xml&view=getDataView&header=none)
-- san_francisco_13_navd88_2010.nc: Data for San Francisco. Source: [San Francisco Bay, California 1/3 arc-second NAVD 88 Coastal Digital Elevation Model](https://data.noaa.gov/metaview/page?xml=NOAA/NESDIS/NGDC/MGG/DEM/iso/xml/741.xml&view=getDataView&header=none)
-
-Hydrodynamic data files:
-
-- ca_subCA_das_2020010615.nc: Data of all of California. Source: the [Joint Institution for Regional Earth System Science and Engineering](https://www.sccoos.org/data/roms-3km/)
-
-The files can also be downloaded from [my google drive](https://drive.google.com/drive/folders/1g5Tb7GLEEwtDrnyy7451mAkIhyG9xuWl?usp=sharing)
+The raw data files can be found in ../data_files/
 
 ## Files:
  - **generate_stl_file.py** - Generates a topological map (STL file) that can be used for the bottom of a Gazebo environment
  - **topological_and_hydro_visualization** Jupyter notebook for visualizing regions of topological and hydrodynamic data
+
+## Create an environment
+Edit generate_stl_file.py with the lat/lon decimal coordinates of your bbox area, and the save file name. Then run:
+```
+python generate_stl_file.py
+```
+Run it with python3 to see the 3D map. Otherwise, it'll just show you the 2D map.
