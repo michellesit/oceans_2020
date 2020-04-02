@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from stl import mesh, Mode
 import matplotlib.tri as mtri
 
-sys.path.append('./../utils/')
+sys.path.append('./../src/utils/')
 from haversine_dist import calc_dist_lat_lon
 
 '''
