@@ -10,7 +10,6 @@ All of the environments are off the coast of San Diego, CA or San Francisco, CA.
  - **san_fran_shoal_south** [(37.755, -123.094)](https://goo.gl/maps/PndBzpvahDt7cUiMA) - Small shoal far off the coast of San Francisco, CA. Same as san_fran_shoal but slightly more south. Contains a small mountain ridge and more flat land.
 
 Misc environments:
- - **single_soda.launch** - launch file for a coke can. Used for subscribing each coke can to its own hydrodynamic topic.
  - **trash_lake** - a modified test environment from uuv_simulator. A lake filled with soda cans. For testing purposes only!
 
 ## To launch environments:
