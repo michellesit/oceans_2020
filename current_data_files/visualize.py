@@ -1,8 +1,6 @@
 import pickle
 
 import rospkg
-from ConfigParser import SafeConfigParser
-
 import numpy as np
 from scipy.io import netcdf
 from scipy.interpolate import griddata
@@ -107,8 +105,7 @@ def main():
     trash_finder_path = rospack.get_path("trash_finder")
     data_path = rospack.get_path("data_files")
 
-    config = SafeConfigParser()
-    config.read(trash_finder_path + '/scripts/demo_configs.ini')
+    config = pickle.load(open(trash_finder_path + '/config/demo_configs.p', 'rb'))
 
     ##hydrodynamic current
     current_path = data_path+'/ca_subCA_das_2020010615.nc'
@@ -117,7 +114,7 @@ def main():
     current_data.close()
 
     ##bathymetry model
-    topo = config.get('TOPO', 'topo_file')
+    topo = config['topo_file']
     topo_path = data_path + '/' + topo
 
     all_locations = pickle.load( open("locations.p", "rb"))
