@@ -1,22 +1,19 @@
-from ConfigParser import SafeConfigParser
+import pickle
 
-import numpy as np
-from scipy.interpolate import RegularGridInterpolator, interpn
-from scipy.io import netcdf
-
-import pdb
 import rospkg
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io import netcdf
+from scipy.interpolate import RegularGridInterpolator, interpn
 
 from trash_utils.haversine_dist import haversine
-
-import matplotlib.pyplot as plt
 
 '''
 Utility functions to support the trash_finder/scripts files
 
 '''
 
-def xyz_to_lat_lon(bbox, x,y):
+def xy_to_lat_lon(bbox, x,y):
 	'''
 	Converts x,y coordinates to lat/lon coordinates
 
@@ -24,35 +21,31 @@ def xyz_to_lat_lon(bbox, x,y):
 		bbox (np.ndarray): 4x2 array with lon/lat float coordinates for the area of interest
 			Coordinates should be top left, top right, bottom right, bottom left
 			Each bbox corner should be in [lon, lat] order
-		x (float): value from coordinate system to convert to lat
-		y (float): value from coordinate system to convert to lon
+		x (float or np.ndarray): value(s) from coordinate system to convert to lat
+		y (float or np.ndarray): value(s) from coordinate system to convert to lon
 
 	Returns:
-		lat (float): corresponding lat value to x coordinate
-		lon (float): corresponding lon value to y coordinate
+		lat (float or np.ndarray): corresponding lat value(s) to x coordinate(s)
+		lon (float or np.ndarray): corresponding lon value(s) to y coordinate(s)
 
-
-	##TODO: CHECK THIS IS CORRECT
 	'''
-	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1])
-	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1])
+	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1]) * 1000
+	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1]) * 1000
 
 	##assert the x and y values are valid
 	##depends on whether the values are zeroed or centered
-	if not ((0 <= abs(x) <= width/2)):
-		raise Exception ("X VALUE OUTSIDE BOUNDS")
-	if not ((0 <= abs(y) <= height/2)):
-		raise Exception ("Y VALUE OUTSIDE BOUNDS")
+	if not ((0 <= np.absolute(x).all() <= width/2)):
+		raise Exception ("X VALUE(S) OUTSIDE BOUNDS. LIMIT +/-{0}".format(width/2))
+	if not ((0 <= np.absolute(y).all() <= height/2)):
+		raise Exception ("Y VALUE(S) OUTSIDE BOUNDS. LIMIT +/-{0}".format(height/2))
 
 	min_lat = min(bbox[:, 0])
 	max_lat = max(bbox[:, 0])
 	min_lon = min(bbox[:, 1])
 	max_lon = max(bbox[:, 1])
 
-	lat = (x * width * max_lat) + min_lat
-	lon = (y * height * max_lon) + min_lon
-
-	pdb.set_trace()
+	lat = ((x + width/2)/width)*(max_lat - min_lat) + min_lat
+	lon = ((y + height/2)/height)*(max_lon - min_lon) + min_lon
 
 	return lat, lon
 
@@ -65,33 +58,30 @@ def lat_lon_to_xy(bbox, lat, lon):
 		bbox (np.ndarray): 4x2 array with lon/lat float coordinates for the area of interest
 			Coordinates should be top left, top right, bottom right, bottom left
 			Each bbox corner should be in [lon, lat] order
-		lat (float): lattitude value to convert to x coordinate
-		lon (float): longitude value to convert to y coordinate
+		lat (float or np.ndarray): lattitude value(s) to convert to x coordinate
+		lon (float or np.ndarray): longitude value(s) to convert to y coordinate
 	Return:
-		x (float): corresponding x value to the lat coordinate
-		y (float): corresponding y value to the lon coordinate
+		x (float or np.ndarray): corresponding x value(s) to the lat coordinate
+		y (float or np.ndarray): corresponding y value(s) to the lon coordinate
 
-
-	##TODO: CHECK THIS IS CORRECT
 	'''
-	##assert that the values are valid within limits
-	if not ((0 <= abs(lat) <= 90)):
-		raise Exception ("INVALID LAT INPUT")
-	if not ((0 <= abs(lon) <= 180)):
-		raise Exception ("INVALID LON INPUT")	
 
-	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1])
-	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1])
+	##assert that the values are valid within limits
+	if not ((0 <= np.absolute(lat).all() <= 90)):
+		raise Exception ("INVALID LAT INPUT(s): LIMIT -90 to 90")
+	if not ((0 <= np.absolute(lon).all() <= 180)):
+		raise Exception ("INVALID LON INPUT(s): LIMIT -180 to 180")	
+
+	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1]) * 1000
+	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1]) * 1000
 
 	min_lat = min(bbox[:, 0])
 	max_lat = max(bbox[:, 0])
 	min_lon = min(bbox[:, 1])
 	max_lon = max(bbox[:, 1])
 
-	x = (lat - min_lat) * (width/max_lon) * 1000
-	y = (lon - min_lon) * (height/max_lon) * 1000
-
-	pdb.set_trace()
+	x = ((lat - min_lat)/(max_lat-min_lat) * width) - (width/2)
+	y = ((lon - min_lon)/(max_lon-min_lon) * height) - (height/2)
 
 	return x,y
 
@@ -131,33 +121,6 @@ def find_bound_idx(data, coord):
 	return np.array((min(start, end), max(start, end)))
 
 
-def grid_data(interp_f, x_bound, y_bound):
-	'''
-	Input:
-		interp_f : Scipy RegularGridInterpolator function that interpolates the data
-			Takes an array of coordinates as input
-		x_bound (list) : list of 
-
-		dim (array): size=(1,2), gives the x,y dimension of the output
-
-	Returns:
-		interp_data (np.array): shape=(dim), interpolated data of the provided coordinates
-
-	'''
-	##meshgrid the data based on dim size
-	##TODO: Figure out how to incorporate x and y bound
-	x = np.arange(x_bound[0], x_bound[1]+1)
-	y = np.arange(y_bound[0], y_bound[1]+1)
-
-	xv, yv = np.meshgrid(x,y)
-	grid = zip(xv.flatten(), yv.flatten())
-
-	##feed it into the interpolation function to get output data of the same size
-	interp_data = interp_f(grid)
-
-	return interp_data.reshape(abs(x_bound[1]-x_bound[0]), abs(y_bound[1] - y_bound[0]))
-
-
 def get_depth_block(bbox, topo_file):
 	'''
 	Input:
@@ -168,9 +131,8 @@ def get_depth_block(bbox, topo_file):
 	Returns:
 		depth_area (np.ndarray): (n,m) array of the depths within the bbox
 		depth_func : interpolation function that outputs the depth within
-					 the array [+-width/2, +-height/2]
+					 the array [+-width/2 (lat), +-height/2 (lon)]
 
-	TODO: plot the output of this and check it looks correct	
 	'''
 	topo_depths = netcdf.NetCDFFile(topo_file)
 	lat = topo_depths.variables['lat'][:].copy()
@@ -238,9 +200,6 @@ def get_current_block(bbox, current_file):
 	lon_idx = np.sort(lon.shape[0]-1-lon_idx)
 	lat_idx = find_bound_idx(lat, [min_lat, max_lat])
 
-	X = lon[lon_idx[0]:lon_idx[-1]+1]
-	Y = lat[lat_idx[0]:lat_idx[-1]+1]
-
 	##pull those coordinates from the current file
 	u_area = (u[0, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
 	v_area = (v[0, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
@@ -267,25 +226,48 @@ def get_current_block(bbox, current_file):
 	return u_area, v_area, uv_area, u_func, v_func, uv_func
 
 
-rospack = rospkg.RosPack()
-trash_finder_path = rospack.get_path("trash_finder")
-data_path = rospack.get_path("data_files")
+def grid_data(interp_f, x_bound, y_bound):
+	'''
+	Input:
+		interp_f : Scipy RegularGridInterpolator function that interpolates the data
+			Takes an array of coordinates as input
+		x_bound (list) : list of min-max values for the x values
+		y_bound (list) : list of min-max values for the y values
 
-config = SafeConfigParser()
-config.read(trash_finder_path + '/scripts/demo_configs.ini')
+		dim (array): size=(1,2), gives the x,y dimension of the output
 
-currents1 = config.get('CURRENTS', 'current_file')
-currents_path = data_path + '/' + currents1
+	Returns:
+		interp_data (np.array): shape=(dim), interpolated data of the provided coordinates
 
-topo = config.get('TOPO', 'topo_file')
-topo_path = data_path + '/' + topo
+	TODO: Might delete this function
+	'''
+	##meshgrid the data based on dim size
+	##TODO: Figure out how to incorporate x and y bound
+	x = np.arange(x_bound[0], x_bound[1]+1)
+	y = np.arange(y_bound[0], y_bound[1]+1)
 
-places = np.array([
-	[config.get('COORDS', 'loc1_lat'), config.get('COORDS', 'loc1_lon')],
-	[config.get('COORDS', 'loc2_lat'), config.get('COORDS', 'loc2_lon')],
-	[config.get('COORDS', 'loc3_lat'), config.get('COORDS', 'loc3_lon')],
-	[config.get('COORDS', 'loc4_lat'), config.get('COORDS', 'loc4_lon')]
-	], dtype=float)
-print ("PLACES: ", places)
-get_current_block(places, currents_path)
-# get_depth_block(places, topo_path)
+	xv, yv = np.meshgrid(x,y)
+	grid = zip(xv.flatten(), yv.flatten())
+
+	##feed it into the interpolation function to get output data of the same size
+	interp_data = interp_f(grid)
+
+	return interp_data.reshape(abs(x_bound[1]-x_bound[0]), abs(y_bound[1] - y_bound[0]))
+
+
+def main():
+	rospack = rospkg.RosPack()
+	trash_finder_path = rospack.get_path("trash_finder")
+	data_path = rospack.get_path("data_files")
+	config = pickle.load(open(trash_finder_path + "/config/demo_configs.p", "rb"))
+
+	currents = config['current_file']
+	currents_path = data_path + '/' + currents
+	topo = config['topo_file']
+	topo_path = data_path + '/' + topo
+
+	places = np.array(config['coords_bbox'])
+	print ("PLACES: ", places)
+
+	get_current_block(places, currents_path)
+	# get_depth_block(places, topo_path)
