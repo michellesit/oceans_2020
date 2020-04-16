@@ -1,6 +1,5 @@
-import numpy as np
-from numpy import deg2rad
 from math import sin, cos, atan2, sqrt
+from numpy import deg2rad
 
 '''
 Uses the Haversine formula to calculate the dist between two points on Earth
