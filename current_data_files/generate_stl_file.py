@@ -211,11 +211,15 @@ def main():
 	loc4 List[float, float] = bottom left
 	'''
 
-	# topological_path = './../data/southern_calif_crm_v1.nc'
-	topological_path = './../data/crm_socal_1as_vers2.nc'
-	# topological_path = './../data/san_francisco_13_navd88_2010.nc'
+	rospack = rospkg.RosPack()
+	trash_finder_path = rospack.get_path('trash_finder')
+	data_path = rospack.get_path('data_files')
 
-	all_locations = pickle.load(open("locations.p", "rb"))
+	# topological_path = data_path+'/southern_calif_crm_v1.nc'
+	topological_path = data_path+'/crm_socal_1as_vers2.nc'
+	# topological_path = data_path+'/san_francisco_13_navd88_2010.nc'
+
+	all_locations = pickle.load(open(trash_finder_path+"/config/locations.p", "rb"))
 	bbox_coords = all_locations["mission_bay_flatter_bbox"]
 
 	savefile_name = 'nosave.stl'
