@@ -6,7 +6,9 @@ The raw data files can be found in ../data_files/
 
 ## Files:
  - **generate_stl_file.py** - Generates a topological map (STL file) that can be used for the bottom of a Gazebo environment
- - **topological_and_hydro_visualization** Jupyter notebook for visualizing regions of topological and hydrodynamic data
+ - **visualize.py** - Visualization methods for currents and bathymetry maps
+ - **pickle_locations.py** - Pickles the dictionary containing the survey location coordinates, widths (km), and heights (km)
+ - **locations.p** - Pickle file containing survey location coordinates, widths (km), and heights (km)
 
 ## Create an environment
 Edit generate_stl_file.py with the lat/lon decimal coordinates of your bbox area, and the save file name. Then run:
