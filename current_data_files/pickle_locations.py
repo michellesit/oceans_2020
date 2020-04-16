@@ -1,4 +1,5 @@
 import pickle
+import rospkg
 import numpy as np
 
 '''
@@ -52,4 +53,6 @@ locations = \
 
 }
 
-pickle.dump( locations, open("locations.p", "wb"))
+rospack = rospkg.RosPack()
+trash_finder_path = rospack.get_path('trash_finder')
+pickle.dump( locations, open(trash_finder_path+"/config/locations.p", "wb"))
