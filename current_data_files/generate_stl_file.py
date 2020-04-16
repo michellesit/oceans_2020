@@ -1,19 +1,19 @@
 import sys
+import pickle
+
+import rospkg
 import numpy as np
 
 from scipy.interpolate import griddata
-import scipy.ndimage as ndimage
 from scipy.ndimage import gaussian_filter
 from scipy.io import netcdf
 
-from matplotlib import cm
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 from stl import mesh, Mode
 import matplotlib.tri as mtri
 
-sys.path.append('./../src/utils/')
-from haversine_dist import calc_dist_lat_lon
+from trash_utils.haversine_dist import haversine
 
 '''
 Generates the real-world topological map for a Gazebo environment
@@ -41,12 +41,12 @@ def get_total_area(bbox):
     [lat2, lon2] = bbox[1, :]
     [lat3, lon3] = bbox[2, :]
     [lat4, lon4] = bbox[3, :]
-    
+
     ##Calculate the haversine dist between all the points:
     ##loc1 to loc2 (width)
-    width = calc_dist_lat_lon(lat1, lon1, lat2, lon2)
+    width = haversine(lat1, lon1, lat2, lon2)
     ##loc2 to loc 3 (height)
-    height = calc_dist_lat_lon(lat2, lon2, lat3, lon3)
+    height = haversine(lat2, lon2, lat3, lon3)
     
     print ("Width (km): ", width)
     print ("Height (km) ", height)
@@ -212,68 +212,11 @@ def main():
 	'''
 
 	# topological_path = './../data/southern_calif_crm_v1.nc'
-	# topological_path = './../data/crm_socal_1as_vers2.nc'
-	# loc1 = [32.858, -117.466]
-	# loc2 = [32.858, -117.265]
-	# loc3 = [32.66, -117.265]
-	# loc4 = [32.66, -117.466]
+	topological_path = './../data/crm_socal_1as_vers2.nc'
+	# topological_path = './../data/san_francisco_13_navd88_2010.nc'
 
-	##Above but cut in half
-	# loc1 = [32.858, -117.365]
-	# loc2 = [32.858, -117.265]
-	# loc3 = [32.66, -117.265]
-	# loc4 = [32.66, -117.365]
-
-	##3km
-	# loc1 = [32.771, -117.288]
-	# loc2 = [32.771, -117.254]
-	# loc3 = [32.739, -117.254]
-	# loc4 = [32.739, -117.288]
-
-	##2km
-	# loc1 = [32.765, -117.278]
-	# loc2 = [32.765, -117.253]
-	# loc3 = [32.745, -117.253]
-	# loc4 = [32.745, -117.278]
-
-	##Pt La Jolla deep/La Jolla Cove
-	# loc1 = [32.875, -117.289]
-	# loc2 = [32.875, -117.266]
-	# loc3 = [32.857, -117.266]
-	# loc4 = [32.857, -117.289]
-
-	##Pt la jolla shore/La Jolla Cove Shore
-	# loc1 = [32.871, -117.284]
-	# loc2 = [32.871, -117.263]
-	# loc3 = [32.851, -117.263]
-	# loc4 = [32.851, -117.284]
-
-	##MBay
-	# loc1 = [32.766, -117.287]
-	# loc2 = [32.766, -117.264]
-	# loc3 = [32.747, -117.264]
-	# loc4 = [32.747, -117.287]
-
-	##MBay flatter
-	# loc1 = [32.766, -117.279]
-	# loc2 = [32.766, -117.256]
-	# loc3 = [32.747, -117.256]
-	# loc4 = [32.747, -117.279]
-
-
-	topological_path = './../data/san_francisco_13_navd88_2010.nc'
-	##SF shoal
-	# loc1 = [37.772, -123.113]
-	# loc2 = [37.772, -123.089]
-	# loc3 = [37.754, -123.089]
-	# loc4 = [37.754, -123.113]
-
-	##SF shoal south
-	loc1 = [37.760, -123.094]
-	loc2 = [37.760, -123.071]
-	loc3 = [37.742, -123.071]
-	loc4 = [37.742, -123.094]
-	bbox_coords = np.array([loc1, loc2, loc3, loc4])
+	all_locations = pickle.load(open("locations.p", "rb"))
+	bbox_coords = all_locations["mission_bay_flatter_bbox"]
 
 	savefile_name = 'nosave.stl'
 	savefig = False
