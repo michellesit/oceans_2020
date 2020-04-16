@@ -1,73 +1,97 @@
 #!/usr/bin/env python
 
-##get the robot's pose and depth
-##subscribe to the robot's ground_truth_to_tf_[name of robot]/pose
-import rospy
-from geometry_msgs.msg import PoseStamped
+import sys
+import pickle
+from math import atan2
 
-from scipy.io import netcdf
 import numpy as np
-from haversine_dist import calc_dist_lat_lon
+from scipy.io import netcdf
 from scipy.interpolate import interpn
 
+import rospkg
+import rospy
+from geometry_msgs.msg import PoseStamped
 from uuv_world_ros_plugins_msgs.srv import SetCurrentModel, SetCurrentVelocity, SetCurrentDirection
-import math
-import sys
+
+from trash_utils.haversine_dist import haversine
+from trash_utils.finder_utils import get_current_block, get_depth_block
 
 import pdb
 
+'''
+Get the robot's pose and depth (X,Y,Z)
+Subscribe to the robot's ground_truth_to_tf_[name of robot]/pose
+
+
+'''
+
 class UUV_local_current():
 
-	def __init__(self, current_file, loc1, loc2, loc3, loc4):
+	def __init__(self, current_file, bbox):
+		self.bbox = bbox
 		self.current_file = current_file
 		self.uuv_name = sys.argv[2]
 
-		self.lon = current_file.variables['lon'][:].copy()
-		self.lon = self.lon[:] - 360
-		self.lat = current_file.variables['lat'][:].copy()
+		self.u_area, self.v_area, self.uv_area, \
+		self.u_func, self.v_func, self.uv_func = get_current_block(self.bbox, self.current_file)
 
-		self.d = current_file.variables['depth'][:].copy()
-		self.u = current_file.variables['u'][:].copy()
-		self.v = current_file.variables['v'][:].copy()
+		# self.lon = self.current_file.variables['lon'][:].copy()
+		# self.lon = self.lon[:] - 360
+		# self.lat = self.current_file.variables['lat'][:].copy()
 
-		##loc1 to loc2 (width)
-		self.width = calc_dist_lat_lon(loc1[0], loc1[1], loc2[0], loc2[1])
-		##loc2 to loc 3 (height)
-		self.height = calc_dist_lat_lon(loc2[0], loc2[1], loc3[0], loc3[1])
+		# self.d = self.current_file.variables['depth'][:].copy()
+		# self.u = self.current_file.variables['u'][:].copy()
+		# self.v = self.current_file.variables['v'][:].copy()
 
-		self.min_lat = min(loc1[0], loc2[0], loc3[0], loc4[0])
-		self.max_lat = max(loc1[0], loc2[0], loc3[0], loc4[0])
-		self.min_lon = min(loc1[1], loc2[1], loc3[1], loc4[1])
-		self.max_lon = max(loc1[1], loc2[1], loc3[1], loc4[1])
+		# ##loc1 to loc2 (width)
+		# self.width = haversine(bbox[0][0], bbox[0][1], bbox[1][0], bbox[1][1])
+		# ##loc2 to loc 3 (height)
+		# self.height = haversine(bbox[1][0], bbox[1][1], bbox[2][0], bbox[2][1])
 
-		##get the idx values from lat, lon arrays
-		self.lon_idx = np.where((self.lon[:]>=self.min_lon) & (self.lon[:]<=self.max_lon))[0]
-		self.lat_idx = np.where((self.lat[:]>=self.min_lat) & (self.lat[:]<=self.max_lat))[0]
+		# self.min_lon = min(bbox[:, 1])
+		# self.max_lon = max(bbox[:, 1])
+		# self.min_lat = min(bbox[:, 0])
+		# self.max_lat = max(bbox[:, 0])
 
-		lon_area = self.lon[self.lon_idx]
-		lon_zeroed = lon_area - min(self.lon[self.lon_idx])
-		self.lon_xcoords = lon_zeroed*(self.width/max(lon_zeroed))*1000
+		# ##get the idx values from lat, lon arrays
+		# self.lon_idx = np.where((self.lon[:]>=self.min_lon) & (self.lon[:]<=self.max_lon))[0]
+		# self.lat_idx = np.where((self.lat[:]>=self.min_lat) & (self.lat[:]<=self.max_lat))[0]
 
-		lat_area = self.lat[self.lat_idx]
-		lat_zeroed = lat_area - min(self.lat[self.lat_idx])
-		self.lat_ycoords = lat_zeroed*(self.height/max(lat_zeroed))*1000
+		# lon_area = self.lon[self.lon_idx]
+		# lon_zeroed = lon_area - min(self.lon[self.lon_idx])
+		# self.lon_xcoords = lon_zeroed*(self.width/max(lon_zeroed))*1000
+
+		# lat_area = self.lat[self.lat_idx]
+		# lat_zeroed = lat_area - min(self.lat[self.lat_idx])
+		# self.lat_ycoords = lat_zeroed*(self.height/max(lat_zeroed))*1000
 
 
 	def callback(self, msg):
+		'''
+		Retrieves the uuv's position, converts the coordinates into xy,
+			and [WHAT?]
+
+		Input:
+			msg () : TODO
+		'''
 		position = msg.pose.position
 		uuv_pos = [position.x, position.y, abs(position.z)]
 		print ("UUV_POS: ", uuv_pos)
 		# rospy.loginfo("Point position: [%f, %f, %f]" %(position.x, position.y, position.z))
 
-		uuv_u, uuv_v = self.convert_to_xy(self.current_file, uuv_pos)
+		# uuv_u, uuv_v = self.convert_to_xy(self.current_file, uuv_pos)
+		uuv_u, uuv_v = self.get_uv_from_pos(uuv_pos)
 
 		##send data via ROS
 		self.update_hydrodynamic(uuv_u, uuv_v)
 
 
 	def listener(self):
+		'''
+		Retrieves the uuv's position
+		'''
 		rospy.init_node('get_robot_pose', anonymous=True)
-		rospy.Subscriber(f"{self.uuv_name}/ground_truth_to_tf_rexrov/pose", PoseStamped, self.callback)
+		rospy.Subscriber('{0}/ground_truth_to_tf_rexrov/pose'.format(self.uuv_name), PoseStamped, self.callback)
 
 		rospy.spin()
 
@@ -78,8 +102,41 @@ class UUV_local_current():
 	##CASE: At the edge of the map
 	##CASE: At the very bottom of the ground
 
-	def convert_to_xy(self, current_file, uuv_pos):
+	def get_uv_from_pos(self, uuv_pos):
+		'''
+		Takes the uuv's x,y,z position and finds the u,v value
+
+		Input:
+			uuv_pos () : uuv's x,y,z position
+
+		Returns:
+			uuv_u (float) :
+			uuv_v (float) :
+		'''
 		[uuv_x, uuv_y, uuv_z] = uuv_pos
+		uuv_u = self.u_func([uuv_z, uuv_x, uuv_y])
+		uuv_v = self.v_func([uuv_z, uuv_x, uuv_y])
+
+		print ("uuv_u: ", uuv_u)
+		print ("uuv_v: ", uuv_v)
+
+		return uuv_u, uuv_v
+
+
+	def convert_to_xy(self, current_file, uuv_pos):
+		'''
+		Takes the uuv's x,y,z position and finds the u,v value
+
+		Input:
+			uuv_pos () : uuv's x,y,z position
+
+		Returns:
+			uuv_u (float) :
+			uuv_v (float) :
+		'''
+		[uuv_x, uuv_y, uuv_z] = uuv_pos
+
+
 		uuv_x += self.width/2
 		uuv_y += self.height/2
 
@@ -142,18 +199,17 @@ class UUV_local_current():
 
 	##What do we want to send this topic?
 	def update_hydrodynamic(self, input_u, input_v):
-		rospy.wait_for_service(f'/{self.uuv_name}/set_current_velocity/')
+		rospy.wait_for_service('/{0}/set_current_velocity/'.format(self.uuv_name))
 
 		##Calculate the magnitude and use for uv value
 		uv = np.hypot(input_u, input_v)
-		# print ("uv: ", uv)
 
 		##Calculate the horizontal angle of this vector:
-		uv_angle = math.atan2(input_u, input_v)
+		uv_angle = atan2(input_u, input_v)
 		print ("uv_angle: ", uv_angle)
 
 		# send_uv = rospy.ServiceProxy('/rexrov/set_current_velocity_model', SetCurrentModel)
-		send_uv = rospy.ServiceProxy(f'/{self.uuv_name}/set_current_velocity', SetCurrentVelocity)
+		send_uv = rospy.ServiceProxy('/{0}/set_current_velocity'.format(self.uuv_name), SetCurrentVelocity)
 		
 		# ##publish updates to monitor the system:
 		# current_pub = rospy.Publisher('/{0}/pub_current_velocity'.format(self.uuv_name), String)
@@ -174,38 +230,35 @@ class UUV_local_current():
 
 
 if __name__ == '__main__':
-	##Calculate the current at that position
-	filepath = sys.argv[1]
-	current_db = netcdf.NetCDFFile(filepath, "r")
-	# current_db = netcdf.NetCDFFile('/home/msit/Desktop/oceans_2020/src/trash_finder/scripts/ca_subCA_das_2020010615.nc')
+	print ("sys argv: ", sys.argv)
 
-	##we'll pretend that this info is being fed in:
-	lajolla = [32.838, -117.343]
-	lajolla_20 = [32.838, -117.543]
-	coronado = [32.66, -117.343]
-	coronado_20 = [32.66, -117.543]
+	rospack = rospkg.RosPack()
+	data_path = rospack.get_path('data_files')
+	trash_finder_path = rospack.get_path('trash_finder')
+	config = pickle.load(open(trash_finder_path + "/config/demo_configs.p", "rb"))
 
-	C = UUV_local_current(current_db, lajolla, lajolla_20, coronado, coronado_20)
+	current_filepath = data_path + '/' + config['current_file']
+	print ("current_filepath: ", current_filepath)
+
+	place_bbox = np.array(config['coords_bbox'])
+	C = UUV_local_current(current_filepath, place_bbox)
 
 
-	rospy.wait_for_service(f'/{C.uuv_name}/set_current_velocity/')
+	rospy.wait_for_service('/{0}/set_current_velocity/'.format(C.uuv_name))
 
-	set_init_cv = rospy.ServiceProxy(f'/{C.uuv_name}/set_current_velocity_model', SetCurrentModel)
+	set_init_cv = rospy.ServiceProxy('/{0}/set_current_velocity_model'.format(C.uuv_name), SetCurrentModel)
 	set_cv_response = set_init_cv(0.0, 0, 50, 0.0, 0.0)
 	print ("SENT_CV_RESPONSE: ", set_cv_response)
 
-	set_hangle = rospy.ServiceProxy(f'/{C.uuv_name}/set_current_horz_angle_model', SetCurrentModel)
+	set_hangle = rospy.ServiceProxy('/{0}/set_current_horz_angle_model'.format(C.uuv_name), SetCurrentModel)
 	set_hangle_response = set_hangle(0.0, -3.141592653589793238, 3.141592653589793238, 0.10, 0.10)
 	print ("SENT_HANGLE_RESPONSE: ", set_hangle_response)
 
-	set_vangle = rospy.ServiceProxy(f'/{C.uuv_name}/set_current_vert_angle_model', SetCurrentModel)
+	set_vangle = rospy.ServiceProxy('/{0}/set_current_vert_angle_model'.format(C.uuv_name), SetCurrentModel)
 	set_vangle_response = set_hangle(1.0, -3.141592653589793238, 3.141592653589793238, 0.10, 0.10)
 	print ("SENT_VANGLE_RESPONSE: ", set_vangle_response)
 
 
 
 	##Get robot position in Gazebo
-	
 	C.listener()
-
-	current_db.close()
