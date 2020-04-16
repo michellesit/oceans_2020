@@ -1,6 +1,6 @@
 <launch>
 	<arg name="uuv_name" default="rexrov"/>
-	<arg name="current_file_path" default="$(find trash_finder)/scripts/ca_subCA_das_2020010615.nc"/>
+	<arg name="current_file_path" default="$(find data_files)/ca_subCA_das_2020010615.nc"/>
 
 	<node pkg="trash_finder"
 		  type="uuv_local_current.py"
