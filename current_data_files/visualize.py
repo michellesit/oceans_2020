@@ -117,7 +117,7 @@ def main():
     topo = config['topo_file']
     topo_path = data_path + '/' + topo
 
-    all_locations = pickle.load( open("locations.p", "rb"))
+    all_locations = pickle.load( open(trash_finder_path+"/config/locations.p", "rb"))
     place_bbox = all_locations["mission_bay_flatter_bbox"]
 
     #visualize_currents(place_bbox, current_path)
