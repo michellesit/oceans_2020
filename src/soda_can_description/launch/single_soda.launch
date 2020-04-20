@@ -3,7 +3,7 @@
     <arg name="y" default="0"/>
     <arg name="z" default="-50"/>
     <arg name="yaw" default="0"/>
-    <arg name="namespace" default="soda_can_defalt"/>
+    <arg name="namespace" default="soda_can_default"/>
 
     <include file="$(find soda_can_description)/launch/upload.launch">
         <arg name="x" default="$(arg x)"/>
@@ -15,6 +15,5 @@
 
     <include file="$(find trash_finder)/launch/produce_hydrodynamic_forces.launch">
         <arg name="uuv_name" value="$(arg namespace)"/>
-        <arg name="current_file_path" value="$(find data_files)/ca_subCA_das_2020010615.nc"/>
     </include>
 </launch>
