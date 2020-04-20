@@ -3,7 +3,7 @@
   <!-- Loading some constants -->
   <xacro:include filename="$(find uuv_descriptions)/urdf/common.urdf.xacro"/>
   <!-- Loading file with sensor macros -->
-  <!-- <xacro:include filename="$(find uuv_sensor_ros_plugins)/urdf/sensor_snippets.xacro"/> -->
+  <xacro:include filename="$(find uuv_sensor_ros_plugins)/urdf/sensor_snippets.xacro"/>
   <!-- Loading the UUV simulator ROS plugin macros -->
   <!-- <xacro:include filename="$(find uuv_gazebo_ros_plugins)/urdf/snippets.xacro"/>   -->
   <!-- Loading vehicle's specific macros -->
@@ -75,7 +75,7 @@
     <!-- <xacro:include filename="$(find soda_can_description)/urdf/actuators.xacro"/> -->
 
     <!-- Include the sensor modules -->
-    <!-- <xacro:include filename="$(find soda_can_description)/urdf/sensors.xacro"/> -->
+    <xacro:include filename="$(find soda_can_description)/urdf/sensors.xacro"/>
 
   </xacro:macro>
 
