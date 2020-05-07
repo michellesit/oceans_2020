@@ -18,7 +18,7 @@ apt-get install --yes python-pip \
 	python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose \
 	python-catkin-tools
 
-pip install numpy-stl
+pip install numpy-stl Shapely
 
 ## Optional python3 packages:
 apt-get install --yes python3-numpy python3-scipy python3-matplotlib python3-pip
