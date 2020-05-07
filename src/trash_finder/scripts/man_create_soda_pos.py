@@ -1,8 +1,6 @@
 import numpy as np
 from trash_utils.finder_utils import get_depth_block
 
-import pdb
-
 def man_create_soda_pos(num_cans, bbox, topo_path, 
 						xbounds, ybounds, zbounds,
 						dist_type="depth_file"):
@@ -34,7 +32,7 @@ def man_create_soda_pos(num_cans, bbox, topo_path,
 	if dist_type == "depth_file":
 		##Get the z dimension from the currents file:
 		##Write method to get the z dimensions from the currents file
-		depth_area, depth_func = get_depth_block(bbox, topo_path)
+		_d, depth_func = get_depth_block(bbox, topo_path)
 
 		cans_x_pos, cans_y_pos = np.meshgrid(x, y)
 		cans_x_pos = cans_x_pos.flatten()
@@ -42,6 +40,12 @@ def man_create_soda_pos(num_cans, bbox, topo_path,
 
 		grid = zip(cans_x_pos, cans_y_pos)
 		cans_z_pos = depth_func(grid)+3.0
+
+	elif dist_type == "hand":
+		_d, depth_func = get_depth_block(bbox, topo_path)
+		cans_x_pos = [5, 50, 100, 200, 250, 300, 350, 400, 450, 500]
+		cans_y_pos = [5, 50, 100, 200, 250, 300, 350, 400, 450, 500]
+		cans_z_pos = depth_func(zip(cans_x_pos, cans_y_pos))
 
 	else:
 		z = -np.arange(zbounds[0], xbounds[1], num_cans)
