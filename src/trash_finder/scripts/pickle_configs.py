@@ -28,18 +28,19 @@ def pickling_info(world_env, current_file, topo_file,
 		num_soda_cans (int) = number of soda cans to generate
 			This number gets squared if distribution_type is "file"
 		distribution_type (str) = "random", "gaussian", "file"
+			Fill out the corresponding section depending on your choice
 			Random distribution: soda cans randomly distributed throughout map
 			Gaussian distribution: soda cans distributed from a single point
 			File distribution: soda can locations manually provided via
 				the man_create_soda_pos.py file
-			Fill out the corresponding section depending on your choice
 
 		x_bounds (array of int) = x coordinate range for distribution
 		y_bounds (array of int) = y coordinate range for distribution
 		z_bounds (array of int) = (optional) z coordinate range for distribution
-		z_dist (str) = "depth_file", "grid"
+		z_dist (str) = "depth_file", "grid", "hand"
 			depth_file : depth is the bottom of the seafloor according to the topo_file
 			grid : depth is generated randomly using z_bounds values
+			hand: values written in by the user in man_create_soda_pos.py
 
 		sc_coord_file = TODO: what is this?
 
@@ -76,7 +77,7 @@ def pickling_info(world_env, current_file, topo_file,
 	
 
 	##TODO: check z_dist. check z_bounds reasonable
-	if z_dist not in ['depth_file', 'grid']:
+	if z_dist not in ['depth_file', 'grid', 'hand']:
 		raise Exception ("Z_DIST IS NOT VALID")
 
 
@@ -132,12 +133,12 @@ if __name__ == '__main__':
 	current_file = "ca_subCA_das_2020010615.nc"
 	topo_file = "crm_socal_1as_vers2.nc"
 
-	num_soda_cans = 10
+	num_soda_cans = 3
 	distribution_type = "file"
 
 	x_bounds = [0, 100]
 	y_bounds = [0, 100]
-	z_bounds = [0, 100]
+	z_bounds = [0, 40]
 	z_dist = "depth_file"
 
 	gaussian_mu = 0.0
