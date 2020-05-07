@@ -1,0 +1,9 @@
+<launch>
+
+	<node pkg="trash_finder"
+		  type="update_trash_states.py"
+		  name="update_trash_states"
+		  output="screen">
+	</node>
+
+</launch>
