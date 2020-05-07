@@ -13,7 +13,11 @@
         <arg name="namespace" default="$(arg namespace)"/>
     </include>
 
-    <include file="$(find trash_finder)/launch/produce_hydrodynamic_forces.launch">
+<!--     <include file="$(find trash_finder)/launch/produce_hydrodynamic_forces.launch">
         <arg name="uuv_name" value="$(arg namespace)"/>
-    </include>
+    </include> -->
+
+<!--     <include file="$(find trash_finder)/launch/check_pos.launch">
+        <arg name="uuv_name" value="$(arg namespace)"/>
+    </include> -->
 </launch>
