@@ -9,7 +9,7 @@
     <pose>0 0 0 0 0 0</pose>
     <geometry>
       <box>
-        <size>2150.557 2112.704 .1</size>
+        <size>2150.55 2112.70 .1</size>
       </box>
     </geometry>
     <material>
