@@ -4,7 +4,7 @@ import rospkg
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import netcdf
-from scipy.interpolate import RegularGridInterpolator, interpn
+from scipy.interpolate import RegularGridInterpolator
 
 from trash_utils.haversine_dist import haversine
 
@@ -131,7 +131,7 @@ def get_depth_block(bbox, topo_file):
 	Returns:
 		depth_area (np.ndarray): (n,m) array of the depths within the bbox
 		depth_func : interpolation function that outputs the depth within
-					 the array [+-width/2 (lat), +-height/2 (lon)]
+					 the array [+-width/2 (x), +-height/2 (y)]
 
 	'''
 	topo_depths = netcdf.NetCDFFile(topo_file)
@@ -154,8 +154,8 @@ def get_depth_block(bbox, topo_file):
 	depths_area = depths[lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1]
 
 	##interpolation things:
-	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1])*1000
-	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1])*1000
+	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1])*1000 +100
+	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1])*1000 +100
 
 	x = np.linspace(-width/2, width/2, depths_area.shape[0], endpoint = True)
 	y = np.linspace(-height/2, height/2, depths_area.shape[1], endpoint = True)
@@ -212,8 +212,8 @@ def get_current_block(bbox, current_file):
 
 	##This is all interpolation things
 	##allocate arrays for width, height
-	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1])*1000
-	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1])*1000
+	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1])*1000 +100
+	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1])*1000 +100
 	
 	##create grid with lat-lon coordinates
 	x = np.linspace(-width/2, width/2, u_area.shape[1], endpoint = True)
@@ -226,33 +226,39 @@ def get_current_block(bbox, current_file):
 	return u_area, v_area, uv_area, u_func, v_func, uv_func
 
 
-def grid_data(interp_f, x_bound, y_bound):
+def grid_data(interp_f, x_bound, y_bound, spacing, z):
 	'''
+	Creates mesh grid based on dim size
+	Used for visualizing data
+
 	Input:
 		interp_f : Scipy RegularGridInterpolator function that interpolates the data
 			Takes an array of coordinates as input
 		x_bound (list) : list of min-max values for the x values
 		y_bound (list) : list of min-max values for the y values
+		spacing (int) : how far apart the grid values should be
+		z (np.ndarray): depth values for all of the input
 
 		dim (array): size=(1,2), gives the x,y dimension of the output
 
 	Returns:
 		interp_data (np.array): shape=(dim), interpolated data of the provided coordinates
-
-	TODO: Might delete this function
 	'''
-	##meshgrid the data based on dim size
-	##TODO: Figure out how to incorporate x and y bound
-	x = np.arange(x_bound[0], x_bound[1]+1)
-	y = np.arange(y_bound[0], y_bound[1]+1)
 
+	x = np.arange(x_bound[0], x_bound[1]+1, spacing)
+	y = np.arange(y_bound[0], y_bound[1]+1, spacing)
 	xv, yv = np.meshgrid(x,y)
-	grid = zip(xv.flatten(), yv.flatten())
+
+	if len(z) == 0:
+		grid = zip(xv.flatten(), yv.flatten())
+	else:
+		z = abs(z)
+		grid = zip(z.flatten(), xv.flatten(), yv.flatten())
 
 	##feed it into the interpolation function to get output data of the same size
 	interp_data = interp_f(grid)
 
-	return interp_data.reshape(abs(x_bound[1]-x_bound[0]), abs(y_bound[1] - y_bound[0]))
+	return interp_data.reshape(x.shape[0], y.shape[0])
 
 
 def main():
