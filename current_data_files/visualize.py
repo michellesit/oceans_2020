@@ -5,14 +5,18 @@ import numpy as np
 from scipy.io import netcdf
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-from trash_utils.finder_utils import get_current_block, get_depth_block, lat_lon_to_xy
+from trash_utils.haversine_dist import haversine
+from trash_utils.finder_utils import get_current_block, get_depth_block, lat_lon_to_xy, grid_data
+
+import pdb
 
 '''
 Visualization methods for current and depth data
 '''
 
-def visualize_currents(bbox, current_file):
+def visualize_currents(bbox, current_file, depth):
     '''
     Visualize the currents at each depth
 
@@ -100,6 +104,80 @@ def visualize_depths(bbox, topo_file):
     plt.show()
 
 
+def visualize_area(bbox, file_depths, currents_path, topo_path):
+    '''
+    visualizes all pieces
+
+    '''
+    min_lat = min(bbox[:, 0])
+    max_lat = max(bbox[:, 0])
+    min_lon = min(bbox[:, 1])
+    max_lon = max(bbox[:, 1]) 
+
+    width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1]) * 1000
+    height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1]) * 1000
+
+    xwidth = [-width/2, width/2]
+    yheight = [-height/2, height/2]
+
+    u_area, v_area, uv_area, ufunc, vfunc, uvfunc = get_current_block(bbox, currents_path)
+    d_area, dfunc = get_depth_block(bbox, topo_path)
+
+    depths = grid_data(dfunc, xwidth, yheight, 10, [])
+    depths += 1
+    depths_flat = depths.flatten()
+
+    u = grid_data(ufunc, xwidth, yheight, 10, depths)
+    v = grid_data(vfunc, xwidth, yheight, 10, depths)
+    uv = grid_data(uvfunc, xwidth, yheight, 10, depths)
+    # angles = np.arctan2(u, v)
+
+    vmin = np.min(uv)
+    vmax = np.max(uv)
+    
+    ##Visualize 2D
+    fig = plt.figure(1)
+    fig.suptitle('Current vector field')
+
+    w,h = np.meshgrid(np.linspace(-width/2, width/2, depths.shape[1], endpoint=True),
+                      np.linspace(-height/2, height/2, depths.shape[0], endpoint=True))
+
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.set_xlabel('width')
+    ax1.set_ylabel('height')
+
+    ax1.scatter(w,h, color='b', s=15)
+    im1 = ax1.quiver(w,h, u, v, uv)
+    fig.colorbar(im1)
+    im1.set_clim(vmin, vmax)
+    plt.show()
+
+    #############
+
+    # ##3D
+    # fig = plt.figure(2)
+    # fig.suptitle('Current vector field')
+
+    # z_space = np.where(file_depths<abs(min(depths_flat)))
+    # z_param = file_depths[0:z_space[0][-1]+1]
+
+    # w,h, z = np.meshgrid(np.linspace(-width/2, width/2, depths.shape[1], endpoint=True),
+    #                      np.linspace(-height/2, height/2, depths.shape[0], endpoint=True),
+    #                      z_param)
+
+    # # ax1 = fig.add_subplot(1, 1, 1, projection='3d')
+    # ax1 = Axes3D(fig)
+    # ax1.set_xlabel('width')
+    # ax1.set_ylabel('height')
+
+    # ax1.scatter(w,h, color='b', s=15)
+    # im1 = ax1.quiver(w,h,z, u, v, uv)
+    # # fig.colorbar(im1)
+    # # im1.set_clim(vmin, vmax)
+    # plt.show()    
+
+
+
 def main():
     rospack = rospkg.RosPack()
     trash_finder_path = rospack.get_path("trash_finder")
@@ -120,7 +198,9 @@ def main():
     all_locations = pickle.load( open(trash_finder_path+"/config/locations.p", "rb"))
     place_bbox = all_locations["mission_bay_flatter_bbox"]
 
-    #visualize_currents(place_bbox, current_path)
+    # visualize_currents(place_bbox, current_path, depth)
     #visualize_depths (place_bbox, topo_path)
+
+    visualize_area(place_bbox, depth, current_path, topo_path)
 
 main()
