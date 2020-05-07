@@ -2,7 +2,7 @@
 import pickle
 
 import rospkg
-from lxml import etree
+from lxml.etree import XMLParser, parse, SubElement
 import numpy as np
 from numpy.random import randint, normal
 
@@ -58,7 +58,8 @@ def create_soda_launch_files():
 
 		sc_pos = man_create_soda_pos(num_soda_cans, bbox, topo_path,
 									x_range, y_range, z_range, z_dist)
-		num_soda_cans = num_soda_cans*num_soda_cans
+		if z_dist == "depth_file":
+			num_soda_cans = num_soda_cans*num_soda_cans
 
 	else:
 		##Randomly generated trash within a specified bound
@@ -71,68 +72,40 @@ def create_soda_launch_files():
 		sc_pos_z = -randint(z_range[0], z_range[1], size=(num_soda_cans))
 		sc_pos = np.vstack((sc_pos_x, sc_pos_y, sc_pos_z))
 
-	##Edit the launch file to create some number of soda cans "robots"
-	parser = etree.XMLParser(remove_blank_text=True)
-	tree = etree.parse(trash_worlds_path+"/launch/basic_demo.launch", parser)
-	launch = tree.getroot()
-
-	##Edit the launch file with the right world
-	edit_launch = launch.getchildren()[8]
-	edit_include = edit_launch.attrib
-	launch_file = edit_include['file']
-	split = launch_file.split('/')
-	new_launch = split[0] + "/" + split[1] + "/" + config["world_env"] + ".launch"
-	edit_include['file'] = new_launch
-
-	##Add in all the unique soda can hydrodynamic topics
-	for i in range (num_soda_cans):
-		include_file = etree.SubElement(launch, "include")
-		include_file.set("file", "$(find soda_can_description)/launch/single_soda.launch")
-
-		sc_x = etree.SubElement(include_file, "arg")
-		sc_x.set("name", "x")
-		sc_x.set("default", str(sc_pos[0, i]))
-
-		sc_y = etree.SubElement(include_file, "arg")
-		sc_y.set("name", "y")
-		sc_y.set("default", str(sc_pos[1, i]))
-
-		sc_z = etree.SubElement(include_file, "arg")
-		sc_z.set("name", "z")
-		sc_z.set("default", str(sc_pos[2, i]))
-
-		sc_yaw = etree.SubElement(include_file, "arg")
-		sc_yaw.set("name", "yaw")
-		sc_yaw.set("default", "0")
-
-		sc_ns = etree.SubElement(include_file, "arg")
-		sc_ns.set("name", "namespace")
-		sc_ns.set("value", "soda_can{0}".format(i))
-
-	##write the xml file
-	##begin generating the text to write into the file
-	tree.write(trash_worlds_path+"/launch/demo_with_cans.launch", pretty_print=True)
-
-
-	##Also update the lj.world file so the hydrodynamics forecasts match the number of soda cans created here
-	world_tree = etree.parse(trash_worlds_path+"/worlds/{0}.world".format(config["world_env"]), parser)
+	##Edit the world file to create some number of soda cans "robots"
+	parser = XMLParser(remove_blank_text=True)
+	world_tree = parse(trash_worlds_path+"/worlds/{0}.world".format(config["world_env"]), parser)
 	sdf = world_tree.getroot()
 	world = sdf.getchildren()[0]
 
 	for i in range (num_soda_cans):
-		plugin_file = etree.SubElement(world, "plugin")
-		plugin_file.set("name", "underwater_current_plugin")
-		plugin_file.set("filename", "libuuv_underwater_current_ros_plugin.so")
+		population = SubElement(world, "population")
+		population.set("name", "can_population_{0}".format(i))
 
-		ns = etree.SubElement(plugin_file, "namespace")
-		ns.text = "soda_can{0}".format(i)
+		model = SubElement(population, "model")
+		model.set("name", "can{0}".format(i))
 
-		cc = etree.SubElement(plugin_file, "constant_current")
+		include_param = SubElement(model, "include")
+		static_bool = SubElement(include_param, "static")
+		static_bool.text = "false"
+		uri = SubElement(include_param, "uri")
+		uri.text = "model://coke_can"
 
-		topic = etree.SubElement(cc, "topic")
-		topic.text = "current_velocity"
+		pose = SubElement(population, "pose")
+		pose.text = "{0} {1} {2} 0 0 0".format(int(sc_pos[0,i]), int(sc_pos[1,i]), int(sc_pos[2,i]))
 
-	world_tree.write(trash_worlds_path+"/worlds/demo_with_cans.world", pretty_print=True)
+		box = SubElement(population, "box")
+		size = SubElement(box, "size")
+		size.text = "5 5 3"
+
+		model_count = SubElement(population, "model_count")
+		model_count.text = "1"
+
+		distribution_param = SubElement(population, "distribution")
+		type_param = SubElement(distribution_param, "type")
+		type_param.text = "random"
+
+	world_tree.write(trash_worlds_path+"/worlds/demo_with_cans.world", xml_declaration=True, encoding='UTF-8', pretty_print=True)
 
 
 if __name__ == '__main__':
