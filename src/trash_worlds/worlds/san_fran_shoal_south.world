@@ -29,7 +29,7 @@
     </include>
 
     <include>
-      <uri>model://sf_shoal_south</uri>
+      <uri>model://san_fran_shoal_south</uri>
       <pose>0 0 0 0 0 0</pose>
     </include>
 
