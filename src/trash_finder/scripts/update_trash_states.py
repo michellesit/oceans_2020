@@ -6,6 +6,8 @@ from math import atan2
 import numpy as np
 import rospy
 import rospkg
+import tf
+from tf.transformations import euler_from_quaternion
 
 # Give ourselves the ability to run a dynamic reconfigure server.
 from dynamic_reconfigure.server import Server as DynamicReconfigureServer
@@ -15,6 +17,8 @@ from dynamic_reconfigure.server import Server as DynamicReconfigureServer
 from gazebo_msgs.msg import ModelState, ModelStates
 
 from trash_utils.finder_utils import get_current_block, get_depth_block
+
+import turtlesim.msg
 
 import pdb
 
@@ -35,7 +39,7 @@ class Move_Cans(object):
         self.prefix = rospy.get_param("~prefix", "can")
         self.rate = rospy.get_param("~rate", 1.0)
 
-        self.u_func, self.v_func, _ = get_current_block(bbox, current_filepath)
+        self.u, self.v, self.uv, self.u_func, self.v_func, self.uv_func = get_current_block(bbox, current_filepath)
         self.depth_func = get_depth_block(bbox, topo_filepath)
 
         
@@ -71,6 +75,9 @@ class Move_Cans(object):
             return
         
         t = rospy.get_rostime().to_sec()
+
+        br = tf.TransformBroadcaster()
+        listener = tf.TransformListener()
         
         # Loop over model states
         for model_name, model_pose, model_twist in zip(
@@ -81,6 +88,32 @@ class Move_Cans(object):
                 model_state.model_name = model_name
                 model_state.pose = model_pose
                 model_state.twist = model_twist
+
+                ##Broadcast the local frame to the world frame?
+                # br = tf.TransformBroadcaster()
+                br.sendTransform((model_state.pose.position.x,
+                                  model_state.pose.position.y,
+                                  model_state.pose.position.z),
+                                 (model_state.pose.orientation.x, 
+                                  model_state.pose.orientation.y,
+                                  model_state.pose.orientation.z,
+                                  model_state.pose.orientation.w),
+                                 rospy.Time.now(),
+                                 model_name,
+                                 'world')
+
+                try:
+                    listener.waitForTransform(model_name, 'world', rospy.Time.now(), rospy.Duration(0.50))
+                    (trans, rot) = listener.lookupTransform(model_name, 'world', rospy.Time(0))
+                    print ("model name: ", model_name)
+                    print ('rot: ', rot)
+                    print ('trans: ', trans)
+
+                    ##normalize quaternion
+                    
+
+                except:
+                    continue
                 
                 # Compute next pose via clock
                 # radius = np.linalg.norm([
@@ -100,17 +133,26 @@ class Move_Cans(object):
                 uv = np.linalg.norm([u_current, v_current])*10
                 angle = atan2(u_current, v_current)
 
-                print ("-----------")
-                print ("can: ", model_name)
-                print ("location: ", model_state.pose.position)
-                print ("twist: ", model_state.twist.linear)
-                print ("u_current: ", u_current[0])
-                print ("v_current: ", v_current[0])
-                print ("uv: ", uv)
-                print ("angle: ", angle)
+                ##Calculate transformation from global to local
+                global_uv = np.array([u_current, v_current, 0]).reshape(-1, 1)
+                local_change = rot*global_uv + trans
+
+                print ("global_uv: ", global_uv)
+                print ("local_uv:  ", local_change)
+
+                # print ("-----------")
+                # print ("can: ", model_name)
+                # print ("location: ", model_state.pose.position)
+                # print ("twist: ", model_state.twist.linear)
+                # print ("u_current: ", u_current[0])
+                # print ("v_current: ", v_current[0])
+                # print ("uv: ", uv)
+                # print ("angle: ", angle)
+
+                # tf_listener = tf.TransformListener()
+
 
                 ##Sets position of the model
-                ##Do I need to take this rate into consideration when speeding up the simulaition?
                 # model_state.pose.position.x = radius * np.cos(self.rate * t * 2 * np.pi)
                 # model_state.pose.position.y = radius * np.sin(self.rate * t * 2 * np.pi)
                 # print ("z pos before update: ", model_state.pose.position.z)
@@ -122,8 +164,8 @@ class Move_Cans(object):
                 # model_state.twist.linear.y = v_current[0]
                 # model_state.twist.linear.z = 0.0
 
-                model_state.twist.linear.x = uv
-                model_state.twist.angular.z = angle
+                # model_state.twist.linear.x = uv
+                # model_state.twist.angular.z = angle
 
                 if model_state.pose.position.z > 0:
                     model_state.pose.position.z = -0.1
@@ -140,12 +182,6 @@ class Move_Cans(object):
                 ##SOMETHING WRONG WITH THE DEPTH CALCULATION
                 # z_pos = self.depth_func([model_state.pose.position.x, 
                 #                          model_state.pose.position.y])
-
-                # print ("z pos after calcula: ", z_pos)
-
-                # pdb.set_trace()
-
-                # model_state.pose.position.z = z_pos[0]+0.25
 
                 # Publish to set model state
                 self.pub.publish(model_state)
@@ -180,6 +216,8 @@ def main():
     topo_filepath = data_path + '/' + config['topo_file']
     current_filepath = data_path + '/' + config['current_file']
     place_bbox = np.array(config['coords_bbox'])
+
+
 
     # Initialize the node and name it.
     rospy.init_node("gazebo_orbits")
