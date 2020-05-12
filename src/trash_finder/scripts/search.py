@@ -41,7 +41,7 @@ class Mowing_Lawn_BBox_Search:
 
 
 		##uuv propulsion stats
-		self.goal_threshold = 1			##meters
+		self.goal_threshold = 5			##meters
 		self.uuv_heading = 0			##radians
 		self.uuv_speed = 2.5722 		##meters/second
 		self.uuv_position = bbox[0,:]
@@ -84,10 +84,10 @@ class Mowing_Lawn_BBox_Search:
 		
 		##Visualize all the bbox here:
 		# print (all_bbox)
-		print (np_all_bbox)
+		# print (np_all_bbox)
 
-		plt.plot(place_bbox[:,0], place_bbox[:,1])
-		plt.plot(np_all_bbox[:,0], np_all_bbox[:,1])
+		# plt.plot(place_bbox[:,0], place_bbox[:,1])
+		# plt.plot(np_all_bbox[:,0], np_all_bbox[:,1])
 		# plt.show()
 
 		return all_bbox
@@ -95,7 +95,7 @@ class Mowing_Lawn_BBox_Search:
 
 	def calc_bbox_lines(self, bbox, height_radius, width_radius):
 		'''
-		
+		TODO: ADD IN COMMENTS
 
 		Input:
 		bbox = Polygon([upper left, upper right, bottom right, bottom left coords])
@@ -113,9 +113,6 @@ class Mowing_Lawn_BBox_Search:
 
 		num_height_lines = bbox_height//height_radius
 		num_width_lines = bbox_width//width_radius
-
-		print (num_height_lines)
-		print (num_width_lines)
 
 		if num_width_lines <= 0:
 			x_bbox = np.array([minx, maxx])
@@ -148,13 +145,7 @@ class Mowing_Lawn_BBox_Search:
 
 		##TODO: Should add in a check here to make sure there are intersecting lines
 		all_lines = sh.MultiLineString(all_lines)
-		# print ("all lines:")
-		# print(all_lines)
 
-		# print ("all intersections: ")
-		# print (all_intersections)
-
-		##TODO: add in logic to make sure the coordinates make sense?
 		##order the waypoints accordingly
 		waypoints = []
 		for i in range(len(all_intersections)):
@@ -175,8 +166,6 @@ class Mowing_Lawn_BBox_Search:
 					waypoints.extend((line_pts[0], line_pts[1]))
 				else:
 					waypoints.extend((line_pts[1], line_pts[0]))
-			
-		# print ("waypoints: ", np.array(waypoints))
 
 		return np.array(waypoints)
 
@@ -188,41 +177,35 @@ class Mowing_Lawn_BBox_Search:
 	
 		uuv_vector (list(float, float)): magnitude and direction (rad)
 		current_vector list(float, float): magnitude and direction (rad)
+
+		Given some waypoint we are heading to
+		for each waypoint in the path, iteratively calculate how long it would take to get there
+
+		for each 1 second (since we are traveling at 5knots = 2.5722m/sec)
+		uuv_heading = some angle
+		uuv_speed = constant for now
 		'''
-		
-		##Given some waypoint we are heading to
-		##for each waypoint in the path, iteratively calculate how long it would take to get there
-
-		##for each 1 second (since we are traveling at 5knots = 2.5722m/sec)
-		##uuv_heading = some angle
-		##uuv_speed = constant for now
-
-		##desired_heading = some angle compared to this
-
-		##currents_speed = uv at the current position
-		##currents_heading = np.tan(u,v)
-
-		##vector math
-		##resulting speed = 
-		##resulting heading =
 
 		##Set uuv position to be the first waypoint
 		##Otherwise, use the uuv's current position as its starting location
 		if est_uuv_pos:
 			self.uuv_position = waypoints[1]
 
+		# plt.subplots(111)
+		# ax=plt.subplot(111)
+		# plt.plot(waypoints[:,0], waypoints[:,1])
+		
 		timesteps = 0
 		for wp in range(len(waypoints)):
 			goal = waypoints[wp]
-			print ("NEW WAYPOINT: ", goal)
+			# print ("NEW WAYPOINT: ", goal)
 
 			# goal = waypoints[2]
 			while abs(np.linalg.norm(self.uuv_position - goal)) > self.goal_threshold:
 				##Calculate the heading to that location
 
-				print ("Waypoint: ", wp)
-
-				desired_heading = atan2(goal[1] - self.uuv_position[1] - goal[1], goal[0] - self.uuv_position[0])
+				# print ("Waypoint: ", wp)
+				desired_heading = atan2(goal[1] - self.uuv_position[1], goal[0] - self.uuv_position[0])
 				goal_u = cos(desired_heading) * np.linalg.norm(goal - self.uuv_position)
 				goal_v = sin(desired_heading) * np.linalg.norm(goal - self.uuv_position)
 
@@ -240,55 +223,45 @@ class Mowing_Lawn_BBox_Search:
 				uuv_v = sin(resulting_heading) * self.uuv_speed
 
 				resulting_speed = np.array([uuv_u + current_u, uuv_v + current_v])
-				
 
-				print ("desired_heading: ", np.rad2deg(desired_heading))
-				print ("goal: ", goal)
-				print ("uuv_position: ", self.uuv_position)
-				print ("goal_u: ", goal_u)
-				print ("goal_v: ", goal_v)
+				# print ("desired_heading: ", np.rad2deg(desired_heading))
+				# print ("goal: ", goal)
+				# print ("uuv_position: ", self.uuv_position)
+				# print ("goal_u: ", goal_u)
+				# print ("goal_v: ", goal_v)
 
-				print ("z: ", z)
-				print ("current_u: ", current_u)
-				print ("current_v: ", current_v)
-				print ("currents_heading: ", np.rad2deg(current_heading))
+				# print ("z: ", z)
+				# print ("current_u: ", current_u)
+				# print ("current_v: ", current_v)
+				# print ("currents_heading: ", np.rad2deg(current_heading))
 
-				print ("desired_u: ", desired_u)
-				print ("desired_v: ", desired_v)
-				print ("resulting_heading: ", np.rad2deg(resulting_heading))
+				# print ("desired_u: ", desired_u)
+				# print ("desired_v: ", desired_v)
+				# print ("resulting_heading: ", np.rad2deg(resulting_heading))
 
-				print ("uuv_u: ", uuv_u)
-				print ("uuv_v: ", uuv_v)
+				# print ("uuv_u: ", uuv_u)
+				# print ("uuv_v: ", uuv_v)
 
-				print ("resulting_speed: ", resulting_speed)
-				print ("new end pos: ", self.uuv_position + resulting_speed)
+				# print ("resulting_speed: ", resulting_speed)
+				# print ("new end pos: ", self.uuv_position + resulting_speed)
 
-				# print ("update uuv_position with this new info")
-				plt.clf()
+				# # print ("update uuv_position with this new info")
 
-
-				fig, ax = plt.subplots()
-				plt.plot(waypoints[:,0], waypoints[:,1])
-				ax.quiver(self.uuv_position[0], self.uuv_position[1], uuv_u, uuv_v, scale=1, scale_units='xy', color='green') ##uuv
-
-				wp_c = plt.Circle((goal[0], goal[1]), 1, color='black') ##waypoint
-				ax.add_artist(wp_c)
-				uuv_end = plt.Circle((self.uuv_position[0] + resulting_speed[0], self.uuv_position[1] + resulting_speed[1]), 1, color="blue")
-				ax.add_artist(uuv_end)
-
-				plt.show()
+				# ax.quiver(self.uuv_position[0], self.uuv_position[1], uuv_u, uuv_v, scale=1, scale_units='xy', color='green') ##uuv
+				# wp_c = plt.Circle((goal[0], goal[1]), 1, color='black') ##waypoint
+				# ax.add_artist(wp_c)
+				# uuv_end = plt.Circle((self.uuv_position[0] + resulting_speed[0], self.uuv_position[1] + resulting_speed[1]), 1, color="blue")
+				# ax.add_artist(uuv_end)
+				# plt.pause(0.05)
 
 				self.uuv_position += resulting_speed
 				self.uuv_heading = resulting_heading
 
 				##add to timestep count (time)
 				timesteps += 1
-				print ("dist to goal: ", abs(np.linalg.norm(self.uuv_position - goal)))
-				print ('continue while loop: ', abs(np.linalg.norm(self.uuv_position - goal)) > self.goal_threshold)
-
-				pdb.set_trace()
 	
-		print ("timesteps: ", timesteps)
+			# plt.show()
+		return timesteps
 
 
 	def search(self):
@@ -307,22 +280,13 @@ class Mowing_Lawn_BBox_Search:
 		rotation = np.arange(0, 360, self.rotation_deg)
 		best_cost = 99999999999999999999
 
+
 		##for each box:
-		# for ii in range(len(all_bbox)):
-		for ii in range(1):
-			print ("ii: ", ii)
+		for ii in range(len(all_bbox)):
 			box = all_bbox[ii]
 
 			for r in range(len(rotation)):
-				# rotated_bbox = sa.rotate(box, rotation[r]) ##By default, takes in rotation by degrees
-				rotated_bbox = sa.rotate(box, 10) ##By default, takes in rotation by degrees
-				# print ("box: ")
-				# print(box)
-
-				# print ("rotated bbox: ")
-				# print (rotated_bbox)
-
-				rotated0_np = np.array(rotated_bbox.exterior.coords)
+				rotated_bbox = sa.rotate(box, rotation[r]) ##By default, takes in rotation by degrees
 
 				##Breaks down the survey area into even smaller more managable regions
 				x_bbox0, y_bbox0 = self.calc_bbox_lines(rotated_bbox, 
@@ -331,9 +295,9 @@ class Mowing_Lawn_BBox_Search:
 
 				##Calculates mowing the lawn pattern
 				waypts = self.calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
-				# centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
-				centered_waypoints = sa.rotate(sh.Polygon(waypts), -10)
+				centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
 
+				# rotated0_np = np.array(rotated_bbox.exterior.coords)
 				# plt.plot(place_bbox[:,0], place_bbox[:,1])
 				# plt.plot(rotated0_np[:,0], rotated0_np[:,1])
 				# plt.plot(centered_waypoints.exterior.coords.xy[0], 
@@ -345,13 +309,16 @@ class Mowing_Lawn_BBox_Search:
 
 				##Calculate the cost of traveling that path:
 				cost = self.est_propulsion(np_centered_waypoints, True)
-				print ("WE ARE OUTSIDE OF EST_PROPULSION")
+				print ("cost: ", cost)
 
 				if cost < best_cost:
 					best_cost = cost
 					best_waypoints = np_centered_waypoints
+					best_rotation = rotation[r]
 
-				print ("best cost: ", best_cost)
+			print ("best cost: ", best_cost)
+			print ("rotation: ", best_rotation)
+			pdb.set_trace()
 
 		return best_waypoints
 
