@@ -15,6 +15,8 @@ from trash_utils.finder_utils import (get_current_block,
 									  find_bound_idx,
 									  xy_to_lat_lon)
 
+from trash_utils.visualize import visualize_area
+
 import pdb
 
 '''
@@ -23,6 +25,7 @@ Goal: discretizes the map into a lawn mower pattern in the direction of interest
 	Calculates the waypoints needed to complete the pattern
 
 TODO: incorporate contours/gradient difference into global decomposition
+TODO: Comments
 '''
 
 ##Do we need to calculate the gradient of the lines?
@@ -49,10 +52,20 @@ class Mowing_Lawn_BBox_Search:
 		self.global_bbox = sh.Polygon(bbox)
 
 
-	def global_decomp(self):
+	def global_decomp(self, visualize=False):
 		'''
 		Breaks down the global bbox into smaller more managable boxes
 
+		Input:
+			visualize (bool) : Set True to see global current map with
+							   all smaller boxes overlayed
+
+		Returns:
+			all_bbox (Polygon) : 
+			np_all_bbox (np.ndarray) : numpy friendly format of all_bbox
+
+
+		##TODO: Figure out why x_bbox*y_bboxy != len(all_bbox)
 		'''
 		x_bbox, y_bbox = self.calc_bbox_lines(self.global_bbox, 
 											  self.global_bbox_height_max,
@@ -62,7 +75,6 @@ class Mowing_Lawn_BBox_Search:
 		print ("y_bbox: ", len(y_bbox))
 
 		##TODO: This is time consuming for many points. Get rid of the two for loops
-		##CHECK: Rearrange the points to be top left, top right, bottom right, bottom left
 		all_bbox = []
 		np_all_bbox = []
 		for i in range(x_bbox.shape[0]-1):
@@ -83,26 +95,28 @@ class Mowing_Lawn_BBox_Search:
 		np_all_bbox = np.array(np_all_bbox).reshape((-1,2))
 		
 		##Visualize all the bbox here:
-		# print (all_bbox)
-		# print (np_all_bbox)
+		if visualize:
+			visualize_area(place_bbox, current_path, topo_path)
+			plt.plot(place_bbox[:,0], place_bbox[:,1])
+			plt.plot(np_all_bbox[:,0], np_all_bbox[:,1], color="black", linewidth=3)
+			plt.show()
 
-		# plt.plot(place_bbox[:,0], place_bbox[:,1])
-		# plt.plot(np_all_bbox[:,0], np_all_bbox[:,1])
-		# plt.show()
-
-		return all_bbox
+		return all_bbox, np_all_bbox
 
 
 	def calc_bbox_lines(self, bbox, height_radius, width_radius):
 		'''
-		TODO: ADD IN COMMENTS
+		Calculates the number of lines that will cross the bbox
+			based on the spacing values given
 
 		Input:
-		bbox = Polygon([upper left, upper right, bottom right, bottom left coords])
-		self.search_radius = height of the search rows
+			bbox (Polygon) 		= Polygon([upper left, upper right, bottom right, bottom left coords])
+			height_radius (int) = height of the search rows
+			width_radius (int)  = 
 
-		Output:
-		x_bbox, y_bbox = 
+		Returns:
+			x_bbox (np.ndarray) = array of the x values for the line
+			y_bbox (np.ndarray) = 
 
 		Make sure the boxes are odd rows with odd number of boxes?
 
@@ -124,15 +138,31 @@ class Mowing_Lawn_BBox_Search:
 		else:
 			y_bbox = np.linspace(miny, maxy, (num_height_lines)+2)
 
+		print ("Figure out what are x_bbox and y_bbox")
+		print ("x_bbox: ", x_bbox)
+		print ("y_bbox: ", y_bbox)
+		print ("Also figure out how to get rid of two for loops")
+		pdb.set_trace()
+
 		return x_bbox, y_bbox
 
 
 	def calc_mowing_lawn(self, bbox, y_bbox, start_end):
 		'''
-		Calculate the intersection of the lines with the bbox:
-		For each pair of x_bbox lines, calculate intersection with bbox
+		Calculate the intersection of the lines with the bbox
+		Orders the waypoints according to either left/right start/end
+
+		Input:
+			bbox () : 
+			y_bbox () : 
+			start_end (str) : "right" or "left"
+							  TODO: [what are we looking at?]
+
+		Output:
+			waypoints (np.ndarray) : ordered waypoints on how to traverse this bbox
 		'''
 
+		##TODO: check this method. Lines are not intersecting with the box
 		all_lines = []
 		all_intersections = []
 		for i in range(y_bbox.shape[0]):
@@ -140,8 +170,9 @@ class Mowing_Lawn_BBox_Search:
 									[bbox.bounds[2]+(bbox.bounds[2]*0.4), y_bbox[i]] ])
 			intersections = bbox.intersection(lines)
 
-			all_lines.append(lines)
-			all_intersections.append(np.array(intersections))
+			if intersections.is_empty == False:
+				all_lines.append(lines)
+				all_intersections.append(np.array(intersections))
 
 		##TODO: Should add in a check here to make sure there are intersecting lines
 		all_lines = sh.MultiLineString(all_lines)
@@ -170,7 +201,7 @@ class Mowing_Lawn_BBox_Search:
 		return np.array(waypoints)
 
 
-	def est_propulsion(self, waypoints, est_uuv_pos=True):
+	def est_propulsion(self, waypoints, bound_cost, est_uuv_pos=True, use_bound=False, visualize=False):
 		'''
 		Do some vector math to calculate what direction/where you'd end up based 
 			on currents and the uuv's vector heading/power
@@ -191,16 +222,15 @@ class Mowing_Lawn_BBox_Search:
 		if est_uuv_pos:
 			self.uuv_position = waypoints[1]
 
-		# plt.subplots(111)
-		# ax=plt.subplot(111)
-		# plt.plot(waypoints[:,0], waypoints[:,1])
+		if visualize:
+			plt.subplots(111)
+			ax = plt.subplot(111)
+			plt.plot(waypoints[:,0], waypoints[:,1])
 		
 		timesteps = 0
 		for wp in range(len(waypoints)):
 			goal = waypoints[wp]
-			# print ("NEW WAYPOINT: ", goal)
 
-			# goal = waypoints[2]
 			while abs(np.linalg.norm(self.uuv_position - goal)) > self.goal_threshold:
 				##Calculate the heading to that location
 
@@ -247,24 +277,28 @@ class Mowing_Lawn_BBox_Search:
 
 				# # print ("update uuv_position with this new info")
 
-				# ax.quiver(self.uuv_position[0], self.uuv_position[1], uuv_u, uuv_v, scale=1, scale_units='xy', color='green') ##uuv
-				# wp_c = plt.Circle((goal[0], goal[1]), 1, color='black') ##waypoint
-				# ax.add_artist(wp_c)
-				# uuv_end = plt.Circle((self.uuv_position[0] + resulting_speed[0], self.uuv_position[1] + resulting_speed[1]), 1, color="blue")
-				# ax.add_artist(uuv_end)
-				# plt.pause(0.05)
+				if visualize:
+					ax.quiver(self.uuv_position[0], self.uuv_position[1], uuv_u, uuv_v, scale=1, scale_units='xy', color='green') ##uuv
+					wp_c = plt.Circle((goal[0], goal[1]), 1, color='black') ##waypoint
+					ax.add_artist(wp_c)
+					uuv_end = plt.Circle((self.uuv_position[0] + resulting_speed[0], self.uuv_position[1] + resulting_speed[1]), 1, color="blue")
+					ax.add_artist(uuv_end)
+					plt.pause(0.05)
 
 				self.uuv_position += resulting_speed
 				self.uuv_heading = resulting_heading
 
 				##add to timestep count (time)
 				timesteps += 1
+				if use_bound and timesteps > bound_cost:
+					return 99999999999999999
+
 	
 			# plt.show()
 		return timesteps
 
 
-	def search(self):
+	def search(self, visualize=False):
 		'''
 		Calculate waypoints for each of the smaller bbox areas
 		for each bbox in all_bbox:
@@ -275,16 +309,23 @@ class Mowing_Lawn_BBox_Search:
 
 		'''
 		##decomp global map into smaller maps
-		all_bbox = self.global_decomp()
+		all_bbox, np_all_bbox = self.global_decomp()
 		
 		rotation = np.arange(0, 360, self.rotation_deg)
-		best_cost = 99999999999999999999
-
+		global_waypoints = {}
+		global_costs = []
 
 		##for each box:
-		for ii in range(len(all_bbox)):
+		print ("TOTAL NUM ITERATIONS: ", len(all_bbox))
+		# for ii in range(len(all_bbox)):
+		# for ii in range(60, len(all_bbox)):
+		for ii in range(60, 70):
+			print ("PROCESSING: ", ii)
 			box = all_bbox[ii]
 
+			best_cost = 99999999999999999999
+			save_waypoints = {}
+			save_rotation_costs = np.empty((2, len(rotation)))
 			for r in range(len(rotation)):
 				rotated_bbox = sa.rotate(box, rotation[r]) ##By default, takes in rotation by degrees
 
@@ -308,19 +349,135 @@ class Mowing_Lawn_BBox_Search:
 													 centered_waypoints.exterior.coords.xy[1]))
 
 				##Calculate the cost of traveling that path:
-				cost = self.est_propulsion(np_centered_waypoints, True)
-				print ("cost: ", cost)
+				cost = self.est_propulsion(np_centered_waypoints, best_cost, est_uuv_pos=True, use_bound=True, visualize=False)
+				# print ("cost: ", cost)
+
+				if visualize:
+					save_rotation_costs[:, r] = [rotation[r], cost]
+					save_waypoints[rotation[r]] = np_centered_waypoints
 
 				if cost < best_cost:
 					best_cost = cost
 					best_waypoints = np_centered_waypoints
 					best_rotation = rotation[r]
 
+			##save the best cost and waypoints
 			print ("best cost: ", best_cost)
-			print ("rotation: ", best_rotation)
-			pdb.set_trace()
+			print ("best rotation: ", best_rotation)
+			global_waypoints[ii] = best_waypoints[:-1, :]
+			global_costs.append(best_cost)
 
-		return best_waypoints
+			if visualize:
+				##Sort the array
+				save_rotation_costs = save_rotation_costs[:, save_rotation_costs.argsort()[1]]
+				print ("top 5 rotations: ", save_rotation_costs[0, 0:5] )
+				print ("top 5 costs:", save_rotation_costs[1, 0:5] )
+
+			##Visualize the array
+			##TODO: make into a method
+			if visualize:
+				small_bbox = np.array(zip(box.exterior.coords.xy[0], box.exterior.coords.xy[1]))
+				small_bbox = small_bbox[:-1, :]
+
+				##Visualize the currents
+				xbound = [min(small_bbox[:,0]), max(small_bbox[:,0])]
+				ybound = [min(small_bbox[:,1]), max(small_bbox[:,1])]
+
+				d = grid_data(dfunc, xbound, ybound, 5, [])
+				d = abs(d) - 2
+				u = grid_data(ufunc, xbound, ybound, 5, d)
+				v = grid_data(vfunc, xbound, ybound, 5, d)
+				uv = grid_data(uvfunc, xbound, ybound, 5, d)
+
+				vmin = np.min(uv)
+				vmax = np.max(uv)
+
+				X,Y = np.meshgrid(np.linspace(xbound[0], xbound[1], u.shape[0], endpoint=True),
+								  np.linspace(ybound[0], ybound[1], u.shape[1], endpoint=True))
+
+				fig = plt.figure(1, figsize=(30, 20), dpi=160)
+				fig.suptitle("box number (best solution) {0}".format(ii))
+				for fignum in range(1, 7):
+					ax = fig.add_subplot(2, 3, fignum)
+					ax.scatter(X,Y, color='b', s=15)
+					im1 = ax.quiver(X,Y, u, v, uv)
+					fig.colorbar(im1)
+					im1.set_clim(vmin, vmax)
+
+					ax.title.set_text("Best Solution {2}  Rotation: {0}  Cost: {1}".format(save_rotation_costs[0,fignum-1],
+																					 	   save_rotation_costs[1,fignum-1],
+																						   fignum))
+					ax.set_xlim(xbound[0]-10, xbound[1]+10)
+					ax.set_ylim(ybound[0]-10, ybound[1]+10)
+
+					ordered_wp = save_waypoints[save_rotation_costs[0, fignum-1]][:-1, :]
+					start_pt = plt.Circle((ordered_wp[0,0], ordered_wp[0,1]), 2, color='green')
+					ax.add_artist(start_pt)
+					end_pt = plt.Circle((ordered_wp[-1,0], ordered_wp[-1,1]), 2, color='red')
+					ax.add_artist(end_pt)
+					plt.plot(ordered_wp[:,0], ordered_wp[:,1])
+				# plt.show()
+				fig.savefig("./nominal_pics/box_{0}_best.png".format(ii))
+				fig.clf()
+
+				fig = plt.figure(1, figsize=(30, 20), dpi=160)
+				fig.suptitle("box number (worst solution) {0}".format(ii))
+				for fignum in range(1,7):
+					ax = fig.add_subplot(2, 3, fignum)
+					ax.scatter(X,Y, color='b', s=15)
+					im1 = ax.quiver(X,Y, u, v, uv)
+					fig.colorbar(im1)
+					im1.set_clim(vmin, vmax)
+
+					ax.title.set_text("Worst Solution {2}  Rotation: {0}  Cost: {1}".format(save_rotation_costs[0, -fignum],
+																					 	    save_rotation_costs[1, -fignum],
+																							len(rotation) - fignum))
+					ax.set_xlim(xbound[0]-10, xbound[1]+10)
+					ax.set_ylim(ybound[0]-10, ybound[1]+10)
+
+					ordered_wp = save_waypoints[save_rotation_costs[0, -fignum]][:-1, :]
+					start_pt = plt.Circle((ordered_wp[0,0], ordered_wp[0,1]), 2, color='green')
+					ax.add_artist(start_pt)
+					end_pt = plt.Circle((ordered_wp[-1,0], ordered_wp[-1,1]), 2, color='red')
+					ax.add_artist(end_pt)
+					plt.plot(ordered_wp[:,0], ordered_wp[:,1])
+				# plt.show()
+				fig.savefig("./nominal_pics/box_{0}_worst.png".format(ii))
+				fig.clf()
+
+
+		pdb.set_trace()
+		self.visualize_global(global_waypoints, global_cost, np_all_bbox)
+
+		##get the best solution for all the boxes
+		return global_waypoints, global_cost, np_all_bbox
+
+
+	def visualize_global(self, global_waypoints, global_cost, np_all_bbox):
+		'''
+		Visualizes the global solution for all boxes
+
+		Inputs:
+			global_waypoints (dict: key=int, item=np.ndarray) : 
+			global_cost (int) : 
+			np_all_bbox (np.ndarray) : 
+		'''
+
+		visualize_area(place_bbox, current_path, topo_path, "Global solution. Cost: {0}".format(sum(global_cost)))
+		plt.plot(place_bbox[:,0], place_bbox[:,1])
+		plt.plot(np_all_bbox[:,0], np_all_bbox[:,1], color="black", linewidth=3)
+
+		pdb.set_trace()
+		##for each box, plot the waypoints
+		for keys, items in global_waypoints.items():
+			plt.plot(items[:,0], items[:,1])
+			start_pt = plt.Circle((items[0,0], items[0,1]), 2, color='green')
+			ax.add_artist(start_pt)
+			end_pt = plt.Circle((items[-1,0], items[-1,1]), 2, color='red')
+			ax.add_artist(end_pt)
+		
+		pdb.set_trace()
+		plt.show()
 
 
 if __name__ == '__main__':
@@ -344,11 +501,6 @@ if __name__ == '__main__':
 	place_bbox = all_locations["mission_bay_flatter_bbox"]
 
 
-
-	# min_lat = min(place_bbox[:, 0])
-	# max_lat = max(place_bbox[:, 0])
-	# min_lon = min(place_bbox[:, 1])
-	# max_lon = max(place_bbox[:, 1]) 
 
 	width = haversine(place_bbox[0,0], place_bbox[0,1], place_bbox[1,0], place_bbox[1,1]) * 1000
 	height = haversine(place_bbox[1,0], place_bbox[1,1], place_bbox[2,0], place_bbox[2,1]) * 1000
