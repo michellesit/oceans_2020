@@ -11,7 +11,6 @@ catkin_package(
 )
 
 catkin_install_python(PROGRAMS scripts/uuv_local_current.py
-						scripts/trashcans_utils.py
                       DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch config scripts
