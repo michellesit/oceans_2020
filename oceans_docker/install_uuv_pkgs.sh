@@ -7,7 +7,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install --yes python-catkin-tools
 
-cd /home$USER/
+cd /home/$USER/
 git clone https://github.com/michellesit/oceans_2020.git
 cd oceans_2020
 catkin init
