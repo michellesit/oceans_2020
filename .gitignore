@@ -14,6 +14,12 @@
 /src/data_files/san_francisco_13_navd88_2010.nc
 /src/data_files/southern_calif_crm_v1.nc
 
+/.catkin_tools/
+/build/
+/devel/
+/logs/
+
 /src/trash_finder/scripts/*.pyc
 /src/trash_utils/src/trash_utils/*.pyc
+/src/trash_utils/src/trash_utils/__pycache__/
 stay.txt
