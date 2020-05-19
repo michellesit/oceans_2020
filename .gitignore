@@ -7,12 +7,7 @@
 /current_data_files/rostopic_echo.txt
 /current_data_files/sd.xyz
 
-/src/data_files/ca_subCA_das_2020010615.nc
-/src/data_files/crm_socal_1as_vers2.nc
-/src/data_files/san_diego_13_mhw_2012.nc
-/src/data_files/san_diego_13_navd88_2012.nc
-/src/data_files/san_francisco_13_navd88_2010.nc
-/src/data_files/southern_calif_crm_v1.nc
+/src/data_files/*.nc
 
 /.catkin_tools/
 /build/
