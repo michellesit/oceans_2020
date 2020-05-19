@@ -8,6 +8,8 @@ from scipy.interpolate import RegularGridInterpolator
 
 from trash_utils.haversine_dist import haversine
 
+import pdb
+
 '''
 Utility functions to support the trash_finder/scripts files
 
@@ -44,8 +46,8 @@ def xy_to_lat_lon(bbox, x,y):
 	min_lon = min(bbox[:, 1])
 	max_lon = max(bbox[:, 1])
 
-	lat = ((x + width/2)/width)*(max_lat - min_lat) + min_lat
-	lon = ((y + height/2)/height)*(max_lon - min_lon) + min_lon
+	lon = ((x + width/2)/width)*(max_lon - min_lon) + min_lon
+	lat = ((y + height/2)/height)*(max_lat - min_lat) + min_lat
 
 	return lat, lon
 
@@ -58,11 +60,11 @@ def lat_lon_to_xy(bbox, lat, lon):
 		bbox (np.ndarray): 4x2 array with lon/lat float coordinates for the area of interest
 			Coordinates should be top left, top right, bottom right, bottom left
 			Each bbox corner should be in [lon, lat] order
-		lat (float or np.ndarray): lattitude value(s) to convert to x coordinate
-		lon (float or np.ndarray): longitude value(s) to convert to y coordinate
+		lat (float or np.ndarray): lattitude value(s) to convert to y coordinate
+		lon (float or np.ndarray): longitude value(s) to convert to x coordinate
 	Return:
-		x (float or np.ndarray): corresponding x value(s) to the lat coordinate
-		y (float or np.ndarray): corresponding y value(s) to the lon coordinate
+		x (float or np.ndarray): corresponding x value(s) to the lon coordinate
+		y (float or np.ndarray): corresponding y value(s) to the lat coordinate
 
 	'''
 
@@ -80,8 +82,8 @@ def lat_lon_to_xy(bbox, lat, lon):
 	min_lon = min(bbox[:, 1])
 	max_lon = max(bbox[:, 1])
 
-	x = ((lat - min_lat)/(max_lat-min_lat) * width) - (width/2)
-	y = ((lon - min_lon)/(max_lon-min_lon) * height) - (height/2)
+	x = ((lon - min_lon)/(max_lon-min_lon) * width) - (width/2)
+	y = ((lat - min_lat)/(max_lat-min_lat) * height) - (height/2)
 
 	return x,y
 
@@ -204,7 +206,7 @@ def get_current_block(bbox, current_file):
 	u_area = (u[0, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
 	v_area = (v[0, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
 
-	##Filter out curernts that are greater than -9999:
+	##Filter out currents that are greater than -9999:
 	u_area[u_area<-800] = 0.0
 	v_area[v_area<-800] = 0.0
 
@@ -224,6 +226,67 @@ def get_current_block(bbox, current_file):
 	uv_func = RegularGridInterpolator((depths, x, y), uv_area)
 
 	return u_area, v_area, uv_area, u_func, v_func, uv_func
+
+
+def get_multi_current_block(bbox, current_file1, current_file2):
+	all_currents1 = netcdf.NetCDFFile(current_file1)
+	lon = all_currents1.variables['lon'][:].copy()
+	lon -= 360
+	lat = all_currents1.variables['lat'][:].copy()
+	u1 = all_currents1.variables['u'][:].copy()
+	v1 = all_currents1.variables['v'][:].copy()
+	depths = all_currents1.variables['depth'][:].copy()
+	t1 = all_currents1.variables['time'][:][-1].copy()
+	all_currents1.close()
+
+	all_currents2 = netcdf.NetCDFFile(current_file2)
+	u2 = all_currents2.variables['u'][:].copy()
+	v2 = all_currents2.variables['v'][:].copy()
+	t2 = all_currents2.variables['time'][:][-1].copy()
+	all_currents2.close()
+
+	##find the bounds
+	min_lon = min(bbox[:, 1])
+	max_lon = max(bbox[:, 1])
+	min_lat = min(bbox[:, 0])
+	max_lat = max(bbox[:, 0])
+
+	##Finding the lon bounds is different cause the values are negative
+	lon_idx = find_bound_idx(lon, [min_lon, max_lon])
+	lon_idx = np.sort(lon.shape[0]-1-lon_idx)
+	lat_idx = find_bound_idx(lat, [min_lat, max_lat])
+
+	##pull those coordinates from the current file
+	u_area1 = (u1[:, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
+	v_area1 = (v1[:, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
+
+	u_area2 = (u2[:, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
+	v_area2 = (v2[:, :, lat_idx[0]:lat_idx[-1]+1, lon_idx[0]:lon_idx[-1]+1])
+
+	u_area = np.vstack((u_area1, u_area2))
+	v_area = np.vstack((v_area1, v_area2))
+
+	##Filter out currents that are greater than -9999:
+	u_area[u_area<-800] = 0.0
+	v_area[v_area<-800] = 0.0
+
+	uv_area = np.hypot(u_area, v_area)
+
+	##This is all interpolation things
+	##allocate arrays for width, height
+	width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1])*1000 +100
+	height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1])*1000 +100
+	
+	##create grid with lat-lon coordinates
+	x = np.linspace(-width/2, width/2, u_area.shape[2], endpoint = True)
+	y = np.linspace(-height/2, height/2, u_area.shape[3], endpoint = True)
+	t = range(0, t1+t2)
+
+	u_func = RegularGridInterpolator((t, depths, x, y), u_area)
+	v_func = RegularGridInterpolator((t, depths, x, y), v_area)
+	uv_func = RegularGridInterpolator((t, depths, x, y), uv_area)
+
+	return u_func, v_func, uv_func
 
 
 def grid_data(interp_f, x_bound, y_bound, spacing, z):
@@ -269,11 +332,16 @@ def main():
 
 	currents = config['current_file']
 	currents_path = data_path + '/' + currents
+	currents1 = config['current_file1']
+	currents_path1 = data_path + '/' + currents1
+	currents2 = config['current_file2']
+	currents_path2 = data_path + '/' + currents2
 	topo = config['topo_file']
 	topo_path = data_path + '/' + topo
 
 	places = np.array(config['coords_bbox'])
 	print ("PLACES: ", places)
 
-	get_current_block(places, currents_path)
+	# get_current_block(places, currents_path)
 	# get_depth_block(places, topo_path)
+	ufunc, vfunc, uvfunc = get_multi_current_block(places, currents_path1, currents_path2)
