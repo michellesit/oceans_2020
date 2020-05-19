@@ -25,6 +25,7 @@ Goal: discretizes the map into a lawn mower pattern in the direction of interest
 	Calculates the waypoints needed to complete the pattern
 
 TODO: incorporate contours/gradient difference into global decomposition
+TODO: Incorporte uuv's last known position when calculating the most optimal route
 '''
 
 ##Do we need to calculate the gradient of the lines?
@@ -47,6 +48,8 @@ class Mowing_Lawn_BBox_Search:
 		self.uuv_heading = 0			##radians
 		self.uuv_speed = 2.5722 		##meters/second
 		self.uuv_position = bbox[0,:]
+
+		self.timestep_block = 0			##hours since beginning
 
 		self.global_bbox = sh.Polygon(bbox)
 
@@ -315,9 +318,9 @@ class Mowing_Lawn_BBox_Search:
 
 		##for each box:
 		print ("TOTAL NUM ITERATIONS: ", len(all_bbox))
-		# for ii in range(len(all_bbox)):
-		# for ii in range(60, len(all_bbox)):
-		for ii in range(60, 70):
+		for ii in range(len(all_bbox)):
+		# for ii in range(len(all_bbox)-32, len(all_bbox)-16):
+		# for ii in range(60, 65):
 			print ("PROCESSING: ", ii)
 			box = all_bbox[ii]
 
@@ -365,8 +368,8 @@ class Mowing_Lawn_BBox_Search:
 					best_rotation = rotation[r]
 
 			##save the best cost and waypoints
-			print ("best cost: ", best_cost)
-			print ("best rotation: ", best_rotation)
+			# print ("best cost: ", best_cost)
+			# print ("best rotation: ", best_rotation)
 			global_waypoints[ii] = best_waypoints[:-1, :]
 			global_costs.append(best_cost)
 
@@ -374,11 +377,10 @@ class Mowing_Lawn_BBox_Search:
 			if visualize:
 				self.visualize_local_results(save_rotation_costs, box, save_waypoints, ii)
 
-		pdb.set_trace()
-		self.visualize_global_results(global_waypoints, global_cost, np_all_bbox)
+		self.visualize_global_results(global_waypoints, global_costs, np_all_bbox)
 
-		##get the best solution for all the boxes
-		return global_waypoints, global_cost, np_all_bbox
+		return global_waypoints, global_costs, np_all_bbox
+
 
 	def visualize_local_results(self, save_rotation_costs, box, save_waypoints, boxnum):
 		'''
@@ -474,22 +476,48 @@ class Mowing_Lawn_BBox_Search:
 			global_cost (List) : 
 			np_all_bbox (np.ndarray) : 
 		'''
+		cost_hours = sum(global_cost)/(3600)
 
-		visualize_area(place_bbox, current_path, topo_path, "Global solution. Cost: {0}".format(sum(global_cost)))
-		plt.plot(place_bbox[:,0], place_bbox[:,1])
+		##need to create currents background
+		xbound = [min(xy_dim[:,0]), max(xy_dim[:,0])]
+		ybound = [min(xy_dim[:,1]), max(xy_dim[:,1])]
+
+		d = grid_data(dfunc, xbound, ybound, 30, [])
+		d = abs(d) - 2
+		u = grid_data(ufunc, xbound, ybound, 30, d)
+		v = grid_data(vfunc, xbound, ybound, 30, d)
+		uv = grid_data(uvfunc, xbound, ybound, 30, d)
+
+		vmin = np.min(uv)
+		vmax = np.max(uv)
+
+		X,Y = np.meshgrid(np.linspace(xbound[0], xbound[1], u.shape[0], endpoint=True),
+						  np.linspace(ybound[0], ybound[1], u.shape[1], endpoint=True))
+
+		fig = plt.figure(1, figsize=(30, 20), dpi=160)
+		fig.suptitle("Global solution. Cost to travel all: {0} hours".format(cost_hours))
+		ax = fig.add_subplot(1, 1, 1)
+
+		np_all_bbox = np_all_bbox.reshape(-1, 2)
 		plt.plot(np_all_bbox[:,0], np_all_bbox[:,1], color="black", linewidth=3)
+		im1 = ax.quiver(X,Y, u, v, uv)
+		fig.colorbar(im1)
+		im1.set_clim(vmin, vmax)
 
-		pdb.set_trace()
 		##for each box, plot the waypoints
+		##TODO: Do the circles show up?
 		for keys, items in global_waypoints.items():
 			plt.plot(items[:,0], items[:,1])
-			start_pt = plt.Circle((items[0,0], items[0,1]), 2, color='green')
+			start_pt = plt.Circle((items[0,0], items[0,1]), 5, color='green')
 			ax.add_artist(start_pt)
-			end_pt = plt.Circle((items[-1,0], items[-1,1]), 2, color='red')
+			end_pt = plt.Circle((items[-1,0], items[-1,1]), 5, color='red')
 			ax.add_artist(end_pt)
-		
-		pdb.set_trace()
+
+		plt.xlim(xbound[0], xbound[1])
+		plt.ylim(ybound[0], ybound[1])
 		plt.show()
+
+		fig.savefig("./nominal_pics/global_solution.png", bbox_inches='tight')
 
 
 if __name__ == '__main__':
@@ -525,7 +553,6 @@ if __name__ == '__main__':
 
 	depths = grid_data(dfunc, xwidth, yheight, 10, [])
 	depths += 1
-	depths_flat = depths.flatten()
 
 	# ##these are interpolated grids of 
 	u = grid_data(ufunc, xwidth, yheight, 10, depths)
