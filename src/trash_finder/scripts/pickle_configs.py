@@ -98,6 +98,8 @@ def pickling_info(world_env, current_file, topo_file,
 
 		##Currents
 		"current_file" : current_file,
+		"current_file1" : current_file1,
+		"current_file2" : current_file2,
 
 		##Topo
 		"topo_file" : topo_file,
@@ -131,6 +133,8 @@ if __name__ == '__main__':
 
 	world_env = "mission_bay_flatter"
 	current_file = "ca_subCA_das_2020010615.nc"
+	current_file1 = "ca_subCA_fcst_2020051703.nc"
+	current_file2 = "ca_subCA_fcst_2020051803.nc"
 	topo_file = "crm_socal_1as_vers2.nc"
 
 	num_soda_cans = 3
