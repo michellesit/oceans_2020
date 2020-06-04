@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 from trash_utils.haversine_dist import haversine
-from trash_utils.finder_utils import get_current_block, get_depth_block, lat_lon_to_xy, grid_data
+from trash_utils.finder_utils import get_current_block, get_depth_block, lat_lon_to_xy, grid_data, get_multi_current_block
 
 import pdb
 
@@ -177,6 +177,73 @@ def visualize_area(bbox, currents_path, topo_path, fig_title='Current vector fie
     # plt.show()    
 
 
+def visualize_multi_current(bbox, currents1_path, currents2_path, topo_path):
+    '''
+    visualizes all pieces
+
+    '''
+    min_lat = min(bbox[:, 0])
+    max_lat = max(bbox[:, 0])
+    min_lon = min(bbox[:, 1])
+    max_lon = max(bbox[:, 1]) 
+
+    width = haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1]) * 1000
+    height = haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1]) * 1000
+
+    xwidth = [-width/2, width/2]
+    yheight = [-height/2, height/2]
+
+    ufunc, vfunc, uvfunc = get_multi_current_block(bbox, currents1_path, currents2_path)
+    d_area, dfunc = get_depth_block(bbox, topo_path)
+
+    depths = grid_data(dfunc, xwidth, yheight, 100, [], [])
+    depths += 1
+    depths_flat = depths.flatten()
+    # time_range = range(0, 145, 3)
+    time_range = range(25, 48, 3)
+
+    ##init figure outside
+    ##8 figures for each day
+    ##6 days total
+
+    ##Visualize 2D
+    w,h = np.meshgrid(np.linspace(-width/2, width/2, depths.shape[1], endpoint=True),
+                      np.linspace(-height/2, height/2, depths.shape[0], endpoint=True))    
+
+    fig = plt.figure(1)
+    fig.suptitle('Current vector field over time (day2)')
+    rows = 2
+    cols = 4
+
+    for t_step in range(len(time_range)):
+        u = grid_data(ufunc, xwidth, yheight, 100, depths, [time_range[t_step]])
+        v = grid_data(vfunc, xwidth, yheight, 100, depths, [time_range[t_step]])
+        uv = grid_data(uvfunc, xwidth, yheight, 100, depths, [time_range[t_step]])
+
+        vmin = np.min(uv)
+        vmax = np.max(uv)
+        
+        ax1 = fig.add_subplot(rows, cols, t_step+1)
+        ax1.set_title("(time(hrs)={0})".format(time_range[t_step]))
+        ax1.set_xlabel('latitude')
+        ax1.set_ylabel('longitude')
+
+        ax1.scatter(w,h, color='b', s=15)
+        im1 = ax1.quiver(w,h, u, v, uv)
+        # fig.colorbar(im1)
+        # im1.set_clim(vmin, vmax)
+
+        ax1.set_xlim([w[0][0]-0.01, w[0][-1]+0.01])
+        ax1.set_ylim([h[0][0]-0.01, h[0][-1]+0.03])
+        ax1.axis('equal')
+
+    fig.colorbar(im1, orientation='horizontal')
+    im1.set_clim(0, 0.15)
+    plt.show()
+
+
+
+
 
 def main():
     rospack = rospkg.RosPack()
@@ -188,6 +255,10 @@ def main():
     ##hydrodynamic current
     current_path = data_path+'/ca_subCA_das_2020010615.nc'
     current_data = netcdf.NetCDFFile(current_path)
+    currents1 = config['current_file1']
+    currents_path1 = data_path + '/' + currents1
+    currents2 = config['current_file2']
+    currents_path2 = data_path + '/' + currents2
     depth = current_data.variables['depth'][:].copy()
     current_data.close()
 
@@ -201,6 +272,7 @@ def main():
     # visualize_currents(place_bbox, current_path, depth)
     #visualize_depths (place_bbox, topo_path)
 
-    visualize_area(place_bbox, depth, current_path, topo_path)
+    # visualize_area(place_bbox, depth, current_path, topo_path)
+    visualize_multi_current(place_bbox, currents_path1, currents_path2, topo_path)
 
-# main()
+main()

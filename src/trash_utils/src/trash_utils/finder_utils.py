@@ -289,7 +289,7 @@ def get_multi_current_block(bbox, current_file1, current_file2):
 	return u_func, v_func, uv_func
 
 
-def grid_data(interp_f, x_bound, y_bound, spacing, z):
+def grid_data(interp_f, x_bound, y_bound, spacing, z, time_hrs):
 	'''
 	Creates mesh grid based on dim size
 	Used for visualizing data
@@ -301,8 +301,7 @@ def grid_data(interp_f, x_bound, y_bound, spacing, z):
 		y_bound (list) : list of min-max values for the y values
 		spacing (int) : how far apart the grid values should be
 		z (np.ndarray): depth values for all of the input
-
-		dim (array): size=(1,2), gives the x,y dimension of the output
+		time_hrs (float) : time in hours to take the currents
 
 	Returns:
 		interp_data (np.array): shape=(dim), interpolated data of the provided coordinates
@@ -317,6 +316,12 @@ def grid_data(interp_f, x_bound, y_bound, spacing, z):
 	else:
 		z = abs(z)
 		grid = zip(z.flatten(), xv.flatten(), yv.flatten())
+
+		if len(time_hrs) == 1:
+			t = np.ones((len(grid), 1))*time_hrs
+		else:
+			t = time_hrs.flatten()
+		grid = np.hstack((t, grid))
 
 	##feed it into the interpolation function to get output data of the same size
 	interp_data = interp_f(grid)

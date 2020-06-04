@@ -9,7 +9,8 @@ import shapely.affinity as sa
 import matplotlib.pyplot as plt
 
 from trash_utils.haversine_dist import haversine
-from trash_utils.finder_utils import (get_current_block,
+from trash_utils.finder_utils import (get_multi_current_block,
+									  get_current_block,
 									  get_depth_block,
 									  grid_data,
 									  find_bound_idx,
@@ -47,9 +48,9 @@ class Mowing_Lawn_BBox_Search:
 		self.goal_threshold = 5			##meters
 		self.uuv_heading = 0			##radians
 		self.uuv_speed = 2.5722 		##meters/second
-		self.uuv_position = bbox[0,:]
+		self.uuv_position = bbox[3,:]
 
-		self.timestep_block = 0			##hours since beginning
+		self.global_timesteps = 0			##seconds since beginning
 
 		self.global_bbox = sh.Polygon(bbox)
 
@@ -94,8 +95,9 @@ class Mowing_Lawn_BBox_Search:
 		##Visualize all the bbox here:
 		if visualize:
 			visualize_area(place_bbox, current_path, topo_path)
+			reshaped = np_all_bbox.reshape((-1,2))
 			plt.plot(place_bbox[:,0], place_bbox[:,1])
-			plt.plot(np_all_bbox[:,0], np_all_bbox[:,1], color="black", linewidth=3)
+			plt.plot(reshaped[:,0], reshaped[:,1], color="black", linewidth=3)
 			plt.show()
 
 		return all_bbox, np_all_bbox
@@ -107,14 +109,14 @@ class Mowing_Lawn_BBox_Search:
 			based on the spacing values given
 
 		Input:
-			bbox (Polygon) 		= Polygon([upper left, upper right, bottom right, 
+			bbox (Polygon) 		: Polygon([upper left, upper right, bottom right, 
 										   bottom left coords, upper left])
-			height_radius (int) = height of the search rows
-			width_radius (int)  = width of the search columns
+			height_radius (int) : height of the search rows
+			width_radius (int)  : width of the search columns
 
 		Returns:
-			x_bbox (np.ndarray) = array of the x values for the smaller boxes
-			y_bbox (np.ndarray) = array of the y values for the smaller boxes
+			x_bbox (np.ndarray) : array of the x values for the smaller boxes
+			y_bbox (np.ndarray) : array of the y values for the smaller boxes
 
 		Make sure the boxes are odd rows with odd number of boxes?
 
@@ -177,7 +179,6 @@ class Mowing_Lawn_BBox_Search:
 				# plt.show()
 				# pdb.set_trace()
 
-				# all_lines.append(lines)
 				all_intersections.append(np.array(intersections))
 
 		##TODO: Should add in a check here to make sure there are intersecting lines
@@ -220,8 +221,8 @@ class Mowing_Lawn_BBox_Search:
 		Inputs:
 			waypoints (np.ndarray) : Ordered waypoints that the UUV needs to take.
 			bound_cost (int) : Branch and bound optimization. The max cost that this method may take.
-			est_uuv_pos (bool) : Sets uuv position to be the first waypoint in the given waypoints.
-								Otherwise, uses the last known position of the uuv
+			est_uuv_pos (bool) : True = Sets uuv position to be the first waypoint in the given waypoints.
+								False, uses the last known position of the uuv (self.uuv_position)
 			use_bound (bool) : Branch and bound optimization. If the timestep value is greater than
 								bound_cost, then the method immediately terminates and returns an
 								unreasonable cost.
@@ -251,11 +252,12 @@ class Mowing_Lawn_BBox_Search:
 				desired_heading = atan2(goal[1] - self.uuv_position[1], goal[0] - self.uuv_position[0])
 				goal_u = cos(desired_heading) * np.linalg.norm(goal - self.uuv_position)
 				goal_v = sin(desired_heading) * np.linalg.norm(goal - self.uuv_position)
+				current_time_hrs = (timesteps + self.global_timesteps)/3600
 
 				z = abs(dfunc(self.uuv_position))
-				current_u = ufunc([z, self.uuv_position[0], self.uuv_position[1]])[0][0]
-				current_v = vfunc([z, self.uuv_position[0], self.uuv_position[1]])[0][0]
-				current_heading = atan2(current_v, current_u)
+				current_u = ufunc([current_time_hrs, z, self.uuv_position[0], self.uuv_position[1]])[0]
+				current_v = vfunc([current_time_hrs, z, self.uuv_position[0], self.uuv_position[1]])[0]
+				# current_heading = atan2(current_v, current_u)
 
 				##vector math
 				desired_u = goal_u + current_u
@@ -315,12 +317,13 @@ class Mowing_Lawn_BBox_Search:
 		##Best overall cost and rotated waypoints for each box are saved
 		global_waypoints = {}
 		global_costs = []
+		global_times = []
 
 		##for each box:
 		print ("TOTAL NUM ITERATIONS: ", len(all_bbox))
-		for ii in range(len(all_bbox)):
+		# for ii in range(len(all_bbox)):
 		# for ii in range(len(all_bbox)-32, len(all_bbox)-16):
-		# for ii in range(60, 65):
+		for ii in range(60, 65):
 			print ("PROCESSING: ", ii)
 			box = all_bbox[ii]
 
@@ -356,7 +359,9 @@ class Mowing_Lawn_BBox_Search:
 													 centered_waypoints.exterior.coords.xy[1]))
 
 				##Calculate the cost of traveling that path:
-				cost = self.est_propulsion(np_centered_waypoints, best_cost, est_uuv_pos=True, use_bound=True, visualize=False)
+				cost = self.est_propulsion(np_centered_waypoints, best_cost, 
+															est_uuv_pos=False, use_bound=True, 
+															visualize=False)
 
 				if visualize:
 					save_rotation_costs[:, r] = [rotation[r], cost]
@@ -366,23 +371,27 @@ class Mowing_Lawn_BBox_Search:
 					best_cost = cost
 					best_waypoints = np_centered_waypoints
 					best_rotation = rotation[r]
+					best_time = cost
 
 			##save the best cost and waypoints
 			# print ("best cost: ", best_cost)
 			# print ("best rotation: ", best_rotation)
 			global_waypoints[ii] = best_waypoints[:-1, :]
 			global_costs.append(best_cost)
+			global_times.append(best_time)
+			self.global_timesteps += best_time
 
 			##Visualize all the local bbox results
 			if visualize:
-				self.visualize_local_results(save_rotation_costs, box, save_waypoints, ii)
+				self.visualize_local_results(save_rotation_costs, box, save_waypoints, ii, (self.global_timesteps)/3600)
 
-		self.visualize_global_results(global_waypoints, global_costs, np_all_bbox)
+		# global_times.append(self.global_timesteps)
+		self.visualize_global_results(global_waypoints, global_costs, np_all_bbox, global_times)
 
 		return global_waypoints, global_costs, np_all_bbox
 
 
-	def visualize_local_results(self, save_rotation_costs, box, save_waypoints, boxnum):
+	def visualize_local_results(self, save_rotation_costs, box, save_waypoints, boxnum, time_hrs):
 		'''
 		TODO: Comments
 
@@ -404,11 +413,12 @@ class Mowing_Lawn_BBox_Search:
 		xbound = [min(small_bbox[:,0]), max(small_bbox[:,0])]
 		ybound = [min(small_bbox[:,1]), max(small_bbox[:,1])]
 
-		d = grid_data(dfunc, xbound, ybound, 5, [])
+
+		d = grid_data(dfunc, xbound, ybound, 5, [], [])
 		d = abs(d) - 2
-		u = grid_data(ufunc, xbound, ybound, 5, d)
-		v = grid_data(vfunc, xbound, ybound, 5, d)
-		uv = grid_data(uvfunc, xbound, ybound, 5, d)
+		u = grid_data(ufunc, xbound, ybound, 5, d, [time_hrs])
+		v = grid_data(vfunc, xbound, ybound, 5, d, [time_hrs])
+		uv = grid_data(uvfunc, xbound, ybound, 5, d, [time_hrs])
 
 		vmin = np.min(uv)
 		vmax = np.max(uv)
@@ -467,7 +477,7 @@ class Mowing_Lawn_BBox_Search:
 		fig.clf()
 
 
-	def visualize_global_results(self, global_waypoints, global_cost, np_all_bbox):
+	def visualize_global_results(self, global_waypoints, global_cost, np_all_bbox, global_times):
 		'''
 		Visualizes the global solution for all of boxes
 
@@ -475,6 +485,8 @@ class Mowing_Lawn_BBox_Search:
 			global_waypoints (Dict: key=int, item=np.ndarray) : 
 			global_cost (List) : 
 			np_all_bbox (np.ndarray) : 
+			global_times (List) : contains the starting time for all the individual boxes
+								to visualize the currents in the individual box
 		'''
 		cost_hours = sum(global_cost)/(3600)
 
@@ -482,11 +494,22 @@ class Mowing_Lawn_BBox_Search:
 		xbound = [min(xy_dim[:,0]), max(xy_dim[:,0])]
 		ybound = [min(xy_dim[:,1]), max(xy_dim[:,1])]
 
-		d = grid_data(dfunc, xbound, ybound, 30, [])
-		d = abs(d) - 2
-		u = grid_data(ufunc, xbound, ybound, 30, d)
-		v = grid_data(vfunc, xbound, ybound, 30, d)
-		uv = grid_data(uvfunc, xbound, ybound, 30, d)
+		## For each of the values in global_waypoints
+		all_d_vis = np.zeros(())
+		all_u_vis = np.zeros(())
+		all_v_vis = np.zeros(())
+		all_uv_vis = np.zeros(())
+		for boxnum in np.sort(global_waypoints.keys()):
+			##Grab the appropriate 
+
+			d = grid_data(dfunc, xbound, ybound, 30, [], [])
+			d = abs(d) - 2
+			u = grid_data(ufunc, xbound, ybound, 30, d, global_times)
+			v = grid_data(vfunc, xbound, ybound, 30, d, global_times)
+			uv = grid_data(uvfunc, xbound, ybound, 30, d, global_times)
+
+			##Add it to the right array
+			
 
 		vmin = np.min(uv)
 		vmax = np.max(uv)
@@ -530,6 +553,11 @@ if __name__ == '__main__':
 	##hydrodynamic current
 	current_path = data_path+'/ca_subCA_das_2020010615.nc'
 	current_data = netcdf.NetCDFFile(current_path)
+
+	currents1 = config['current_file1']
+	currents_path1 = data_path + '/' + currents1
+	currents2 = config['current_file2']
+	currents_path2 = data_path + '/' + currents2
 	depth = current_data.variables['depth'][:].copy()
 	current_data.close()
 
@@ -548,16 +576,9 @@ if __name__ == '__main__':
 	xwidth = [-width/2, width/2]
 	yheight = [-height/2, height/2]
 
-	u_area, v_area, uv_area, ufunc, vfunc, uvfunc = get_current_block(place_bbox, current_path)
+	# u_area, v_area, uv_area, ufunc, vfunc, uvfunc = get_current_block(place_bbox, current_path)
+	ufunc, vfunc, uvfunc = get_multi_current_block(place_bbox, currents_path1, currents_path2)
 	d_area, dfunc = get_depth_block(place_bbox, topo_path)
-
-	depths = grid_data(dfunc, xwidth, yheight, 10, [])
-	depths += 1
-
-	# ##these are interpolated grids of 
-	u = grid_data(ufunc, xwidth, yheight, 10, depths)
-	v = grid_data(vfunc, xwidth, yheight, 10, depths)
-	uv = grid_data(uvfunc, xwidth, yheight, 10, depths)
 
 	xy_dim = np.array([[-width/2, height/2], [width/2, height/2], [width/2, -height/2], [-width/2, -height/2]])
 
