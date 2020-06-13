@@ -1,4 +1,5 @@
 import pickle
+import yaml
 
 import rospkg
 import numpy as np
@@ -327,6 +328,24 @@ def grid_data(interp_f, x_bound, y_bound, spacing, z, time_hrs):
 	interp_data = interp_f(grid)
 
 	return interp_data.reshape(x.shape[0], y.shape[0])
+
+
+def wpts_to_yaml(input_waypoints, save_path):
+	##TODO: Figure out how to format the points properly 
+	all_wpt_dict = []
+	for idx in range(input_waypoints.shape[0]):
+		wpt_dict = {'point' : '{0}'.format(input_waypoints[idx].tolist()),
+					'max_forward_speed' : 0.4,
+					'heading' : 0,
+					'use_fixed_heading' : 'False'
+					}
+		all_wpt_dict.append(wpt_dict)
+
+	all_dict = dict(inertial_frame_id = 'world',
+					waypoints = all_wpt_dict)
+	with open('test.yaml', 'w') as outfile:
+		yaml.dump(all_dict, outfile, default_flow_style=False)
+
 
 
 def main():
