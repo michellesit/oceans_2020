@@ -2,6 +2,7 @@
 <!-- Global params -->
     <arg name="set_timeout" default="false"/>
     <arg name="timeout" default="1005"/>
+    <!-- <arg name="use_ned_frame" default="false" doc="If true, uses the NED (North-East-Down) frame conversion. If false, ENU (East-North-Up) will be used per default."/> -->
 
     <!-- Controller parameters -->
     <arg name="K" default="5,5,5,5,5,5"/>
@@ -21,12 +22,16 @@
     <arg name="uuv_yaw" default="0"/>
     <arg name="uuv_name" default="rexrov"/>
 
+    <!-- The rexrov default doesn't allow for currents to push it around -->
+    <!-- TODO: Figure out why the rexrov floats tot he surface -->
+    <!-- <include file="$(find rexrov2_description)/launch/upload_rexrov2.launch"> -->
     <include file="$(find uuv_descriptions)/launch/upload_rexrov.launch">
         <arg name="x" default="$(arg uuv_x)"/>
         <arg name="y" default="$(arg uuv_y)"/>
         <arg name="z" default="$(arg uuv_z)"/>
         <arg name="yaw" default="$(arg uuv_yaw)"/>
         <arg name="namespace" default="$(arg uuv_name)"/>
+        <!-- <arg name="use_ned_frame" value="$(arg use_ned_frame)"/> -->
     </include>
 
     <include file="$(find uuv_trajectory_control)/launch/rov_nmb_sm_controller.launch">
@@ -42,7 +47,7 @@
         <arg name="uuv_name" value="$(arg uuv_name)"/>
     </include> -->
 
-    <!-- <include file="$(find trash_finder)/launch/update_trash_states.launch"/> -->
+    <include file="$(find trash_finder)/launch/update_trash_states.launch"/>
 
     <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find uuv_gazebo)/rviz/controller_demo.rviz"/>
 

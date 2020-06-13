@@ -109,6 +109,71 @@ class Hotspot_Sampling():
 
 		return trash_dict
 
+	def calc_mowing_lawn(self, bbox, y_bbox, start_end):
+		'''
+		Calculate the intersection of the lines with the bbox
+		Orders the waypoints according to either left/right start/end
+
+		Input:
+			bbox (sh.Polygon) : some polygon to calculate the mowing lawn pattern
+			y_bbox (np.ndarray) : Array of heights that the lines are calculated at
+								Each point in this array corresponds to a line.
+			start_end (str) : "right" or "left". Determines which side the first
+							waypoint comes from. This determines the ordering of all
+							the following waypoints.
+
+		Output:
+			waypoints (np.ndarray) : ordered waypoints on how to traverse this bbox
+		'''
+		all_intersections = []
+		minx, miny, maxx, maxy = bbox.bounds
+		for i in range(y_bbox.shape[0]):
+			lines = sh.LineString([ [minx-abs(minx*0.4), y_bbox[i]],
+									[maxx+abs(maxx*0.4), y_bbox[i]] ])
+			intersections = bbox.intersection(lines)
+
+			if intersections.is_empty == False:
+				##TODO: sort the intersections so they are always left to right
+				# print (zip(lines.xy[0], lines.xy[1]))
+				# ziplines = zip(lines.xy[0], lines.xy[1])
+				# npint = np.array(intersections)
+
+				# plt.plot(bbox.exterior.coords.xy[0], bbox.exterior.coords.xy[1])
+				# plt.plot(lines.xy[0], lines.xy[1])
+				# if npint.ndim == 1:
+				# 	plt.scatter(npint[0], npint[1])
+				# else:
+				# 	plt.scatter(npint[:,0], npint[:,1])
+				# plt.show()
+				# pdb.set_trace()
+
+				all_intersections.append(np.array(intersections))
+
+		##TODO: Should add in a check here to make sure there are intersecting lines
+
+		##order the waypoints accordingly
+		waypoints = []
+		for i in range(len(all_intersections)):
+			line_pts = all_intersections[i]
+
+			if all_intersections[i].ndim == 1:
+				waypoints.extend((line_pts, line_pts))
+				continue
+
+			if start_end == "right":
+				if i%2 == 0:
+					waypoints.extend((line_pts[1], line_pts[0]))
+				else:
+					waypoints.extend((line_pts[0], line_pts[1]))
+
+			elif start_end == "left":
+				if i%2 == 0:
+					waypoints.extend((line_pts[0], line_pts[1]))
+				else:
+					waypoints.extend((line_pts[1], line_pts[0]))
+
+		return np.array(waypoints)
+		
 
 	def est_propulsion_2d(self, waypoints, bound_cost, est_uuv_pos=True, use_bound=False, visualize=False):
 		'''
