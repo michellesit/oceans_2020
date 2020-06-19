@@ -1,5 +1,5 @@
 import pickle
-from math import atan2, sin, cos
+from math import atan2, sin, cos, acos
 
 import rospkg
 from scipy.io import netcdf
@@ -9,6 +9,9 @@ import shapely.affinity as sa
 from shapely.ops import nearest_points
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+
+from collections import OrderedDict
+from numpy.linalg import norm
 
 from trash_utils.haversine_dist import haversine
 from trash_utils.finder_utils import (get_multi_current_block,
@@ -42,6 +45,10 @@ class Hotspot_Sampling():
 		self.num_hotspots = 6
 
 		self.uuv_position = [0.0, 0.0, 0.0]
+
+		#For 4D path planning
+		self.global_timesteps = 0
+		self.
 
 
 	def load_currents(self):
@@ -257,6 +264,176 @@ class Hotspot_Sampling():
 					return 99999999999999999
 
 		return timesteps
+
+
+	def cost_to_waypoint(start_pos, uuv_heading, goal_pos, goal_heading, time_now):
+		'''
+		Given headings and positions, calculate the cost of getting to that position
+		Returns cost as timesteps and uuv_controls
+
+		Input:
+			start_pos (np.ndarray): (x,y,z)
+			uuv_heading (int, np.ndarray): radians [phi, theta]
+			goal_pos (np.ndarray): (x,y,z)
+			goal_heading (int, np.ndarray): radians [phi, theta]
+
+		TEST
+
+		'''
+
+		threshold = 5	##meters
+		desired_speed = 2.5722 	##meters/second (5 knots)
+		timesteps = 0
+
+		uuv_controls = []
+		# all_currents = []
+		pos = start_pos
+		while abs(np.linalg.norm(pos - goal_pos)) > threshold:
+			##Calculate ocean u,v currents
+			current_u = self.ufunc([time_now + timesteps, pos[2], pos[0], pos[1]])
+			current_v = self.vfunc([time_now + timesteps, pos[2], pos[0], pos[1]])
+			# current_vector = np.linalg.norm([current_u, current_v])
+			# current_vector = [ocean_u, ocean_v, 0]
+
+			##Calculate the desired heading and position
+			goal_phi = goal_heading[0]
+			goal_theta = goal_heading[1]
+			mid_goal_x = desired_speed * cos(goal_phi) * cos(goal_theta)
+			mid_goal_y = desired_speed * sin(goal_phi) * sin(goal_phi)
+			mid_goal_z = desired_speed * cos(goal_phi)
+
+			##Calculate the needed UUV offset and at what angle
+			##uvv controls = desired_vector - ocean_vector
+			desired_x = mid_goal_x - current_u
+			desired_y = mid_goal_y - current_v
+			desired_z = mid_goal_z
+			uuv_vector = np.linalg.norm([desired_x, desired_y, desired_z])
+
+			uuv_phi = acos((desired_z / desired_speed))
+			uuv_theta = acos((desired_x/(desired_speed * sin(uuv_phi))))
+
+			# all_currents.append(current_vector)
+			uuv_controls.append([desired_x, desired_y, desired_z, uuv_vector, uuv_phi, uuv_theta])
+			timesteps += 1
+
+
+		return timesteps, np.array(uuv_controls).reshape((-1, 6))
+
+
+	def find_optimal_path_nrmpc(time_start, epoch, start_pos, end_pos, max_current):
+		'''
+		Following the paper
+		Predictive motion planning for AUVs subject to strong time-varying currents and forecasting uncertainties (Huynh, Van T., Dunbabin, Matthew, Smith, Ryan N.) (2015)
+
+		They use a Nonlinear Robust Model Predictive Control (NRMPC) algorithm to define their system's state and control params. Then use A* to explore the space and control params until they get to their final destination.
+
+		Input:
+			time_start = time in seconds
+			epoch = how many steps into the future to calculate
+			start_pos = (x,y,depth)
+			end_pos = (x,y,depth)
+			max_current (array) = [max u current from the whole map, max v current from the whole map]
+
+		Returns:
+			middle_pts = all the waypoints (x,y,depth) to get to the end_pos
+			middle_time = all the times it would take to get to end_pos
+			ending_control = ending speed in (u,v)
+
+		'''
+		##parameters?
+		E_appr = 5 ##Approximate, minimum energy per sampling time consumed by the vehicle at each time step
+		max_current = [1.2, 1.4]
+		uuv_speed = 2.5722
+
+		##Do sorted dictionary to hold the cost, heuristic_cost, and total_cost values
+		all_map = {}
+
+		##init starting node
+		##heuristic_cost = euclidean_dist(current_pos, end_pos)/max(euclidean_dist(v_current + v_AUV_relative_speed)) * E_appr
+		##heuristic cost is taken from the paper
+		heuristic_cost = ( norm(start_pos, end_pos)/max(norm(max_current + uuv_speed)) )*E_appr
+		all_map[start_pos] = ['cost': 0, 'heuristic_cost': heuristic_cost, 'total_cost': heuristic_cost]
+
+		visited_list = []
+		to_be_visited_list = [] ##This will just be the sorted dict keys list
+
+		##Find the possible positions around the goal
+		##for each heading, calculate where the AUV would end up
+		##also need to calculate in different depths
+		base_h_angle = 45
+		num_headings = 360/base_h_angle
+		
+
+		##Calculate the headings in spherical coordinate space
+		theta = np.hstack((np.arange(0, 360, base_h_angle), np.arange(0, 360, base_h_angle), np.arange(0, 360, base_h_angle))).tolist()
+		theta.extend([0.0, 0.0])
+		theta = np.deg2rad(theta)
+
+		phi = np.hstack((np.ones((1,8))*45, np.ones((1,8))*90, np.ones((1,8))*135))[0].tolist()
+		phi.extend([0, 180])
+		phi = np.deg2rad(phi)
+
+		##Convert spherical coordinates into cartesian coordinates
+		##Use these cartesian coordinates to figure out where to estimate where to plan for next
+		x = np.sin(phi)*np.cos(theta)
+		y = np.sin(phi)*np.sin(theta)
+		z = np.cos(phi)
+
+
+		all_hangles = np.array(zip(x,y,z))
+		all_timesteps = np.arange(0, 500, 8) ##TODO: Fix/figure this out
+		current_pos = start_pos
+		for angle_idx in range(all_hangles.shape[0]):
+
+			##Calculate the desired point into the distance
+			desired_heading = all_hangles[angle_idx]
+			goal_x, goal_y, goal_z = desired_heading*10 + current_pos
+			current_time_hrs = (time_start + all_timesteps[angle_idx])/3600
+
+			##Calculate the cost of getting to that goal
+
+
+
+			# ##Get the ocean currents at the UUV location?
+			# z = start_pos[-1]
+			# current_u = self.ufunc([current_time_hrs, z, current_pos[0], current_pos[1]])
+			# current_v = self.vfunc([current_time_hrs, z, current_pos[0], current_pos[1]])
+
+
+			# ##vector math
+			# desired_u = goal_x + current_u
+			# desired_v = goal_y + current_v
+			# resulting_heading = atan2(desired_v, desired_u)
+
+
+			# uuv_u = cos(resulting_heading) * uuv_speed
+			# uuv_v = sin(resulting_heading) * uuv_speed
+			# resulting_speed = [uuv_u + current_u, uuv_v + current_v]
+
+			
+			# A_eta = np.eye(2)*np.array([current_pos[0], current_pos[1]]).transpose()
+			# B = np.array([[cos(resulting_heading), 0, 1, 0], [0, sin(resulting_heading), 0, 1]])
+			# u = np.array([uuv_u, uuv_v, current_u, current_v]).reshape((-1,1))
+			# cost = A_eta + B*u
+
+			print ('cost: ', cost)
+
+			heuristic_cost = ( norm(current_pos, end_pos)/max(norm(max_current + uuv_speed)) )*E_appr
+			print ('heuristic_cost: ', heuristic_cost)
+
+
+
+		##Also calculate the cost of getting to that node
+		##Also calculate the heuristic cost for each of the nodes
+		##
+
+		##Sort the nodes based on their total cost
+		##Append the current node to the visited list
+		##Take the lowest cost node to be the next node
+		##Append 
+		current_node = sorted_nodes[0]
+
+
 
 
 	def simple_cc(self, search_bbox):
