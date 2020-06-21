@@ -195,17 +195,20 @@ class Hotspot_Sampling():
 			goal_pos (np.ndarray): (x,y,z)
 			goal_heading (int, np.ndarray): radians [phi, theta]
 
-		TEST
+		Returns:
+			cost (float) : formula calculated from paper
+			timesteps (int) : time it took to travel to the goal node in seconds
+			controls (np.ndarray) : inputs to the system
 
 		'''
 
-		threshold = 5	##meters
+		threshold2 = 5	##meters
 		timesteps = 0
 
 		uuv_controls = []
 		# all_currents = []
 		pos = start_pos
-		while abs(np.linalg.norm(pos - goal_pos)) > threshold:
+		while abs(np.linalg.norm(pos - goal_pos)) > threshold2:
 			##Calculate ocean u,v currents
 			current_u = self.ufunc([time_now + timesteps, pos[2], pos[0], pos[1]])
 			current_v = self.vfunc([time_now + timesteps, pos[2], pos[0], pos[1]])
@@ -243,9 +246,9 @@ class Hotspot_Sampling():
 			##TODO: visualize this makes sense
 
 
-
 		cost = (timesteps*(12/3600)) + (timesteps * ((uuv_controls[-1, 0]**3)**(1/3)) * 0.5)
 		print ("cost: ", cost)
+		print ("timesteps (in seconds): ", timesteps)
 
 		return cost, timesteps, np.array(uuv_controls).reshape((-1, 6))
 
@@ -276,29 +279,36 @@ class Hotspot_Sampling():
 		uuv_speed = 2.5722
 
 		##Do sorted dictionary to hold the cost, heuristic_cost, and total_cost values
-		all_map = {}
+		visited_dict = {}  ##add in the new values once they've been calculated
+		to_be_visited_dict = {} ##This will just be the sorted dict keys list
 
 		##init starting node and its cost
 		##heuristic_cost = euclidean_dist(current_pos, end_pos)/max(euclidean_dist(v_current + v_AUV_relative_speed)) * E_appr
 		##heuristic cost is taken from the paper
 		heuristic_cost = ( norm(start_pos, end_pos)/heuristic_denom )*E_appr
-		all_map[tuple(start_pos)] = {'cost' : 0, 'heuristic_cost': heuristic_cost, 'total_cost': heuristic_cost}
-
-		visited_list = []
-		to_be_visited_list = {} ##This will just be the sorted dict keys list
+		visited_dict[tuple(start_pos)] = {'cost' : 0, 
+										'heuristic_cost': heuristic_cost, 
+										'total_cost': heuristic_cost, 
+										'parent_pos': tuple([np.inf, np.inf, np.inf]), 
+										'time_sec_at_this_node' : 0}
 
 		##Find the possible positions around the goal
 		##for each heading, calculate where the AUV would end up
 		##also need to calculate in different depths
 		base_h_angle = 45
 		num_headings = 360/base_h_angle
+		#num_phi_angles = (180/base_h_angle) - 1
 		
 		##Calculate the headings in spherical coordinate space
 		theta = np.hstack((np.arange(0, 360, base_h_angle), np.arange(0, 360, base_h_angle), np.arange(0, 360, base_h_angle))).tolist()
 		theta.extend([0.0, 0.0])
 		theta = np.deg2rad(theta)
 
-		phi = np.hstack((np.ones((1,8))*45, np.ones((1,8))*90, np.ones((1,8))*135))[0].tolist()
+		##There is a smarter way to do this in an automated fashion:
+		##Create a num_phi_angles x num_headings np.ones matrix
+		##Multiply each row by np.arange(0, 180, base_h_angle)
+		##Flatten and tolist()
+		phi = np.hstack((np.ones((1,num_headings))*45, np.ones((1,num_headings))*90, np.ones((1,num_headings))*135))[0].tolist()
 		phi.extend([0, 180])
 		phi = np.deg2rad(phi)
 
@@ -308,34 +318,63 @@ class Hotspot_Sampling():
 		y = np.sin(phi)*np.sin(theta)
 		z = np.cos(phi)
 
-
 		all_hangles = np.array(zip(x,y,z))
-		all_timesteps = np.arange(0, 500, 8) ##TODO: Fix/figure this out
+		# all_timesteps = np.arange(0, 500, 8) ##TODO: Fix/figure this out
 		current_pos = start_pos
-
-		##Calculate for each heading
-		for angle_idx in range(all_hangles.shape[0]):
-			##Calculate the desired point into the distance
-			desired_heading = all_hangles[angle_idx]
-			goal_x, goal_y, goal_z = desired_heading*10 + current_pos
-			current_time_hrs = (time_start + all_timesteps[angle_idx])/3600 ##TODO Does this make sense?
-
-			##Calculate the cost of getting to that goal
-			cost, time_traveled, controls = cost_to_waypoint(current_pos, goal_pos, goal_heading, current_time_hrs)
-
-			print ('cost: ', cost)
-
-			heuristic_cost = ( norm(current_pos, end_pos)/heuristic_denom )*E_appr
-			print ('heuristic_cost: ', heuristic_cost)
-
-			##Append this cost to the unvisited list
-			##TODO: how do we build the graph so that we can trace the min cost path through the whole thing?
+		parent_cost = 0
+		time_at_node = 0
 
 
-		##Sort the unvisited list by cost
+		##While not within a threshold to the endpoint
+		##calculate all of the headings
+		threshold1 = 50 ##meters
+		while abs(np.linalg.norm(current_pos - end_pos)) > threshold1
 
+			##For each heading
+			##Calculate the point 10km into the distance
+				##TODO: check that this point isn't within some distance to the other points?
+			##Calculate the cost of getting to that point + parent cost = total cost
+			##Calculate the heuristic of getting to that point
+			##Save the point to the to_be_visted_list
+			for angle_idx in range(all_hangles.shape[0]):
 
-		##Pick the next node to visit
+				##Calculate the desired point 10m into the distance
+				desired_heading = all_hangles[angle_idx]
+				goal_x, goal_y, goal_z = desired_heading*10 + current_pos
+				current_time_hrs = (time_start + all_timesteps[angle_idx])/3600 ##TODO FIX THIS?
+
+				##Calculate the cost of getting to that goal (cost is determined by formula from paper)
+				cost, time_traveled, controls = cost_to_waypoint(current_pos, goal_pos, goal_heading, current_time_hrs)
+				self_and_parent_cost = parent_cost + cost
+				print ('cost: ', cost)
+
+				heuristic_cost = ( norm(current_pos, end_pos)/heuristic_denom )*E_appr
+				print ('heuristic_cost: ', heuristic_cost)
+
+				##Append this cost to the unvisited list
+				to_be_visited_dict[tuple([goal_x, goal_y, goal_z])] = {'cost' : self_and_parent_cost, 
+																		'heuristic_cost': heuristic_cost, 
+																		'total_cost': heuristic_cost+self_and_parent_cost, 
+																		'parent_pos': current_pos, 
+																		'time_sec_at_this_node' : time_at_node + time_traveled}
+
+			##After we have calculated all these costs for all the headings, figure out which node to calculate from next
+			##Sort the unvisited list by cost
+			sorted_cost_dict = sorted(to_be_visited_dict, key=lambda x:(to_be_visited_dict[x]['cost']))
+
+			##Pick the next node to visit
+			lowest_cost_key = sorted_cost_dict[0]
+			lowest_cost_items = sorted_cost_dict[tuple(lowest_cost_key)]
+			print ("next node to be visited: ", lowest_cost_key, lowest_cost_items)
+
+			##Update the needed variables
+			##Parent cost
+			##Append current node to the visited list
+			##Update timestart timestep values?
+			visited_dict[tuple(current_pos)] = to_be_visited_dict[tuple(current_pos)]
+			parent_cost = lowest_cost_items['cost']
+			time_at_node = lowest_cost_items['time_sec_at_this_node']
+			current_pos = lowest_cost_key
 
 
 
@@ -596,6 +635,8 @@ class Hotspot_Sampling():
 					##A* method
 					find_optimal_path_nrmpc(timenow[ts], 100, pt1, pt2)
 
+
+					###############STOP. CURRENTLY TESTING UP TO HERE
 
 					##Calculate the waypoints needed to traverse along the bottom of the seafloor
 					##NOMINAL PATH
