@@ -40,16 +40,21 @@ class Hotspot_Sampling():
 
 	def __init__(self):
 		self.place_bbox, self.ufunc, self.vfunc, self.dfunc = self.load_currents()
-		self.u_boost = 1.5
-		self.v_boost = 1.5
+		self.width = haversine(self.place_bbox[0,0], self.place_bbox[0,1], self.place_bbox[1,0], self.place_bbox[1,1]) * 1000
+		self.height = haversine(self.place_bbox[1,0], self.place_bbox[1,1], self.place_bbox[2,0], self.place_bbox[2,1]) * 1000
+		self.u_boost = 30.5
+		self.v_boost = 30.5
 		self.num_hotspots = 6
 
 		self.uuv_position = [0.0, 0.0, 0.0]
 
 		#For 4D path planning
-		self.global_timesteps = 0
 		self.desired_speed = 2.5722 	##meters/second (5 knots)
-		self.max_uuv_vector = 7			##TODO: check this is okay
+		self.goal_dist = 75
+		self.num_max_epochs = 500
+		self.E_appr = 10
+
+
 
 
 	def load_currents(self):
@@ -104,9 +109,12 @@ class Hotspot_Sampling():
 		'''
 
 		##Initialize 6 hotspots:
-		trash_x_centers = np.random.randint(-width/2, width/2, size=(self.num_hotspots,1))
-		trash_y_centers = np.random.randint(-height/2, height/2, size=(self.num_hotspots,1))
+		# trash_x_centers = np.random.randint(-width/2, width/2, size=(self.num_hotspots,1))
+		# trash_y_centers = np.random.randint(-height/2, height/2, size=(self.num_hotspots,1))
 		
+		trash_x_centers = np.array([-250.98494701, -504.8406451, -132, 345, 876, 423]).reshape(-1,1)
+		trash_y_centers = np.array([-508.96243035, -877.89326774, -687, 354, 120, 348]).reshape(-1,1)
+
 		sigma = [[0.5, 0.8], [0.8, 0.5]]
 		num_soda_cans = 10
 		trash_dict = {}
@@ -184,8 +192,76 @@ class Hotspot_Sampling():
 		return np.array(waypoints)
 
 
+	def simple_cc(self, search_bbox):
+		rotation = np.arange(0, 360, 10)
+		best_cost = 99999999999999999;
+		for r in range(len(rotation)):
+			rotated_bbox = sa.rotate(search_bbox, rotation[r]) ##Default, takes in rotation by degrees
+			waypts = self.calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
+			centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
+			np_centered_waypoints = np.array(zip(centered_waypoints.exterior.coords.xy[0], 
+									 centered_waypoints.exterior.coords.xy[1]))
+			cost = self.est_propulsion(np_centered_waypoints, best_cost, 
+											est_uuv_pos=False, use_bound=True, 
+											visualize=False)
 
-	def cost_to_waypoint(start_pos, goal_pos, goal_heading, time_now):
+			if cost < best_cost:
+				best_cost = cost
+				best_waypoints = np_centered_waypoints
+				best_rotation = rotation[r]
+				# best_time = cost
+
+		return best_cost
+
+
+	def calc_heuristic_denom(self, xbound, ybound):
+		'''
+		Find the max current and calculate the heuristic denominator
+		max || vc + vr ||
+
+
+
+		'''
+
+		d = grid_data(self.dfunc, xbound, ybound, 50, [], [])
+
+		##Find the max current over a 4 day period (96 hrs total)
+		min_u = 999999
+		min_v = 999999
+		# max_u = -999999
+		# max_v = -999999
+		for hrs in range(0, 96):
+			u = grid_data(self.ufunc, xbound, ybound, 50, d, [hrs]) * self.u_boost
+			v = grid_data(self.vfunc, xbound, ybound, 50, d, [hrs]) * self.v_boost
+			min_u = min(min_u, np.min(u))
+			min_v = min(min_v, np.min(v))
+			# max_u = max(max_u, np.max(u))
+			# max_v = max(max_v, np.max(v))
+
+		##Calculate the desired heading and position
+		goal_phi = np.deg2rad(45)
+		goal_theta = np.deg2rad(45)
+		mid_goal_x = self.desired_speed * sin(goal_phi) * cos(goal_theta)
+		mid_goal_y = self.desired_speed * sin(goal_phi) * sin(goal_theta)
+		mid_goal_z = self.desired_speed * cos(goal_phi)
+
+		##Calculate the needed UUV offset and at what angle
+		##uvv controls = desired_vector - ocean_vector
+		desired_x_min = mid_goal_x - min_u
+		desired_y_min = mid_goal_y - min_v
+		# desired_x_max = mid_goal_x - max_u
+		# desired_y_max = mid_goal_y - max_v
+		desired_z = mid_goal_z
+		uuv_vector_min = np.linalg.norm([desired_x_min, desired_y_min, desired_z])
+		# uuv_vector_max = np.linalg.norm([desired_x_max, desired_y_max, desired_z])
+
+		denom = uuv_vector_min + np.linalg.norm([min_u, min_v])
+		# print("max total: ", uuv_vector_max + np.linalg.norm([max_u, max_v]))
+
+		return denom
+
+
+	def cost_to_waypoint(self, input_start_pos, goal_pos, goal_heading, time_now):
 		'''
 		Given headings and positions, calculate the cost of getting to that position
 		Returns cost as timesteps and uuv_controls
@@ -202,25 +278,42 @@ class Hotspot_Sampling():
 
 		'''
 
-		threshold2 = 5	##meters
+		threshold2 = 2	##meters
 		timesteps = 0
 
 		uuv_controls = []
 		# all_currents = []
-		pos = start_pos
-		while abs(np.linalg.norm(pos - goal_pos)) > threshold2:
+		pos = np.copy(input_start_pos)
+
+		goal_phi = goal_heading[0]
+		goal_theta = goal_heading[1]
+
+		# fig = plt.figure()
+		# ax1 = fig.gca(projection='3d')
+		# ax1.plot([input_start_pos[0]], [input_start_pos[1]], [input_start_pos[2]], 'bo')
+		# ax1.plot([goal_pos[0]], [goal_pos[1]], [goal_pos[2]], 'bo')
+		# ax1.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1], goal_pos[1]], [input_start_pos[2], goal_pos[2]], 'b--')
+
+		while abs(np.linalg.norm([pos - goal_pos])) > threshold2:
+			time_now_hrs = (time_now + timesteps)/3600.0
 			##Calculate ocean u,v currents
-			current_u = self.ufunc([time_now + timesteps, pos[2], pos[0], pos[1]])
-			current_v = self.vfunc([time_now + timesteps, pos[2], pos[0], pos[1]])
+			current_u = self.ufunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.u_boost
+			current_v = self.vfunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.v_boost
 			# current_vector = np.linalg.norm([current_u, current_v])
 			# current_vector = [ocean_u, ocean_v, 0]
 
-			##Calculate the desired heading and position
-			goal_phi = goal_heading[0]
-			goal_theta = goal_heading[1]
-			mid_goal_x = self.desired_speed * cos(goal_phi) * cos(goal_theta)
-			mid_goal_y = self.desired_speed * sin(goal_phi) * sin(goal_phi)
+			##Calculate the desired heading and position of the uuv
+			mid_goal_x = self.desired_speed * sin(goal_phi) * cos(goal_theta)
+			mid_goal_y = self.desired_speed * sin(goal_phi) * sin(goal_theta)
 			mid_goal_z = self.desired_speed * cos(goal_phi)
+
+			##Adapt the mid_goal in respose to distance to actual point
+			if mid_goal_x > abs(np.linalg.norm([pos[0] - goal_pos[0]])):
+				mid_goal_x = abs(np.linalg.norm([pos[0] - goal_pos[0]]))
+			if mid_goal_y > abs(np.linalg.norm([pos[1] - goal_pos[1]])):
+				mid_goal_y = abs(np.linalg.norm([pos[1] - goal_pos[1]]))
+			if mid_goal_z > abs(np.linalg.norm([pos[2] - goal_pos[2]])):
+				mid_goal_z = abs(np.linalg.norm([pos[2] - goal_pos[2]]))
 
 			##Calculate the needed UUV offset and at what angle
 			##uvv controls = desired_vector - ocean_vector
@@ -228,33 +321,88 @@ class Hotspot_Sampling():
 			desired_y = mid_goal_y - current_v
 			desired_z = mid_goal_z
 			uuv_vector = np.linalg.norm([desired_x, desired_y, desired_z])
+			# print ("uuv_vector: ", uuv_vector)
 
-			##TODO: throw in check. If uuv_vector > possible result, return 9999999999 cost
-			if uuv_vector > self.max_uuv_vector:
-				return 99999999999999999, 99999999999999999999, np.empty((0,6))
+			# ##TODO: throw in check. If uuv_vector > possible result, return 9999999999 cost
+			# if uuv_vector > self.max_uuv_vector:
+			# 	return 99999999999999999, 99999999999999999999, np.empty((0,6))
 
 			uuv_phi = acos((desired_z / self.desired_speed))
-			uuv_theta = acos((desired_x/(self.desired_speed * sin(uuv_phi))))
+			uuv_theta = atan2(desired_y, desired_x)
 
 			# all_currents.append(current_vector)
 			uuv_controls.append([uuv_vector, desired_x, desired_y, desired_z, uuv_phi, uuv_theta])
 			timesteps += 1
 
 			##update pos with resulting location
-			pos = [mid_goal_x, mid_goal_y, mid_goal_z]
+			pos += [mid_goal_x, mid_goal_y, mid_goal_z]
+			# print ("dist to goal: ", abs(np.linalg.norm([pos - goal_pos])))
 
-			##TODO: visualize this makes sense
+		# 	##TODO: visualize this makes sense
+		# 	print ("start_pos: ", input_start_pos)
+		# 	print ("goal_pos : ", goal_pos)
+		# 	print ("pos: ", pos)
+		# 	ax1.plot([pos[0]], [pos[1]], [pos[2]], 'ro')
+		# 	print ("")
 
+		# ax1.set_xlabel("x-axis")
+		# ax1.set_ylabel("y-axis")
+		# ax1.set_zlabel("depth")
+		# plt.show()
 
-		cost = (timesteps*(12/3600)) + (timesteps * ((uuv_controls[-1, 0]**3)**(1/3)) * 0.5)
-		print ("cost: ", cost)
-		print ("timesteps (in seconds): ", timesteps)
+		if not uuv_controls:
+			time_now_hrs = (time_now + timesteps)/3600.0
+			##Calculate ocean u,v currents
+			current_u = self.ufunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.u_boost
+			current_v = self.vfunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.v_boost
+			# current_vector = np.linalg.norm([current_u, current_v])
+			# current_vector = [ocean_u, ocean_v, 0]
+
+			##Calculate the desired heading and position of the uuv
+			mid_goal_x = self.desired_speed * sin(goal_phi) * cos(goal_theta)
+			mid_goal_y = self.desired_speed * sin(goal_phi) * sin(goal_theta)
+			mid_goal_z = self.desired_speed * cos(goal_phi)
+
+			##Adapt the mid_goal in respose to distance to actual point
+			if mid_goal_x > abs(np.linalg.norm([pos[0] - goal_pos[0]])):
+				mid_goal_x = abs(np.linalg.norm([pos[0] - goal_pos[0]]))
+			if mid_goal_y > abs(np.linalg.norm([pos[1] - goal_pos[1]])):
+				mid_goal_y = abs(np.linalg.norm([pos[1] - goal_pos[1]]))
+			if mid_goal_z > abs(np.linalg.norm([pos[2] - goal_pos[2]])):
+				mid_goal_z = abs(np.linalg.norm([pos[2] - goal_pos[2]]))
+
+			##Calculate the needed UUV offset and at what angle
+			##uvv controls = desired_vector - ocean_vector
+			desired_x = mid_goal_x - current_u
+			desired_y = mid_goal_y - current_v
+			desired_z = mid_goal_z
+			uuv_vector = np.linalg.norm([desired_x, desired_y, desired_z])
+			# print ("uuv_vector: ", uuv_vector)
+
+			# ##TODO: throw in check. If uuv_vector > possible result, return 9999999999 cost
+			# if uuv_vector > self.max_uuv_vector:
+			# 	return 99999999999999999, 99999999999999999999, np.empty((0,6))
+
+			uuv_phi = acos((desired_z / self.desired_speed))
+			uuv_theta = atan2(desired_y, desired_x)
+
+			# all_currents.append(current_vector)
+			uuv_controls = [uuv_vector, desired_x, desired_y, desired_z, uuv_phi, uuv_theta]
+			cost = (timesteps*(12.0/3600.0)) + (timesteps * ((uuv_controls[0]**3)**(0.333333)))
+		else:
+			uuv_controls = np.array(uuv_controls)
+			cost = (timesteps*(12.0/3600.0)) + (timesteps * ((uuv_controls[-1, 0]**3)**(0.333333)))
+
+		# print ("cost: ", cost)
+		# print ("timesteps (in seconds): ", timesteps)
+		# print ("about to go to next point")
+		# pdb.set_trace()
 
 		return cost, timesteps, np.array(uuv_controls).reshape((-1, 6))
 
 
 
-	def find_optimal_path_nrmpc(time_start, epoch, start_pos, end_pos, heuristic_denom):
+	def find_optimal_path_nrmpc(self, time_start, epoch_max, start_pos, end_pos, heuristic_denom):
 		'''
 		Following the paper
 		Predictive motion planning for AUVs subject to strong time-varying currents and forecasting uncertainties (Huynh, Van T., Dunbabin, Matthew, Smith, Ryan N.) (2015)
@@ -263,7 +411,7 @@ class Hotspot_Sampling():
 
 		Input:
 			time_start = time in seconds
-			epoch = how many steps into the future to calculate
+			epoch_max = how many steps into the future to calculate
 			start_pos = (x,y,depth)
 			end_pos = (x,y,depth)
 			heuristic_denom (float) = calculated value for heuristic denominator
@@ -275,8 +423,8 @@ class Hotspot_Sampling():
 
 		'''
 		##parameters?
-		E_appr = 5 ##Approximate, minimum energy per sampling time consumed by the vehicle at each time step
-		uuv_speed = 2.5722
+		# E_appr = 10 ##Approximate, minimum energy per sampling time consumed by the vehicle at each time step
+		# uuv_speed = 2.5722
 
 		##Do sorted dictionary to hold the cost, heuristic_cost, and total_cost values
 		visited_dict = {}  ##add in the new values once they've been calculated
@@ -285,8 +433,8 @@ class Hotspot_Sampling():
 		##init starting node and its cost
 		##heuristic_cost = euclidean_dist(current_pos, end_pos)/max(euclidean_dist(v_current + v_AUV_relative_speed)) * E_appr
 		##heuristic cost is taken from the paper
-		heuristic_cost = ( norm(start_pos, end_pos)/heuristic_denom )*E_appr
-		visited_dict[tuple(start_pos)] = {'cost' : 0, 
+		heuristic_cost = ( np.linalg.norm([start_pos, end_pos])/heuristic_denom )*self.E_appr
+		to_be_visited_dict[tuple(start_pos)] = {'cost' : 0, 
 										'heuristic_cost': heuristic_cost, 
 										'total_cost': heuristic_cost, 
 										'parent_pos': tuple([np.inf, np.inf, np.inf]), 
@@ -318,17 +466,29 @@ class Hotspot_Sampling():
 		y = np.sin(phi)*np.sin(theta)
 		z = np.cos(phi)
 
-		all_hangles = np.array(zip(x,y,z))
+		all_hangles_cart = np.array(zip(x,y,z))
+		all_hangles_sphere = np.array(zip(phi, theta))
 		# all_timesteps = np.arange(0, 500, 8) ##TODO: Fix/figure this out
-		current_pos = start_pos
+		current_pos = np.copy(start_pos)
 		parent_cost = 0
 		time_at_node = 0
+
+		##Visualization
+		fig = plt.figure()
+		ax1 = fig.gca(projection='3d')
+		#Plot the start and end points
+		ax1.plot([start_pos[0]], [start_pos[1]], [start_pos[2]], 'ro')
+		ax1.plot([end_pos[0]], [end_pos[1]], [end_pos[2]], 'bo')
 
 
 		##While not within a threshold to the endpoint
 		##calculate all of the headings
 		threshold1 = 50 ##meters
-		while abs(np.linalg.norm(current_pos - end_pos)) > threshold1
+		epoch = 0
+		while abs(np.linalg.norm([current_pos - end_pos])) > threshold1 and epoch < epoch_max:
+			# fig = plt.figure()
+			# ax1 = fig.gca(projection='3d')
+			# ax1.plot([current_pos[0]], [current_pos[1]], [current_pos[2]], 'go')
 
 			##For each heading
 			##Calculate the point 10km into the distance
@@ -336,120 +496,118 @@ class Hotspot_Sampling():
 			##Calculate the cost of getting to that point + parent cost = total cost
 			##Calculate the heuristic of getting to that point
 			##Save the point to the to_be_visted_list
-			for angle_idx in range(all_hangles.shape[0]):
+			for angle_idx in range(all_hangles_cart.shape[0]):
+				print ("angle_idx: ", angle_idx)
 
 				##Calculate the desired point 10m into the distance
-				desired_heading = all_hangles[angle_idx]
-				goal_x, goal_y, goal_z = desired_heading*10 + current_pos
-				current_time_hrs = (time_start + all_timesteps[angle_idx])/3600 ##TODO FIX THIS?
+				desired_heading_cart = all_hangles_cart[angle_idx]
+				goal_x, goal_y, goal_z = desired_heading_cart*self.goal_dist + current_pos
+				goal_pos = np.array([goal_x, goal_y, goal_z])
+				
+				# pdb.set_trace()
+				##If this point is within some distance to a previously calculated point, then move onto next step
+				not_valid = False
+				print ("num keys: ", len(to_be_visited_dict.items()))
+				for k,v in to_be_visited_dict.items():
+					check_dist = np.linalg.norm([goal_pos - np.array(k)])
+
+					if check_dist < 50 and np.linalg.norm(v['parent_pos'] - start_pos)>5:
+						print ("check dist: ", check_dist)
+						print ("too close")
+						print ("goal_pos: ", goal_pos)
+						print ("K    pos: ", np.array(k))
+						not_valid = True
+						pdb.set_trace()
+						break
+
+					if np.linalg.norm([goal_pos - k]) < 5:
+						print ("Goal pos and k are the same!")
+						pdb.set_trace()
+
+				if not_valid:
+					continue
+
+				if abs(goal_x) > self.width/2:
+					goal_x = self.width/2 * np.sign(goal_x)
+				if abs(goal_y) > self.height/2:
+					goal_y = self.height/2 * np.sign(goal_y)
+				if goal_z > 0:
+					goal_z = 0
+				goal_pos = np.array([goal_x, goal_y, goal_z])
+
+				print ("point is valid")
+
 
 				##Calculate the cost of getting to that goal (cost is determined by formula from paper)
-				cost, time_traveled, controls = cost_to_waypoint(current_pos, goal_pos, goal_heading, current_time_hrs)
-				self_and_parent_cost = parent_cost + cost
-				print ('cost: ', cost)
+				# print ("current_pos: ", current_pos)
+				# print ("goal_pos: ", goal_pos)
 
-				heuristic_cost = ( norm(current_pos, end_pos)/heuristic_denom )*E_appr
-				print ('heuristic_cost: ', heuristic_cost)
+				# pdb.set_trace()
+				desired_heading_sphere = all_hangles_sphere[angle_idx]
+				cost, time_traveled, controls = self.cost_to_waypoint(current_pos, goal_pos, desired_heading_sphere, time_at_node/3600)
+				self_and_parent_cost = parent_cost + cost
+				# print ("self_and_parent_cost: ", self_and_parent_cost)
+
+				heuristic_cost = ( np.linalg.norm([current_pos, end_pos])/heuristic_denom )*self.E_appr
+				# pdb.set_trace()
+				# print ('heuristic_cost: ', heuristic_cost)
+				# print ("total_cost: ", heuristic_cost+self_and_parent_cost)
 
 				##Append this cost to the unvisited list
-				to_be_visited_dict[tuple([goal_x, goal_y, goal_z])] = {'cost' : self_and_parent_cost, 
-																		'heuristic_cost': heuristic_cost, 
-																		'total_cost': heuristic_cost+self_and_parent_cost, 
-																		'parent_pos': current_pos, 
-																		'time_sec_at_this_node' : time_at_node + time_traveled}
+				to_be_visited_dict[tuple(goal_pos)] = {'cost' : self_and_parent_cost, 
+														'heuristic_cost': heuristic_cost, 
+														'total_cost': heuristic_cost+self_and_parent_cost, 
+														'parent_pos': current_pos, 
+														'time_sec_at_this_node' : time_at_node + time_traveled}
+				
+				print ("added value to dict: ", goal_pos)
+				pdb.set_trace()
+
+				##plot where the resulting point is and the cost of how much it takes to get to that point
+				# ax1.plot([goal_x], [goal_y], [goal_z], 'bo')
+				# ax1.plot([current_pos[0], goal_x], [current_pos[1], goal_y], [current_pos[2], goal_z], 'b--')
+				# ax1.text(goal_x, goal_y, goal_z, str(heuristic_cost+self_and_parent_cost))
+
+
+			# pdb.set_trace()
 
 			##After we have calculated all these costs for all the headings, figure out which node to calculate from next
 			##Sort the unvisited list by cost
-			sorted_cost_dict = sorted(to_be_visited_dict, key=lambda x:(to_be_visited_dict[x]['cost']))
+			visited_dict[tuple(current_pos)] = to_be_visited_dict[tuple(current_pos)]
+			del to_be_visited_dict[tuple(current_pos)]
+			print ("deleted something")
+			sorted_cost_dict = sorted(to_be_visited_dict.items(), key=lambda x: (x[1]['cost']))
 
 			##Pick the next node to visit
-			lowest_cost_key = sorted_cost_dict[0]
-			lowest_cost_items = sorted_cost_dict[tuple(lowest_cost_key)]
-			print ("next node to be visited: ", lowest_cost_key, lowest_cost_items)
+			lowest_cost_key = sorted_cost_dict[0][0]
+			lowest_cost_items = sorted_cost_dict[0][1]
+			# print ("next node to be visited: ", lowest_cost_key, lowest_cost_items)
+
+			ax1.plot([lowest_cost_key[0]], [lowest_cost_key[1]], [lowest_cost_key[2]], 'go')
 
 			##Update the needed variables
 			##Parent cost
 			##Append current node to the visited list
 			##Update timestart timestep values?
-			visited_dict[tuple(current_pos)] = to_be_visited_dict[tuple(current_pos)]
+			
 			parent_cost = lowest_cost_items['cost']
 			time_at_node = lowest_cost_items['time_sec_at_this_node']
 			current_pos = lowest_cost_key
 
+			epoch += 1
+
+		ax1.set_xlabel("x-axis")
+		ax1.set_ylabel("y-axis")
+		ax1.set_zlabel("depth")
+		plt.show()
+
+		for k,v in visited_dict.items():
+			print (v['cost'])
+			print (v['heuristic_cost'])
+			print (v['total_cost'])
+			print ()
 
 
-
-	def simple_cc(self, search_bbox):
-		rotation = np.arange(0, 360, 10)
-		best_cost = 99999999999999999;
-		for r in range(len(rotation)):
-			rotated_bbox = sa.rotate(search_bbox, rotation[r]) ##Default, takes in rotation by degrees
-			waypts = self.calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
-			centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
-			np_centered_waypoints = np.array(zip(centered_waypoints.exterior.coords.xy[0], 
-									 centered_waypoints.exterior.coords.xy[1]))
-			cost = self.est_propulsion(np_centered_waypoints, best_cost, 
-											est_uuv_pos=False, use_bound=True, 
-											visualize=False)
-
-			if cost < best_cost:
-				best_cost = cost
-				best_waypoints = np_centered_waypoints
-				best_rotation = rotation[r]
-				# best_time = cost
-
-		return best_cost
-
-
-	def shortest_dist_sim(self, total_time_duration):
-		pass
-
-
-	def calc_heuristic_denom(self, xbound, ybound):
-		'''
-		Find the max current and calculate the heuristic denominator
-		max || vc + vr ||
-
-
-
-		'''
-
-		d = grid_data(self.dfunc, xbound, ybound, 50, [], [])
-
-		##Find the max current over a 4 day period (96 hrs total)
-		min_u = 999999
-		min_v = 999999
-		# max_u = -999999
-		# max_v = -999999
-		for hrs in range(0, 96):
-			u = grid_data(self.ufunc, xbound, ybound, 50, d, [hrs])
-			v = grid_data(self.vfunc, xbound, ybound, 50, d, [hrs])
-			min_u = min(min_u, np.min(u))
-			min_v = min(min_v, np.min(v))
-			# max_u = max(max_u, np.max(u))
-			# max_v = max(max_v, np.max(v))
-
-		##Calculate the desired heading and position
-		goal_phi = np.deg2rad(45)
-		goal_theta = np.deg2rad(45)
-		mid_goal_x = self.desired_speed * cos(goal_phi) * cos(goal_theta)
-		mid_goal_y = self.desired_speed * sin(goal_phi) * sin(goal_phi)
-		mid_goal_z = self.desired_speed * cos(goal_phi)
-
-		##Calculate the needed UUV offset and at what angle
-		##uvv controls = desired_vector - ocean_vector
-		desired_x_min = mid_goal_x - min_u
-		desired_y_min = mid_goal_y - min_v
-		# desired_x_max = mid_goal_x - max_u
-		# desired_y_max = mid_goal_y - max_v
-		desired_z = mid_goal_z
-		uuv_vector_min = np.linalg.norm([desired_x_min, desired_y_min, desired_z])
-		# uuv_vector_max = np.linalg.norm([desired_x_max, desired_y_max, desired_z])
-
-		denom = uuv_vector_min + np.linalg.norm([min_u, min_v])
-		# print("max total: ", uuv_vector_max + np.linalg.norm([max_u, max_v]))
-
-		return denom
 
 	def main(self):
 		## Get all the currents functions
@@ -576,21 +734,18 @@ class Hotspot_Sampling():
 
 	def main_2d(self):
 		## Get all the currents functions
-		width = haversine(self.place_bbox[0,0], self.place_bbox[0,1], self.place_bbox[1,0], self.place_bbox[1,1]) * 1000
-		height = haversine(self.place_bbox[1,0], self.place_bbox[1,1], self.place_bbox[2,0], self.place_bbox[2,1]) * 1000
+
 		# xwidth = [-width/2, width/2]
 		# yheight = [-height/2, height/2]
 		# xy_dim = np.array([[-width/2, height/2], [width/2, height/2], [width/2, -height/2], [-width/2, -height/2]])
 
 		##Get max current and calculate heuristic denominator
-		xbound = [-width/2, width/2]
-		ybound = [-height/2, height/2]
+		xbound = [-self.width/2, self.width/2]
+		ybound = [-self.height/2, self.height/2]
 		heuristic_denom = self.calc_heuristic_denom(xbound, ybound)
 
 		## Create hotspots of trash
-		hotspot_dict = self.init_hotspots(width, height)
-		print (hotspot_dict)
-		pdb.set_trace()
+		hotspot_dict = self.init_hotspots(self.width, self.height)
 
 		## Create a matrix containing cost to get from hotspot to hotspot
 		## Create a hotspot grid, which contains the cost of how long it would take to do cc in the hotspot
@@ -630,11 +785,20 @@ class Hotspot_Sampling():
 
 					##Calculate the closest points to each hotspot
 					pt1, pt2 = nearest_points(buffer_a, buffer_b)
+					pt1_depth = self.dfunc([pt1.x, pt1.y])[0]
+					pt2_depth = self.dfunc([pt2.x, pt2.y])[0]
 
+					pt1_3d = np.array([pt1.x, pt1.y, pt1_depth])
+					pt2_3d = np.array([pt2.x, pt2.y, pt2_depth])
+
+					print ('pt1_3d: ', pt1_3d)
+					print ('pt2_3d: ', pt2_3d)
+					print ()
 
 					##A* method
-					find_optimal_path_nrmpc(timenow[ts], 100, pt1, pt2)
-
+					self.find_optimal_path_nrmpc(0, self.num_max_epochs, pt1_3d, pt2_3d, heuristic_denom)
+					print ("FINAL_OPTIMAL_PATH_NRMPC IS FINISHED TESTING")
+					pdb.set_trace()
 
 					###############STOP. CURRENTLY TESTING UP TO HERE
 
