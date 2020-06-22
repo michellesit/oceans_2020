@@ -47,12 +47,13 @@ class Hotspot_Sampling():
 		self.num_hotspots = 6
 
 		self.uuv_position = [0.0, 0.0, 0.0]
+		self.max_uuv_vector = 7
 
 		#For 4D path planning
 		self.desired_speed = 2.5722 	##meters/second (5 knots)
 		self.goal_dist = 75
-		self.num_max_epochs = 500
-		self.E_appr = 10
+		self.num_max_epochs = 2500
+		self.E_appr = 75
 
 
 
@@ -293,8 +294,9 @@ class Hotspot_Sampling():
 		# ax1.plot([input_start_pos[0]], [input_start_pos[1]], [input_start_pos[2]], 'bo')
 		# ax1.plot([goal_pos[0]], [goal_pos[1]], [goal_pos[2]], 'bo')
 		# ax1.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1], goal_pos[1]], [input_start_pos[2], goal_pos[2]], 'b--')
-
-		while abs(np.linalg.norm([pos - goal_pos])) > threshold2:
+		epoch2 = 0
+		max_num_epoch2 = 200
+		while abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 < max_num_epoch2:
 			time_now_hrs = (time_now + timesteps)/3600.0
 			##Calculate ocean u,v currents
 			current_u = self.ufunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.u_boost
@@ -315,6 +317,23 @@ class Hotspot_Sampling():
 			if mid_goal_z > abs(np.linalg.norm([pos[2] - goal_pos[2]])):
 				mid_goal_z = abs(np.linalg.norm([pos[2] - goal_pos[2]]))
 
+			# print ('mid_goal_x: ', mid_goal_x)
+			# print ('mid_goal_y: ', mid_goal_y)
+			# print ('mid_goal_z: ', mid_goal_z)
+
+			##If mid_goal is outside the bounds of the map, then set to the edge
+			if abs(pos[0]+mid_goal_x) > self.width/2:
+				mid_goal_x = 0.0
+				# print ("changed x")
+			if abs(pos[1]+mid_goal_y) > self.height/2:
+				mid_goal_y = 0.0
+				# print ('changed y')
+			if abs(pos[2]+mid_goal_z) > 60:
+				mid_goal_z = 0.0
+				# print ('changed z')
+
+			# pdb.set_trace()
+
 			##Calculate the needed UUV offset and at what angle
 			##uvv controls = desired_vector - ocean_vector
 			desired_x = mid_goal_x - current_u
@@ -324,8 +343,10 @@ class Hotspot_Sampling():
 			# print ("uuv_vector: ", uuv_vector)
 
 			# ##TODO: throw in check. If uuv_vector > possible result, return 9999999999 cost
-			# if uuv_vector > self.max_uuv_vector:
-			# 	return 99999999999999999, 99999999999999999999, np.empty((0,6))
+			if uuv_vector > self.max_uuv_vector:
+				print ("uuv_vector: ", uuv_vector)
+				pdb.set_trace()
+				return np.inf, np.inf, np.empty((0,6))
 
 			uuv_phi = acos((desired_z / self.desired_speed))
 			uuv_theta = atan2(desired_y, desired_x)
@@ -338,11 +359,13 @@ class Hotspot_Sampling():
 			pos += [mid_goal_x, mid_goal_y, mid_goal_z]
 			# print ("dist to goal: ", abs(np.linalg.norm([pos - goal_pos])))
 
+			epoch2 += 1
+
 		# 	##TODO: visualize this makes sense
 		# 	print ("start_pos: ", input_start_pos)
 		# 	print ("goal_pos : ", goal_pos)
 		# 	print ("pos: ", pos)
-		# 	ax1.plot([pos[0]], [pos[1]], [pos[2]], 'ro')
+			# ax1.plot([pos[0]], [pos[1]], [pos[2]], 'ro')
 		# 	print ("")
 
 		# ax1.set_xlabel("x-axis")
@@ -371,6 +394,14 @@ class Hotspot_Sampling():
 			if mid_goal_z > abs(np.linalg.norm([pos[2] - goal_pos[2]])):
 				mid_goal_z = abs(np.linalg.norm([pos[2] - goal_pos[2]]))
 
+			##If mid_goal is outside the bounds of the map, then set to the edge
+			if abs(pos[0] + mid_goal_x) > self.width/2:
+				mid_goal_x = 0.0
+			if abs(pos[1] + mid_goal_y) > self.height/2:
+				mid_goal_y = 0.0
+			if abs(pos[2]+mid_goal_z) > 60:
+				mid_goal_z = 0.0
+
 			##Calculate the needed UUV offset and at what angle
 			##uvv controls = desired_vector - ocean_vector
 			desired_x = mid_goal_x - current_u
@@ -388,17 +419,22 @@ class Hotspot_Sampling():
 
 			# all_currents.append(current_vector)
 			uuv_controls = [uuv_vector, desired_x, desired_y, desired_z, uuv_phi, uuv_theta]
-			cost = (timesteps*(12.0/3600.0)) + (timesteps * ((uuv_controls[0]**3)**(0.333333)))
+			cost = (timesteps*(12.0/3600.0)) + (timesteps * ((uuv_controls[0]**3)**(0.333333))) * 0.30
 		else:
 			uuv_controls = np.array(uuv_controls)
-			cost = (timesteps*(12.0/3600.0)) + (timesteps * ((uuv_controls[-1, 0]**3)**(0.333333)))
+			cost = (timesteps*(12.0/3600.0)) + (timesteps * ((uuv_controls[-1, 0]**3)**(0.333333))) * 0.30
 
+
+		if epoch2 >= max_num_epoch2:
+			return np.inf, np.inf, np.array(uuv_controls).reshape((-1, 6))
+		else:
+			return cost, timesteps, np.array(uuv_controls).reshape((-1, 6))
 		# print ("cost: ", cost)
 		# print ("timesteps (in seconds): ", timesteps)
 		# print ("about to go to next point")
 		# pdb.set_trace()
 
-		return cost, timesteps, np.array(uuv_controls).reshape((-1, 6))
+		# return cost, timesteps, np.array(uuv_controls).reshape((-1, 6))
 
 
 
@@ -433,7 +469,8 @@ class Hotspot_Sampling():
 		##init starting node and its cost
 		##heuristic_cost = euclidean_dist(current_pos, end_pos)/max(euclidean_dist(v_current + v_AUV_relative_speed)) * E_appr
 		##heuristic cost is taken from the paper
-		heuristic_cost = ( np.linalg.norm([start_pos, end_pos])/heuristic_denom )*self.E_appr
+		heuristic_cost = ( abs(np.linalg.norm([end_pos - start_pos]))/heuristic_denom )*self.E_appr
+
 		to_be_visited_dict[tuple(start_pos)] = {'cost' : 0, 
 										'heuristic_cost': heuristic_cost, 
 										'total_cost': heuristic_cost, 
@@ -472,6 +509,7 @@ class Hotspot_Sampling():
 		current_pos = np.copy(start_pos)
 		parent_cost = 0
 		time_at_node = 0
+		found_goal = False
 
 		##Visualization
 		fig = plt.figure()
@@ -492,40 +530,16 @@ class Hotspot_Sampling():
 
 			##For each heading
 			##Calculate the point 10km into the distance
-				##TODO: check that this point isn't within some distance to the other points?
 			##Calculate the cost of getting to that point + parent cost = total cost
 			##Calculate the heuristic of getting to that point
 			##Save the point to the to_be_visted_list
 			for angle_idx in range(all_hangles_cart.shape[0]):
-				print ("angle_idx: ", angle_idx)
+				# print ("angle_idx: ", angle_idx)
 
 				##Calculate the desired point 10m into the distance
 				desired_heading_cart = all_hangles_cart[angle_idx]
 				goal_x, goal_y, goal_z = desired_heading_cart*self.goal_dist + current_pos
 				goal_pos = np.array([goal_x, goal_y, goal_z])
-				
-				# pdb.set_trace()
-				##If this point is within some distance to a previously calculated point, then move onto next step
-				not_valid = False
-				print ("num keys: ", len(to_be_visited_dict.items()))
-				for k,v in to_be_visited_dict.items():
-					check_dist = np.linalg.norm([goal_pos - np.array(k)])
-
-					if check_dist < 50 and np.linalg.norm(v['parent_pos'] - start_pos)>5:
-						print ("check dist: ", check_dist)
-						print ("too close")
-						print ("goal_pos: ", goal_pos)
-						print ("K    pos: ", np.array(k))
-						not_valid = True
-						pdb.set_trace()
-						break
-
-					if np.linalg.norm([goal_pos - k]) < 5:
-						print ("Goal pos and k are the same!")
-						pdb.set_trace()
-
-				if not_valid:
-					continue
 
 				if abs(goal_x) > self.width/2:
 					goal_x = self.width/2 * np.sign(goal_x)
@@ -533,9 +547,31 @@ class Hotspot_Sampling():
 					goal_y = self.height/2 * np.sign(goal_y)
 				if goal_z > 0:
 					goal_z = 0
+				if goal_z < -60:
+					goal_z = -60
 				goal_pos = np.array([goal_x, goal_y, goal_z])
 
-				print ("point is valid")
+				##If this point is within some distance to a previously calculated point, then move onto next step
+				not_valid = False
+				# print ("num keys: ", len(to_be_visited_dict.items()))
+				for k,v in to_be_visited_dict.items():
+					check_dist = abs(np.linalg.norm([goal_pos - np.array(k)]))
+
+					if check_dist < self.goal_dist-5 and abs(np.linalg.norm(v['parent_pos'] - start_pos))>5:
+						# print ("check dist: ", check_dist)
+						# print ("too close")
+						# print ("goal_pos: ", goal_pos)
+						# print ("K    pos: ", np.array(k))
+						not_valid = True
+						# pdb.set_trace()
+						break
+
+				if not_valid:
+					continue
+
+
+
+				# print ("point is valid")
 
 
 				##Calculate the cost of getting to that goal (cost is determined by formula from paper)
@@ -548,20 +584,28 @@ class Hotspot_Sampling():
 				self_and_parent_cost = parent_cost + cost
 				# print ("self_and_parent_cost: ", self_and_parent_cost)
 
-				heuristic_cost = ( np.linalg.norm([current_pos, end_pos])/heuristic_denom )*self.E_appr
-				# pdb.set_trace()
+				heuristic_cost = ( abs(np.linalg.norm([end_pos - current_pos]))/heuristic_denom )*self.E_appr
 				# print ('heuristic_cost: ', heuristic_cost)
 				# print ("total_cost: ", heuristic_cost+self_and_parent_cost)
+
+				# if tuple(goal_pos) in to_be_visited_dict:
+				# 	print ("this key already exists in dict")
+				# 	print ("goal_pos: ", goal_pos)
+				# 	print ("current_pos: ", current_pos)
+				# 	print (to_be_visited_dict[tuple(goal_pos)])
+				# else:
+				# 	print ("This key is not in the dict")
+
 
 				##Append this cost to the unvisited list
 				to_be_visited_dict[tuple(goal_pos)] = {'cost' : self_and_parent_cost, 
 														'heuristic_cost': heuristic_cost, 
-														'total_cost': heuristic_cost+self_and_parent_cost, 
+														'total_cost': heuristic_cost + self_and_parent_cost,
 														'parent_pos': current_pos, 
 														'time_sec_at_this_node' : time_at_node + time_traveled}
 				
-				print ("added value to dict: ", goal_pos)
-				pdb.set_trace()
+				# print ("added value to dict: ", goal_pos)
+				# pdb.set_trace()
 
 				##plot where the resulting point is and the cost of how much it takes to get to that point
 				# ax1.plot([goal_x], [goal_y], [goal_z], 'bo')
@@ -575,13 +619,19 @@ class Hotspot_Sampling():
 			##Sort the unvisited list by cost
 			visited_dict[tuple(current_pos)] = to_be_visited_dict[tuple(current_pos)]
 			del to_be_visited_dict[tuple(current_pos)]
-			print ("deleted something")
-			sorted_cost_dict = sorted(to_be_visited_dict.items(), key=lambda x: (x[1]['cost']))
+			# print ("deleted something")
+			sorted_cost_dict = sorted(to_be_visited_dict.items(), key=lambda x: (x[1]['total_cost']))
 
 			##Pick the next node to visit
 			lowest_cost_key = sorted_cost_dict[0][0]
 			lowest_cost_items = sorted_cost_dict[0][1]
 			# print ("next node to be visited: ", lowest_cost_key, lowest_cost_items)
+			print ("dist to goal: ", abs(np.linalg.norm([end_pos - lowest_cost_key])))
+			print ("lowest cost: ", lowest_cost_items['cost'])
+			print ("lowest heuristic_cost: ", lowest_cost_items['heuristic_cost'])
+			print ("lowest total_cost: ", lowest_cost_items['total_cost'])
+			print ()
+			# pdb.set_trace()
 
 			ax1.plot([lowest_cost_key[0]], [lowest_cost_key[1]], [lowest_cost_key[2]], 'go')
 
@@ -590,23 +640,31 @@ class Hotspot_Sampling():
 			##Append current node to the visited list
 			##Update timestart timestep values?
 			
-			parent_cost = lowest_cost_items['cost']
+			parent_cost = lowest_cost_items['total_cost']
 			time_at_node = lowest_cost_items['time_sec_at_this_node']
 			current_pos = lowest_cost_key
 
 			epoch += 1
+
+			if abs(np.linalg.norm([current_pos - end_pos])) < threshold1:
+				print ("WE ARE WITHIN REACH TO THE END POINT!")
+				print ("WE ARE BREAKING LOOP")
+				print ("Epochs: ", epoch)
+				found_goal = True
+				##backtrack through the nodes as a result
+				break
 
 		ax1.set_xlabel("x-axis")
 		ax1.set_ylabel("y-axis")
 		ax1.set_zlabel("depth")
 		plt.show()
 
-		for k,v in visited_dict.items():
-			print (v['cost'])
-			print (v['heuristic_cost'])
-			print (v['total_cost'])
-			print ()
+		if found_goal:
+			print ("We found the end!!!!")
+		else:
+			print ("We did not reach the goal")
 
+		pdb.set_trace()
 
 
 	def main(self):
