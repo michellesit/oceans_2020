@@ -58,7 +58,7 @@ class Hotspot_Sampling():
 		#For 4D path planning
 		self.desired_speed = 2.5722 	##meters/second (5 knots)
 		self.goal_dist = 50
-		self.num_max_epochs = 7000
+		self.num_max_epochs = 15000
 		self.E_appr = 75 ##Approximate, minimum energy per sampling time consumed by the vehicle at each time step
 
 
@@ -299,7 +299,7 @@ class Hotspot_Sampling():
 			ax1.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1], goal_pos[1]], [input_start_pos[2], goal_pos[2]], 'b--')
 
 		epoch2 = 0
-		max_num_epoch2 = 200
+		max_num_epoch2 = 150
 		while abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 < max_num_epoch2:
 			time_now_hrs = (time_now + timesteps)/3600.0
 			##Calculate ocean u,v currents
@@ -348,6 +348,7 @@ class Hotspot_Sampling():
 			##update pos with resulting location
 			pos += [mid_goal_x, mid_goal_y, mid_goal_z]
 			epoch2 += 1
+			# print ("epoch2: ", epoch2)
 
 			#Visualize this makes sense
 			if vis_ctw:
@@ -629,8 +630,10 @@ class Hotspot_Sampling():
 			parent_control_cost = lowest_cost_items['total_control_cost']
 
 			epoch += 1
+			print ("epoch: ", epoch)
 
 			final_diff = end_pos - current_pos
+			print (abs(np.linalg.norm([current_pos - end_pos])))
 			if abs(np.linalg.norm([current_pos - end_pos])) < threshold1:
 				print ("WE ARE WITHIN REACH TO THE END POINT!")
 				print ("WE ARE BREAKING LOOP")
@@ -690,8 +693,8 @@ class Hotspot_Sampling():
 
 		## Create a matrix containing cost to get from hotspot to hotspot
 		## Create a hotspot grid, which contains the cost of how long it would take to do cc in the hotspot
-		total_time_duration = 15*4*24*4
-		time_arr = np.arange(0, total_time_duration, 15)/3600
+		total_time_duration = 15*4*24*4*60
+		time_arr = np.arange(0, total_time_duration, 3600)
 
 		cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
 		nom_cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
@@ -699,12 +702,12 @@ class Hotspot_Sampling():
 		paths_matrix = []
 
 		## For every 15 minutes over 4 days:
-		for ts in range(len(time_arr)):
+		for ts in range(0, len(time_arr)):
 			convex_hotspots = []
 			original_hotspots = []
 
 			##For each hotspot
-			for a_idx in range(self.num_hotspots-1):
+			for a_idx in range(self.num_hotspots):
 				## Get convex hull of each of the hotspots plus some buffer
 				convexhull_a = sg.MultiPoint(hotspot_dict[a_idx][-1][:, 1:3]).convex_hull
 				buffer_a = convexhull_a.buffer(5)
@@ -714,7 +717,14 @@ class Hotspot_Sampling():
 
 
 
-				for b_idx in range(1, self.num_hotspots):
+				for b_idx in range(self.num_hotspots):
+				# for b_idx in range(5, self.num_hotspots+1):
+					if b_idx == a_idx:
+						print ("ts: ", ts, a_idx, b_idx)
+						print ("a_idx and b_idx are the same. Passing!")
+						pdb.set_trace()
+						continue
+
 					print ("ts: ", ts, a_idx, b_idx)
 					convexhull_b = sg.MultiPoint(hotspot_dict[b_idx][-1][:, 1:3]).convex_hull
 					buffer_b = convexhull_b.buffer(5)
@@ -739,16 +749,14 @@ class Hotspot_Sampling():
 					print ()
 
 					##A* method
-					astar_path, astar_cost = self.find_optimal_path_nrmpc(0, self.num_max_epochs, pt1_3d, pt2_3d, heuristic_denom)
+					astar_path, astar_cost = self.find_optimal_path_nrmpc(time_arr[ts], self.num_max_epochs, pt1_3d, pt2_3d, heuristic_denom)
 					cost_matrix[ts][a_idx][b_idx] = astar_cost
 					print ("astar_cost: ", astar_cost)
 					print ("FINAL_OPTIMAL_PATH_NRMPC IS FINISHED TESTING")
 
 					# pdb.set_trace()
 
-					###############STOP. CURRENTLY TESTING UP TO HERE
-
-					##Calculate the waypoints needed to traverse along the bottom of the seafloor
+					#Calculate the waypoints needed to traverse along the bottom of the seafloor
 					##NOMINAL PATH
 					##Split path into several points
 					##Get the depth for all of those points
@@ -765,8 +773,8 @@ class Hotspot_Sampling():
 
 					##TODO: Calculate the cost of traveling this path
 					print ("all_waypts: ", all_waypts)
-					print ("pt1_3d: ", pt1_3d)
-					print ("pt2_3d: ", pt2_3d)
+					# print ("pt1_3d: ", pt1_3d)
+					# print ("pt2_3d: ", pt2_3d)
 
 					nom_total_cost = 0
 					for nom_pt_idx in range(all_waypts.shape[0]-1):
@@ -779,9 +787,9 @@ class Hotspot_Sampling():
 
 						nom_total_cost += np.sum(nom_controls[:, 0])
 
-					print ("astar_cost: ", astar_cost)
-					print ("final nom_total_cost: ", nom_total_cost)
-					print ("difference between costs: ", astar_cost - nom_total_cost)
+					# print ("astar_cost: ", astar_cost)
+					# print ("final nom_total_cost: ", nom_total_cost)
+					# print ("difference between costs: ", astar_cost - nom_total_cost)
 					nom_cost_matrix[ts][a_idx][b_idx] = nom_total_cost
 					# pdb.set_trace()
 
@@ -817,11 +825,13 @@ class Hotspot_Sampling():
 
 						str_total_cost += np.sum(str_controls[:, 0])
 
+					print ("ts: ", ts, a_idx, b_idx)
 					print ("astar_cost: ", astar_cost)
 					print ("final nom_total_cost: ", nom_total_cost)
+					print ("difference between costs: ", astar_cost - nom_total_cost)
 					print ("final str_total_cost: ", str_total_cost)
 					print ("difference between costs: ", astar_cost - str_total_cost)
-					# pdb.set_trace()
+					pdb.set_trace()
 
 					# #Visualize/debugging in 2D
 					# plt.plot(original_a[:,0], original_a[:,1], 'ro')
