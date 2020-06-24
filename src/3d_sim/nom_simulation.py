@@ -26,6 +26,8 @@ from trash_utils.finder_utils import (get_multi_current_block,
 									  get_height)
 
 from trash_utils.trash_lib import trash_2d_gauss, init_hotspots, visualize_trash_flow, update_trash_pos,visualize_trash_step
+from trash_utils.cc_utils import calc_mowing_lawn
+from trash_utils.Env import Env
 
 import pdb
 
@@ -37,19 +39,10 @@ Calculate a path in 3D that would go from spot to spot
 Do complete coverage in those spots
 '''
 
-class Hotspot_Sampling():
+class Nom_Simulation():
 
 	def __init__(self):
-		self.place_bbox, self.ufunc, self.vfunc, self.dfunc = load_currents()
-		self.width = get_width(self.place_bbox)
-		self.height = get_height(self.place_bbox)
-		self.u_boost = 1
-		self.v_boost = 1
-
-		# self.u_boost = 30.5
-		# self.v_boost = 30.5
-		# self.u_boost = 50.5
-		# self.v_boost = 50.5
+		self.Env = Env() ##This now contains all the ufunc, vfunc, width, height, u_boost, v_boost
 		self.num_hotspots = 6
 
 		self.uuv_position = [0.0, 0.0, 0.0]
@@ -61,93 +54,6 @@ class Hotspot_Sampling():
 		self.goal_dist = 50
 
 
-
-	def calc_mowing_lawn(self, bbox, y_bbox, start_end):
-		'''
-		Calculate the intersection of the lines with the bbox
-		Orders the waypoints according to either left/right start/end
-
-		Input:
-			bbox (sh.Polygon) : some polygon to calculate the mowing lawn pattern
-			y_bbox (np.ndarray) : Array of heights that the lines are calculated at
-								Each point in this array corresponds to a line.
-			start_end (str) : "right" or "left". Determines which side the first
-							waypoint comes from. This determines the ordering of all
-							the following waypoints.
-
-		Output:
-			waypoints (np.ndarray) : ordered waypoints on how to traverse this bbox
-		'''
-		all_intersections = []
-		minx, miny, maxx, maxy = bbox.bounds
-		for i in range(y_bbox.shape[0]):
-			lines = sh.LineString([ [minx-abs(minx*0.4), y_bbox[i]],
-									[maxx+abs(maxx*0.4), y_bbox[i]] ])
-			intersections = bbox.intersection(lines)
-
-			if intersections.is_empty == False:
-				##TODO: sort the intersections so they are always left to right
-				# print (zip(lines.xy[0], lines.xy[1]))
-				# ziplines = zip(lines.xy[0], lines.xy[1])
-				# npint = np.array(intersections)
-
-				# plt.plot(bbox.exterior.coords.xy[0], bbox.exterior.coords.xy[1])
-				# plt.plot(lines.xy[0], lines.xy[1])
-				# if npint.ndim == 1:
-				# 	plt.scatter(npint[0], npint[1])
-				# else:
-				# 	plt.scatter(npint[:,0], npint[:,1])
-				# plt.show()
-				# pdb.set_trace()
-
-				all_intersections.append(np.array(intersections))
-
-		##TODO: Should add in a check here to make sure there are intersecting lines
-
-		##order the waypoints accordingly
-		waypoints = []
-		for i in range(len(all_intersections)):
-			line_pts = all_intersections[i]
-
-			if all_intersections[i].ndim == 1:
-				waypoints.extend((line_pts, line_pts))
-				continue
-
-			if start_end == "right":
-				if i%2 == 0:
-					waypoints.extend((line_pts[1], line_pts[0]))
-				else:
-					waypoints.extend((line_pts[0], line_pts[1]))
-
-			elif start_end == "left":
-				if i%2 == 0:
-					waypoints.extend((line_pts[0], line_pts[1]))
-				else:
-					waypoints.extend((line_pts[1], line_pts[0]))
-
-		return np.array(waypoints)
-
-
-	def simple_cc(self, search_bbox):
-		rotation = np.arange(0, 360, 10)
-		best_cost = 99999999999999999;
-		for r in range(len(rotation)):
-			rotated_bbox = sa.rotate(search_bbox, rotation[r]) ##Default, takes in rotation by degrees
-			waypts = self.calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
-			centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
-			np_centered_waypoints = np.array(zip(centered_waypoints.exterior.coords.xy[0], 
-									 centered_waypoints.exterior.coords.xy[1]))
-			cost = self.est_propulsion(np_centered_waypoints, best_cost, 
-											est_uuv_pos=False, use_bound=True, 
-											visualize=False)
-
-			if cost < best_cost:
-				best_cost = cost
-				best_waypoints = np_centered_waypoints
-				best_rotation = rotation[r]
-				# best_time = cost
-
-		return best_cost
 
 
 	def cost_to_waypoint(self, input_start_pos, goal_pos, goal_heading, time_now, vis_ctw=False):
@@ -299,44 +205,120 @@ class Hotspot_Sampling():
 			return cost, timesteps, np.array(uuv_controls).reshape((-1, 6))
 
 
+	def calculate_nominal_paths(self, hotspot_dict, wpt_spacing):
+		'''
+
+		Inputs:
+			hotspot_dict (Dict) :
+			wpt_spacing (int) : distance (meters) between the nominal waypoints
+
+		Returns:
+			cc_paths (np.ndarray) : 
+			all_paths (np.ndarray) : Nominal waypoints for traveling from hotspot to hotspot
+									To access the path from hotspot 1 to 4 for example:
+									all_paths[1][4]
+
+		'''
+
+		##For each of these hotspots, calculate the path to each other and the complete coverage algorithm to cover them
+		cc_paths = []
+		all_paths = []
+		for a_idx in range(self.num_hotspots):
+			## Get convex hull of each of the hotspots plus some buffer
+			convexhull_a = sg.MultiPoint(hotspot_dict[a_idx][-1][:, 1:3]).convex_hull
+			buffer_a = convexhull_a.buffer(5)
+			ax, ay = buffer_a.exterior.coords.xy
+			[minx, miny, maxx, maxy] = buffer_a.bounds
+			cc_y_lines = np.arange(miny, maxy, 5)
+
+			##Calculate the CC pattern on this hotspot
+			cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines)
+			cc_paths.append(cc_wpts)
+
+			hotspot_paths = []
+			for b_idx in range(self.num_hotspots):
+				if b_idx == a_idx:
+					hotspot_paths.append([])
+					continue
+
+				convexhull_b = sg.MultiPoint(hotspot_dict[b_idx][-1][:, 1:3]).convex_hull
+				buffer_b = convexhull_b.buffer(5)
+				bx, by = buffer_b.exterior.coords.xy
+
+				##Calculate the closest points between the hotspots
+				pt1, pt2 = nearest_points(buffer_a, buffer_b)
+				pt1_depth = self.Env.dfunc([pt1.x, pt1.y])[0]
+				pt2_depth = self.Env.dfunc([pt2.x, pt2.y])[0]
+				pt1_3d = np.array([pt1.x, pt1.y, pt1_depth])
+				pt2_3d = np.array([pt2.x, pt2.y, pt2_depth])
+
+				##NOMINAL PATH
+				##Calculate the waypoints needed to traverse along the bottom of the seafloor
+				##Split path into several points
+				##Get the depth for all of those points
+				##TODO? Smooth out the waypoints
+				num_pts = abs(pt1.x - pt2.x)//wpt_spacing
+				if num_pts == 0:
+					path = np.array([pt1_3d, pt2_3d])
+				else:
+					waypts = np.array(zip(np.linspace(pt1.x, pt2.x, num_pts, endpoint=True), 
+										  np.linspace(pt1.y, pt2.y, num_pts, endpoint=True)))
+					waypts_depth = self.Env.dfunc(waypts)
+					path = np.hstack((waypts, waypts_depth.reshape(-1,1) ))
+
+				hotspot_paths.append(path)
+
+			all_paths.append(hotspot_paths)
+
+		return cc_paths, all_paths
+
+
 
 	def main(self):
 		# ##Get max current and calculate heuristic denominator
-		xbound = [-self.width/2, self.width/2]
-		ybound = [-self.height/2, self.height/2]
+		xbound = [-self.Env.width/2, self.Env.width/2]
+		ybound = [-self.Env.height/2, self.Env.height/2]
 
 		## Create hotspots of trash
 		trash_x_centers = np.array([-250.98494701, -504.8406451, -132, 345, 876, 423]).reshape(-1,1)
 		trash_y_centers = np.array([-508.96243035, -877.89326774, -687, 354, 120, 348]).reshape(-1,1)
 		# trash_sigma = [[0.5, 0], [0, 0.1]]
 		trash_sigma = [[], []]
-		hotspot_dict = init_hotspots(trash_x_centers, trash_y_centers, trash_sigma, 20, self.dfunc)
+		hotspot_dict = init_hotspots(trash_x_centers, trash_y_centers, trash_sigma, 20, self.Env.dfunc)
 
 		map_dim = [xbound, ybound]
 
-		##step the trash dict 1 timestep
-		fig = plt.figure()
-		for xx in range(100):
-			hotspot_dict = update_trash_pos(hotspot_dict, 0, self.ufunc, self.vfunc, self.dfunc, self.width, self.height)
+		##Step the hotspot dict some x num times into the future
+		# fig = plt.figure()
+		for xx in range(1000):
+			hotspot_dict = update_trash_pos(hotspot_dict, 0, self.Env)
 
 			# visualize_trash_step(hotspot_dict, True, map_dim)
-			visualize_trash_step(hotspot_dict)
-			plt.pause(0.05)
-			plt.clf()
+			# visualize_trash_step(hotspot_dict)
+			# plt.pause(0.05)
 
-		plt.show()
+		# plt.show()
 
-		pdb.set_trace()
+		all_cc_paths, all_hotspot_paths = self.calculate_nominal_paths(hotspot_dict, 50)
+
+		## Arbitrarily selected order of hotspot traversal
+		hotspot_order = [0, 1, 2, 3, 4, 5]
+
+		##Execute the path
+		self.follow_path(hotspot_order, all_cc_paths, all_hotspot_paths)
+
+
+		'''
 
 		## Create a matrix containing cost to get from hotspot to hotspot
 		## Create a hotspot grid, which contains the cost of how long it would take to do cc in the hotspot
 		total_time_duration = 15*4*24*4*60
 		time_arr = np.arange(0, total_time_duration, 3600*3)
 
-		cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
-		nom_cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
-		cc_cost_matrix = np.empty((total_time_duration, self.num_hotspots, 1))
-		paths_matrix = []
+		# cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
+		# nom_cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
+		# cc_cost_matrix = np.empty((total_time_duration, self.num_hotspots, 1))
+		# paths_matrix = []
 
 		## For every 15 minutes over 4 days:
 		for ts in range(len(time_arr)):
@@ -355,21 +337,20 @@ class Hotspot_Sampling():
 
 
 				for b_idx in range(self.num_hotspots):
+					print ("ts: ", ts, a_idx, b_idx)
 					if b_idx == a_idx:
-						print ("ts: ", ts, a_idx, b_idx)
 						print ("a_idx and b_idx are the same. Passing!")
 						continue
 
-					print ("ts: ", ts, a_idx, b_idx)
 					convexhull_b = sg.MultiPoint(hotspot_dict[b_idx][-1][:, 1:3]).convex_hull
 					buffer_b = convexhull_b.buffer(5)
 					bx, by = buffer_b.exterior.coords.xy
 
 					original_a = hotspot_dict[a_idx][-1][:, 1:3]
 					original_b = hotspot_dict[b_idx][-1][:, 1:3]
-
 					convex_hotspots.append([ax,ay])
 					original_hotspots.append(original_a)
+
 
 					##Calculate the closest points to each hotspot
 					pt1, pt2 = nearest_points(buffer_a, buffer_b)
@@ -383,37 +364,11 @@ class Hotspot_Sampling():
 					print ('pt2_3d: ', pt2_3d)
 					print ()
 
-					# ##A* method
-					# astar_path, astar_cost, astar_time_sec = self.find_optimal_path_nrmpc(time_arr[ts], self.num_max_epochs, pt1_3d, pt2_3d, heuristic_denom)
-
-					# acompcost = 0
-					# acomptimecost = 0
-					# for apt_idx in range(astar_path.shape[0]-1):
-					# 	astar_diff = astar_path[apt_idx+1,:] - astar_path[apt_idx, :]
-					# 	astar_h = np.linalg.norm(astar_diff)
-					# 	astar_phi = acos(astar_diff[2] / astar_h)
-					# 	astar_theta = atan2(astar_diff[1], astar_diff[0])
-					# 	astar_heading = [astar_phi, astar_theta]
-					# 	acost, atime, actrl = self.cost_to_waypoint(astar_path[apt_idx,:], astar_path[apt_idx+1,:], astar_heading, time_arr[ts])
-						
-					# 	acompcost += np.sum(actrl[:,0])
-					# 	acomptimecost += atime
-
-					# print ("ACOST? ", acompcost)
-					# print ("ATIME? ", acomptimecost)
-
-					# cost_matrix[ts][a_idx][b_idx] = astar_cost
-					# print ("astar_cost: ", astar_cost)
-					# print ("FINAL_OPTIMAL_PATH_NRMPC IS FINISHED TESTING")
-
-					# pdb.set_trace()
-
-					#Calculate the waypoints needed to traverse along the bottom of the seafloor
 					##NOMINAL PATH
+					##Calculate the waypoints needed to traverse along the bottom of the seafloor
 					##Split path into several points
 					##Get the depth for all of those points
 					num_x_pts = abs(pt1.x - pt2.x)//50
-					# num_y_pts = abs(pt1.y - pt2.y)//20
 
 					waypts = np.array(zip(np.linspace(pt1.x, pt2.x, num_x_pts, endpoint=True), np.linspace(pt1.y, pt2.y, num_x_pts, endpoint=True)))
 					waypts_depth = self.dfunc(waypts)
@@ -423,11 +378,9 @@ class Hotspot_Sampling():
 					##Save the paths waypoints. TODO: FIX
 					# paths_matrix[ts, a_idx, b_idx] = np.hstack((waypts_depth, waypts))
 
-					##TODO: Calculate the cost of traveling this path
 					print ("all_waypts: ", all_waypts)
-					# print ("pt1_3d: ", pt1_3d)
-					# print ("pt2_3d: ", pt2_3d)
 
+					##TODO: Calculate the cost of traveling this path
 					nom_total_cost = 0
 					nom_total_timecost = 0
 					for nom_pt_idx in range(all_waypts.shape[0]-1):
@@ -563,5 +516,5 @@ class Hotspot_Sampling():
 		pdb.set_trace()
 		'''
 
-HS = Hotspot_Sampling()
+HS = Nom_Simulation()
 HS.main()
