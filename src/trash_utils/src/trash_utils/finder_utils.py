@@ -230,6 +230,22 @@ def get_current_block(bbox, current_file):
 
 
 def get_multi_current_block(bbox, current_file1, current_file2):
+	'''
+	Same a get_current_block but takes time into consideration
+
+	Inputs:
+		current_file1 (string): path to netcdf file containing the hydrodynamic data
+		current_file2 (string): path to netcdf file containing the hydrodynamic data
+
+	Returns:
+		u_func : interpolation function that outputs the u value at the specified array
+				To get the u value call: ufunc([time in hrs, depth, x, y])
+		v_func : interpolation function that outputs the v value at the specified array
+				To get the v value call: vfunc([time in hrs, depth, x, y])
+		uv_func : interpolation function that outputs the hypotenuse value of u and v at the specified array
+				To get the uv value call: ufunc([time in hrs, depth, x, y])
+
+	'''
 	all_currents1 = netcdf.NetCDFFile(current_file1)
 	lon = all_currents1.variables['lon'][:].copy()
 	lon -= 360
@@ -331,7 +347,13 @@ def grid_data(interp_f, x_bound, y_bound, spacing, z, time_hrs):
 
 
 def wpts_to_yaml(input_waypoints, save_path):
-	##TODO: Figure out how to format the points properly 
+	'''
+	TODO: Figure out how to format the points properly 
+
+	Output a yaml file containing the inputted waypoints
+	Used for the UUV Simulator
+
+	'''
 	all_wpt_dict = []
 	for idx in range(input_waypoints.shape[0]):
 		wpt_dict = {'point' : '{0}'.format(input_waypoints[idx].tolist()),
@@ -346,6 +368,61 @@ def wpts_to_yaml(input_waypoints, save_path):
 	with open('test.yaml', 'w') as outfile:
 		yaml.dump(all_dict, outfile, default_flow_style=False)
 
+
+def load_currents():
+	'''
+	Initialize survey area bbox, u,v,depth functions
+
+	Returns:
+		place_bbox(np.ndarray):
+		ufunc(function): time-dependent currents in u-direction. Inputs (time, depth, x,y)
+		vfunc(function): time-dependent currents in v-direction. Inputs (time, depth, x,y)
+		dfunc(function): returns bottom depth at that coordinate. Inputs (x,y)
+
+	'''
+	rospack = rospkg.RosPack()
+	trash_finder_path = rospack.get_path("trash_finder")
+	data_path = rospack.get_path("data_files")
+
+	config = pickle.load(open(trash_finder_path + '/config/demo_configs.p', 'rb'))
+
+	##hydrodynamic current
+	current_path = data_path+'/ca_subCA_das_2020010615.nc'
+	current_data = netcdf.NetCDFFile(current_path)
+
+	currents1 = config['current_file1']
+	currents_path1 = data_path + '/' + currents1
+	currents2 = config['current_file2']
+	currents_path2 = data_path + '/' + currents2
+	depth = current_data.variables['depth'][:].copy()
+	current_data.close()
+
+	##bathymetry model
+	topo = config['topo_file']
+	topo_path = data_path + '/' + topo
+
+	all_locations = pickle.load( open(trash_finder_path + "/config/locations.p", "rb"))
+	place_bbox = all_locations["mission_bay_flatter_bbox"]
+
+	ufunc, vfunc, uvfunc = get_multi_current_block(place_bbox, currents_path1, currents_path2)
+	d_area, dfunc = get_depth_block(place_bbox, topo_path)
+
+	return place_bbox, ufunc, vfunc, dfunc
+
+
+def get_width(bbox):
+	'''
+	Returns width (float) in meters
+
+	'''
+	return haversine(bbox[0,0], bbox[0,1], bbox[1,0], bbox[1,1]) * 1000
+
+def get_height(bbox):
+	'''
+	Returns height (float) in meters
+
+	'''
+	return haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1]) * 1000
 
 
 def main():
