@@ -5,6 +5,8 @@ import shapely.geometry as sg
 import shapely.affinity as sa
 import matplotlib.pyplot as plt
 
+
+
 '''
 All of the complete coverage algorithms to be shared across files
 
@@ -75,6 +77,75 @@ def calc_mowing_lawn(bbox, y_bbox, start_end='right'):
 				waypoints.extend((line_pts[1], line_pts[0]))
 
 	return np.array(waypoints)
+
+
+def search_for_trash(cc_path, trash_dict, start_uuv_pos):
+	'''
+	At each leg of the algorithm, "searches" for trash by detecting distance to the trash position
+	Assumes the algorithm is the mowing the lawn pattern
+
+	Inputs:
+		cc_path (np.ndarray) : 
+		trash_dict (Dict) :
+
+	Returns:
+		energy_cost (float) :
+		time_cost_sec (int) :
+
+	TODO: add in cost function
+	TODO: add visualization
+	'''
+
+	energy_cost = 0
+	time_cost_sec = 0
+	threshold_cc = 5
+	uuv_pos = np.copy(start_uuv_pos)
+	for pt_idx in range(len(cc_path)):
+		##Follow the waypoint and calculate the cost of getting to that point
+		#energy, time_sec = cost_to_waypoint(uuv_pos, cc_path[pt_idx])
+		energy_cost += energy
+		time_cost_sec += time_sec
+
+
+		##Check if any of the trash positions are near the uuv
+		##If yes, save the uuv position and trash position
+		all_trash_pos = np.array(trash_dict.values()).reshape(-1, 3)
+		uuv_trash_diff = np.hypot(*(uuv_pos - all_trash_pos).T)
+		detected_idx = np.where(abs(uuv_trash_diff) < 5)
+		print ("detected_idx: ", detected_idx)
+
+		pdb.set_trace()
+
+		##Surface
+		##broadcast the position of the trash to the base station
+		##Deal with surfacing somehow?
+		if len(detected_idx) > 0:
+			all_detected_trash_pos = all_trash_pos[detected_idx]
+			uuv_detected_pos = uuv.pos
+			detected_time = time_cost_sec		##use this to determine the u,v currents at that time
+
+			## Surface
+			new_uuv_pos = [uuv_pos[0], uuv_pos[1], 0]
+			## energy, time_sec = cost_to_waypoint(uuv_pos, new_uuv_pos)
+			energy_cost += energy
+			time_cost_sec += time_sec
+
+			uuv_pos = new_uuv_pos ##TODO: Do we need this?
+
+			##TODO CARLOS: This is where you'd predict the trash locations
+			##self.uuv in nom_simulation has a all_found_trash data structure. Feel free to change it to whatever you need
+
+
+
+		else:
+			##TODO: Does this need to be updated here?
+			uuv_pos = cc_path[pt_idx]
+
+
+	return energy_cost, time_cost_sec
+
+
+
 
 '''
 def simple_cc(search_bbox):

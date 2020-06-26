@@ -71,7 +71,7 @@ def init_hotspots(trash_x_centers, trash_y_centers, input_sigma, num_soda_cans, 
 	return trash_dict
 
 
-def update_trash_pos(trash_dict, time_now_hrs, ufunc, vfunc, dfunc, width, height):
+def update_trash_pos(trash_dict, time_now_hrs, e, tracking=False):
 	'''
 	Takes dict of trash positions and updates them according to the currents + noise and random walk
 
@@ -79,9 +79,14 @@ def update_trash_pos(trash_dict, time_now_hrs, ufunc, vfunc, dfunc, width, heigh
 		trash_dict (Dict) : keys = soda can ID number, items = np.ndarray of soda can's
 								positions throughout the timesteps
 		time_now_hrs (float): time to update at in hrs
+		e (Object) : Object (Env.py) that contains all the environment properties (currents, height, width)
+		tracking (bool) : Set to true to keep track of all the soda can positions
+							False = replace the trash position at each step
+		
 		ufunc, vfunc, dfunc (function) : interpolated currents and depth function from finder_utils
 		width (int): width of the map in xy-dim
 		height (int) : height of the map in xy-dim
+
 
 	Returns:
 		trash_dict (Dict) : updated with new soda can positions
@@ -97,8 +102,8 @@ def update_trash_pos(trash_dict, time_now_hrs, ufunc, vfunc, dfunc, width, heigh
 		##20% of the time, the soda can takes a step in a random direction
 		random_walk_chance = np.random.rand()
 		if random_walk_chance < 0.8:
-			local_u = ufunc(cans) * np.random.normal(1, 0.5)
-			local_v = vfunc(cans) * np.random.normal(1, 0.5)
+			local_u = e.ufunc(cans) * np.random.normal(1, 0.5)
+			local_v = e.vfunc(cans) * np.random.normal(1, 0.5)
 		else:
 			random_range = np.random.uniform(0, 2)
 			local_u = np.random.uniform(-random_range, random_range, size=(cans.shape[0], 1))
@@ -111,16 +116,19 @@ def update_trash_pos(trash_dict, time_now_hrs, ufunc, vfunc, dfunc, width, heigh
 		##TODO: TEST THIS
 		##If the position of the soda can is at the bounds, 
 		##then set the soda can position to boundary value
-		cans[:,2][cans[:,2] > width/2] = width/2
-		cans[:,2][cans[:,2] < -width/2] = -width/2
-		cans[:,3][cans[:,3] > height/2] = height/2
-		cans[:,3][cans[:,3] < -height/2] = -height/2
+		cans[:,2][cans[:,2] > e.width/2] = e.width/2
+		cans[:,2][cans[:,2] < -e.width/2] = -e.width/2
+		cans[:,3][cans[:,3] > e.height/2] = e.height/2
+		cans[:,3][cans[:,3] < -e.height/2] = -e.height/2
 
-		new_z = -dfunc(cans[:, 2:4])
+		new_z = -e.dfunc(cans[:, 2:4])
 		new_cans = np.hstack((new_z.reshape((-1,1)), cans[:, 2:4]))
 
 		##Add it to the dictionary and update last_pos
-		trash_dict[group_ID].append(new_cans)
+		if tracking:
+			trash_dict[group_ID].append(new_cans)
+		else:
+			trash_dict[group_ID] = [new_cans]
 
 	return trash_dict
 

@@ -18,3 +18,13 @@
 /src/trash_utils/src/trash_utils/*.pyc
 /src/trash_utils/src/trash_utils/__pycache__/
 stay.txt
+
+/src/3d_sim/*.pyc
+/src/3d_sim/*.png
+/src/trash_finder/scripts/old/
+/src/trash_finder/scripts/nominal_pics/
+/src/trash_finder/scripts/*.txt
+
+/src/trash_worlds/models/lajolla_cove/
+/src/trash_worlds/models/mission_bay/
+/src/trash_worlds/models/san_fran_shoal/
