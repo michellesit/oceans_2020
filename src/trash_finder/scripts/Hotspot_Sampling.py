@@ -121,7 +121,7 @@ class Hotspot_Sampling():
 		trash_y_centers = np.array([-508.96243035, -877.89326774, -687, 354, 120, 348]).reshape(-1,1)
 
 		sigma = [[0.5, 0.8], [0.8, 0.5]]
-		num_soda_cans = 10
+		num_soda_cans = 20
 		trash_dict = {}
 
 		for hotspot_idx in range(self.num_hotspots):
@@ -236,8 +236,8 @@ class Hotspot_Sampling():
 		# max_u = -999999
 		# max_v = -999999
 		for hrs in range(0, 96):
-			u = grid_data(self.ufunc, xbound, ybound, 50, d, [hrs]) * self.u_boost
-			v = grid_data(self.vfunc, xbound, ybound, 50, d, [hrs]) * self.v_boost
+			u = grid_data(self.ufunc, xbound, ybound, 50, d, [hrs]) * self.u_boost * np.random.normal(1, 0.5)
+			v = grid_data(self.vfunc, xbound, ybound, 50, d, [hrs]) * self.v_boost * np.random.normal(1, 0.5)
 			min_u = min(min_u, np.min(u))
 			min_v = min(min_v, np.min(v))
 			# max_u = max(max_u, np.max(u))
@@ -274,6 +274,7 @@ class Hotspot_Sampling():
 			start_pos (np.ndarray): (x,y,z)
 			goal_pos (np.ndarray): (x,y,z)
 			goal_heading (int, np.ndarray): radians [phi, theta]
+			time_now (int): time in seconds
 
 		Returns:
 			cost (float) : formula calculated from paper
@@ -303,8 +304,8 @@ class Hotspot_Sampling():
 		while abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 < max_num_epoch2:
 			time_now_hrs = (time_now + timesteps)/3600.0
 			##Calculate ocean u,v currents
-			current_u = self.ufunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.u_boost
-			current_v = self.vfunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.v_boost
+			current_u = self.ufunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.u_boost * np.random.normal(1, 0.5)
+			current_v = self.vfunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.v_boost * np.random.normal(1, 0.5)
 
 			##Calculate the desired heading and position of the uuv
 			mid_goal_x = self.desired_speed * sin(goal_phi) * cos(goal_theta)
@@ -336,7 +337,6 @@ class Hotspot_Sampling():
 			# ##TODO: throw in check. If uuv_vector > possible result, return 9999999999 cost
 			if uuv_vector > self.max_uuv_vector:
 				print ("uuv_vector: ", uuv_vector)
-				# pdb.set_trace()
 				return np.inf, np.inf, np.empty((0,6))
 
 			uuv_phi = acos((desired_z / self.desired_speed))
@@ -363,8 +363,8 @@ class Hotspot_Sampling():
 		if not uuv_controls:
 			time_now_hrs = (time_now + timesteps)/3600.0
 			##Calculate ocean u,v currents
-			current_u = self.ufunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.u_boost
-			current_v = self.vfunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.v_boost
+			current_u = self.ufunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.u_boost * np.random.normal(1, 0.5)
+			current_v = self.vfunc([time_now_hrs, abs(pos[2]), pos[0], pos[1]])[0] * self.v_boost * np.random.normal(1, 0.5)
 
 			##Calculate the desired heading and position of the uuv
 			mid_goal_x = self.desired_speed * sin(goal_phi) * cos(goal_theta)
@@ -414,34 +414,6 @@ class Hotspot_Sampling():
 			return cost, timesteps, np.array(uuv_controls).reshape((-1, 6))
 
 
-	def find_final_path(self, visited_dict, last_pos_coords, last_pos_items):
-		'''
-		Visited dict (dict): dictionary of all the nodes that have been visited so far
-		last_pos (np.ndarray): [x,y,z] used to trace path through dictionary
-
-		Returns:
-			path_cost (np.ndarray) : [x,y,z] coordinates of traveling that path
-
-		'''
-
-		path_coords = [last_pos_coords]
-		path_pos = np.copy(last_pos_coords)
-		path_pos_parent = last_pos_items['parent_pos']
-		path_cost = 0
-
-		while (np.array((path_pos_parent)) != np.array((np.inf, np.inf, np.inf))).all():
-			path_pos = path_pos_parent
-			path_pos_parent = visited_dict[tuple(path_pos)]['parent_pos']
-			path_cost += visited_dict[tuple(path_pos)]['controls_cost']
-			path_coords.append(path_pos)
-
-		path_coords = np.array(path_coords)
-		# print ("path_coords: ", np.flipud(path_coords))
-
-		return path_coords, path_cost
-
-
-
 	def find_optimal_path_nrmpc(self, time_start, epoch_max, start_pos, end_pos, heuristic_denom):
 		'''
 		Following the paper
@@ -474,7 +446,7 @@ class Hotspot_Sampling():
 										'heuristic_cost': heuristic_cost, 
 										'total_cost': heuristic_cost, 
 										'parent_pos': tuple([np.inf, np.inf, np.inf]), 
-										'time_sec_at_this_node' : 0,
+										'time_sec_at_this_node' : time_start,
 										'controls_cost' : 0,
 										'parent_control_cost': 0,
 										'total_control_cost': 0,
@@ -508,15 +480,15 @@ class Hotspot_Sampling():
 
 		all_hangles_cart = np.array(zip(x,y,z))
 		all_hangles_sphere = np.array(zip(phi, theta))
-		# all_timesteps = np.arange(0, 500, 8) ##TODO: Fix/figure this out
 		current_pos = np.copy(start_pos)
 		parent_cost = 0
 		parent_control_cost = 0
 		parent_nodes = np.empty((0,3))
-		time_at_node = 0
+		time_at_node = time_start
 		found_goal = False
 		final_cost = np.inf
 		found_path = []
+		time_sec_cost = 0
 
 		##Visualization
 		# fig = plt.figure()
@@ -572,7 +544,7 @@ class Hotspot_Sampling():
 
 				##Calculate the cost of getting to that goal (cost is determined by formula from paper)
 				desired_heading_sphere = all_hangles_sphere[angle_idx]
-				cost, time_traveled, controls_cost = self.cost_to_waypoint(current_pos, goal_pos, desired_heading_sphere, time_at_node/3600)
+				cost, time_traveled, controls_cost = self.cost_to_waypoint(current_pos, goal_pos, desired_heading_sphere, time_at_node)
 				self_and_parent_cost = parent_cost + cost
 				heuristic_cost = ( abs(np.linalg.norm([end_pos - current_pos]))/heuristic_denom )*self.E_appr
 				control_cost = np.sum(controls_cost[:,0])
@@ -653,18 +625,9 @@ class Hotspot_Sampling():
 				found_path = np.vstack((found_path, current_pos, end_pos))
 				found_cost = lowest_cost_items['parent_control_cost']
 				final_cost = found_cost + final_cost
-
-				# found_path, found_cost = self.find_final_path(visited_dict, current_pos, lowest_cost_items)
-				# final_cost += found_cost
-				# found_path = np.vstack((end_pos, found_path))
+				time_sec_cost = time_at_node + last_leg_time_traveled
 
 				# ax1.plot(found_path[:,0], found_path[:,1], found_path[:,2], 'k--')
-
-				# print ('found_path: ', np.flipud(found_path))
-				# print ('found_path2: ', found_path2)
-
-				# print ('found_cost: ', found_cost)
-				# print ('found_cost2: ', found_cost2)
 
 				# pdb.set_trace()
 				break
@@ -679,7 +642,7 @@ class Hotspot_Sampling():
 		else:
 			print ("We did not reach the goal")
 
-		return found_path, final_cost
+		return found_path, final_cost, time_sec_cost
 
 
 	def main_2d(self):
@@ -694,7 +657,7 @@ class Hotspot_Sampling():
 		## Create a matrix containing cost to get from hotspot to hotspot
 		## Create a hotspot grid, which contains the cost of how long it would take to do cc in the hotspot
 		total_time_duration = 15*4*24*4*60
-		time_arr = np.arange(0, total_time_duration, 3600)
+		time_arr = np.arange(0, total_time_duration, 3600*3)
 
 		cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
 		nom_cost_matrix = np.empty((total_time_duration, self.num_hotspots, self.num_hotspots))
@@ -702,7 +665,7 @@ class Hotspot_Sampling():
 		paths_matrix = []
 
 		## For every 15 minutes over 4 days:
-		for ts in range(0, len(time_arr)):
+		for ts in range(len(time_arr)):
 			convex_hotspots = []
 			original_hotspots = []
 
@@ -716,13 +679,17 @@ class Hotspot_Sampling():
 				##TODO: Calculate how much time it would take to do cc on that hotspot
 
 
+				##Create file to save results in
+				results_txt_file = open('results_hr{0}.txt'.format(time_arr[ts]/3600), "a")
+				results_txt_file.write("\n\n\nHOTSPOT #{0}\n".format(a_idx))
+				results_txt_file.close()
 
 				for b_idx in range(self.num_hotspots):
 				# for b_idx in range(5, self.num_hotspots+1):
 					if b_idx == a_idx:
 						print ("ts: ", ts, a_idx, b_idx)
 						print ("a_idx and b_idx are the same. Passing!")
-						pdb.set_trace()
+						# pdb.set_trace()
 						continue
 
 					print ("ts: ", ts, a_idx, b_idx)
@@ -749,7 +716,24 @@ class Hotspot_Sampling():
 					print ()
 
 					##A* method
-					astar_path, astar_cost = self.find_optimal_path_nrmpc(time_arr[ts], self.num_max_epochs, pt1_3d, pt2_3d, heuristic_denom)
+					astar_path, astar_cost, astar_time_sec = self.find_optimal_path_nrmpc(time_arr[ts], self.num_max_epochs, pt1_3d, pt2_3d, heuristic_denom)
+
+					acompcost = 0
+					acomptimecost = 0
+					for apt_idx in range(astar_path.shape[0]-1):
+						astar_diff = astar_path[apt_idx+1,:] - astar_path[apt_idx, :]
+						astar_h = np.linalg.norm(astar_diff)
+						astar_phi = acos(astar_diff[2] / astar_h)
+						astar_theta = atan2(astar_diff[1], astar_diff[0])
+						astar_heading = [astar_phi, astar_theta]
+						acost, atime, actrl = self.cost_to_waypoint(astar_path[apt_idx,:], astar_path[apt_idx+1,:], astar_heading, time_arr[ts])
+						
+						acompcost += np.sum(actrl[:,0])
+						acomptimecost += atime
+
+					print ("ACOST? ", acompcost)
+					print ("ATIME? ", acomptimecost)
+
 					cost_matrix[ts][a_idx][b_idx] = astar_cost
 					print ("astar_cost: ", astar_cost)
 					print ("FINAL_OPTIMAL_PATH_NRMPC IS FINISHED TESTING")
@@ -763,7 +747,7 @@ class Hotspot_Sampling():
 					num_x_pts = abs(pt1.x - pt2.x)//50
 					# num_y_pts = abs(pt1.y - pt2.y)//20
 
-					waypts = np.array(zip(np.linspace(pt1.x, pt2.x, num_x_pts), np.linspace(pt1.y, pt2.y, num_x_pts)))
+					waypts = np.array(zip(np.linspace(pt1.x, pt2.x, num_x_pts, endpoint=True), np.linspace(pt1.y, pt2.y, num_x_pts, endpoint=True)))
 					waypts_depth = self.dfunc(waypts)
 					all_waypts = np.hstack((waypts, waypts_depth.reshape(-1,1) ))
 
@@ -777,15 +761,17 @@ class Hotspot_Sampling():
 					# print ("pt2_3d: ", pt2_3d)
 
 					nom_total_cost = 0
+					nom_total_timecost = 0
 					for nom_pt_idx in range(all_waypts.shape[0]-1):
 						nominal_diff = all_waypts[nom_pt_idx+1] - all_waypts[nom_pt_idx]
 						nominal_h = np.linalg.norm(nominal_diff)
 						nominal_phi = acos(nominal_diff[2] / nominal_h)
 						nominal_theta = atan2(nominal_diff[1], nominal_diff[0])
 						nominal_heading = [nominal_phi, nominal_theta]
-						nom_alg_cost, nom_, nom_controls = self.cost_to_waypoint(all_waypts[nom_pt_idx, :], all_waypts[nom_pt_idx+1, :], nominal_heading, time_arr[ts])
+						nom_alg_cost, nom_timesteps, nom_controls = self.cost_to_waypoint(all_waypts[nom_pt_idx, :], all_waypts[nom_pt_idx+1, :], nominal_heading, time_arr[ts])
 
 						nom_total_cost += np.sum(nom_controls[:, 0])
+						nom_total_timecost += nom_timesteps
 
 					# print ("astar_cost: ", astar_cost)
 					# print ("final nom_total_cost: ", nom_total_cost)
@@ -813,25 +799,48 @@ class Hotspot_Sampling():
 
 					##STRAIGHT LINE PATH
 					str_waypts_depth = [self.dfunc([pt1.x, pt1.y])[0], self.dfunc([pt2.x, pt2.y])[0]]
-					all_str_waypts = np.array(zip(np.linspace(pt1.x, pt2.x, num_x_pts), np.linspace(pt1.y, pt2.y, num_x_pts), np.linspace(str_waypts_depth[0], str_waypts_depth[1], num_x_pts)))
+					all_str_waypts = np.array(zip(np.linspace(pt1.x, pt2.x, num_x_pts, endpoint=True), np.linspace(pt1.y, pt2.y, num_x_pts, endpoint=True), np.linspace(str_waypts_depth[0], str_waypts_depth[1], num_x_pts, endpoint=True)))
 					str_total_cost = 0
+					str_total_timecost = 0
 					for str_pt_idx in range(all_str_waypts.shape[0]-1):
 						str_diff = all_str_waypts[str_pt_idx+1] - all_str_waypts[str_pt_idx]
 						str_h = np.linalg.norm(str_diff)
 						str_phi = acos(str_diff[2] / str_h)
 						str_theta = atan2(str_diff[1], str_diff[0])
 						str_heading = [str_phi, str_theta]
-						str_alg_cost, str_, str_controls = self.cost_to_waypoint(all_str_waypts[str_pt_idx, :], all_str_waypts[str_pt_idx+1, :], str_heading, time_arr[ts])
+						str_alg_cost, str_timecost, str_controls = self.cost_to_waypoint(all_str_waypts[str_pt_idx, :], all_str_waypts[str_pt_idx+1, :], str_heading, time_arr[ts])
 
+						str_total_timecost += str_timecost
 						str_total_cost += np.sum(str_controls[:, 0])
 
 					print ("ts: ", ts, a_idx, b_idx)
-					print ("astar_cost: ", astar_cost)
+					print ("astar_cost prev: ", astar_cost)
+					print ("astar_cost: ", acompcost)
 					print ("final nom_total_cost: ", nom_total_cost)
-					print ("difference between costs: ", astar_cost - nom_total_cost)
+					print ("difference between costs: ", acompcost - nom_total_cost)
 					print ("final str_total_cost: ", str_total_cost)
-					print ("difference between costs: ", astar_cost - str_total_cost)
-					pdb.set_trace()
+					print ("difference between costs: ", acompcost - str_total_cost)
+					# print ("astar_time_cost: ", astar_time_sec)
+					print ("astar_time_cost: ", acomptimecost)
+					print ("final_nom_total_timecost: ", nom_total_timecost)
+					print ("final_nom_time_cost: ", str_total_timecost)
+
+					results_txt_file = open('results_hr{0}.txt'.format(time_arr[ts]/3600), "a")
+					results_txt_file.write("ts: ({0}, {1}, {2})\n".format(ts, a_idx, b_idx))
+					results_txt_file.write("astar_cost_prev: {0}\n".format(astar_cost))
+					results_txt_file.write("astar_cost: {0}\n".format(acompcost))
+					results_txt_file.write("final nom_total_cost: {0}\n".format(nom_total_cost))
+					results_txt_file.write("difference between costs: {0}\n".format(acompcost - nom_total_cost))
+					results_txt_file.write("final str_total_cost: {0}\n".format(str_total_cost))
+					results_txt_file.write("difference between costs: {0}\n".format(acompcost - str_total_cost))
+					# results_txt_file.write("astar_time_sec: {0}\n".format(astar_time_sec))
+					results_txt_file.write("astar_time_sec: {0}\n".format(acomptimecost))
+					results_txt_file.write("nom_total_timecost: {0}\n".format(nom_total_timecost))
+					results_txt_file.write("str_total_timecost: {0}\n\n".format(str_total_timecost))
+					results_txt_file.close()
+
+
+					# pdb.set_trace()
 
 					# #Visualize/debugging in 2D
 					# plt.plot(original_a[:,0], original_a[:,1], 'ro')
@@ -887,9 +896,10 @@ class Hotspot_Sampling():
 					##Need to incorporate 3d distance to waypoint into path cost now
 
 
-
 				convex_hotspots.append([bx,by])
 				original_hotspots.append(original_b)
+
+			# pdb.set_trace()
 
 			## Calculate cost to get to each of the other hotspots
 			## Convex hull the trash positions + add buffer
