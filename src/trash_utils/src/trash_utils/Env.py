@@ -10,5 +10,10 @@ class Env():
 		self.place_bbox, self.ufunc, self.vfunc, self.dfunc = load_currents()
 		self.width = get_width(self.place_bbox)
 		self.height = get_height(self.place_bbox)
+		self.max_depth = 50
 		self.u_boost = uboost
 		self.v_boost = vboost
+
+		self.xbound = [-self.width/2, self.width/2]
+		self.ybound = [-self.height/2, self.height/2]
+		self.map_dim = [self.xbound, self.ybound]
