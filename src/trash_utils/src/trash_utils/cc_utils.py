@@ -1,11 +1,11 @@
-from math import atan2, sin, cos
-
 import numpy as np
 import shapely.geometry as sg
 import shapely.affinity as sa
 import matplotlib.pyplot as plt
 
+from trash_utils.fourD_utils import follow_path_waypoints
 
+import pdb
 
 '''
 All of the complete coverage algorithms to be shared across files
@@ -14,243 +14,209 @@ All of the complete coverage algorithms to be shared across files
 
 
 def calc_mowing_lawn(bbox, y_bbox, start_end='right'):
-	'''
-	Calculate the intersection of the lines with the bbox
-	Orders the waypoints according to either left/right start/end
+    '''
+    Calculate the intersection of the lines with the bbox
+    Orders the waypoints according to either left/right start/end
 
-	Input:
-		bbox (sh.Polygon) : some polygon to calculate the mowing lawn pattern
-		y_bbox (np.ndarray) : Array of heights that the lines are calculated at
-							Each point in this array corresponds to a line.
-		start_end (str) : "right" or "left". Determines which side the first
-						waypoint comes from. This determines the ordering of all
-						the following waypoints.
+    Input:
+        bbox (sh.Polygon)      : some polygon to calculate the mowing lawn pattern
+        y_bbox (np.ndarray)    : Array of heights that the lines are calculated at
+                                 Each point in this array corresponds to a line.
+        start_end (str)        : "right" or "left". 
+                                 Determines which side the first waypoint comes from.
+                                 This determines the ordering of all the following 
+                                 waypoints.
 
-	Output:
-		waypoints (np.ndarray) : ordered waypoints on how to traverse this bbox
-	'''
-	all_intersections = []
-	minx, miny, maxx, maxy = bbox.bounds
-	for i in range(y_bbox.shape[0]):
-		lines = sg.LineString([ [minx-abs(minx*0.4), y_bbox[i]],
-								[maxx+abs(maxx*0.4), y_bbox[i]] ])
-		intersections = bbox.intersection(lines)
+    Output:
+        waypoints (np.ndarray) : ordered waypoints on how to traverse this bbox
+    '''
+    all_intersections = []
+    minx, miny, maxx, maxy = bbox.bounds
+    for i in range(y_bbox.shape[0]):
+        lines = sg.LineString([ [minx-abs(minx*0.4), y_bbox[i]],
+                                [maxx+abs(maxx*0.4), y_bbox[i]] ])
+        intersections = bbox.intersection(lines)
 
-		if intersections.is_empty == False:
-			##TODO: sort the intersections so they are always left to right
-			# print (zip(lines.xy[0], lines.xy[1]))
-			# ziplines = zip(lines.xy[0], lines.xy[1])
-			# npint = np.array(intersections)
+        if intersections.is_empty == False:
+            ##TODO: sort the intersections so they are always left to right
+            # print (zip(lines.xy[0], lines.xy[1]))
+            # ziplines = zip(lines.xy[0], lines.xy[1])
+            # npint = np.array(intersections)
 
-			# plt.plot(bbox.exterior.coords.xy[0], bbox.exterior.coords.xy[1])
-			# plt.plot(lines.xy[0], lines.xy[1])
-			# if npint.ndim == 1:
-			# 	plt.scatter(npint[0], npint[1])
-			# else:
-			# 	plt.scatter(npint[:,0], npint[:,1])
-			# plt.show()
-			# pdb.set_trace()
+            # plt.plot(bbox.exterior.coords.xy[0], bbox.exterior.coords.xy[1])
+            # plt.plot(lines.xy[0], lines.xy[1])
+            # if npint.ndim == 1:
+            #   plt.scatter(npint[0], npint[1])
+            # else:
+            #   plt.scatter(npint[:,0], npint[:,1])
+            # plt.show()
+            # pdb.set_trace()
 
-			all_intersections.append(np.array(intersections))
+            all_intersections.append(np.array(intersections))
 
-	##TODO: Should add in a check here to make sure there are intersecting lines
+    ##TODO: Should add in a check here to make sure there are intersecting lines
 
-	##order the waypoints accordingly
-	waypoints = []
-	for i in range(len(all_intersections)):
-		line_pts = all_intersections[i]
+    ##order the waypoints accordingly
+    waypoints = []
+    for i in range(len(all_intersections)):
+        line_pts = all_intersections[i]
 
-		if all_intersections[i].ndim == 1:
-			waypoints.extend((line_pts, line_pts))
-			continue
+        if all_intersections[i].ndim == 1:
+            waypoints.append(line_pts)
+            # waypoints.extend((line_pts, line_pts))
+            continue
 
-		if start_end == "right":
-			if i%2 == 0:
-				waypoints.extend((line_pts[1], line_pts[0]))
-			else:
-				waypoints.extend((line_pts[0], line_pts[1]))
+        if start_end == "right":
+            if i%2 == 0:
+                waypoints.extend((line_pts[1], line_pts[0]))
+            else:
+                waypoints.extend((line_pts[0], line_pts[1]))
 
-		elif start_end == "left":
-			if i%2 == 0:
-				waypoints.extend((line_pts[0], line_pts[1]))
-			else:
-				waypoints.extend((line_pts[1], line_pts[0]))
+        elif start_end == "left":
+            if i%2 == 0:
+                waypoints.extend((line_pts[0], line_pts[1]))
+            else:
+                waypoints.extend((line_pts[1], line_pts[0]))
 
-	return np.array(waypoints)
-
-
-def search_for_trash(cc_path, trash_dict, start_uuv_pos):
-	'''
-	At each leg of the algorithm, "searches" for trash by detecting distance to the trash position
-	Assumes the algorithm is the mowing the lawn pattern
-
-	Inputs:
-		cc_path (np.ndarray) : 
-		trash_dict (Dict) :
-
-	Returns:
-		energy_cost (float) :
-		time_cost_sec (int) :
-
-	TODO: add in cost function
-	TODO: add visualization
-	'''
-
-	energy_cost = 0
-	time_cost_sec = 0
-	threshold_cc = 5
-	uuv_pos = np.copy(start_uuv_pos)
-	for pt_idx in range(len(cc_path)):
-		##Follow the waypoint and calculate the cost of getting to that point
-		#energy, time_sec = cost_to_waypoint(uuv_pos, cc_path[pt_idx])
-		energy_cost += energy
-		time_cost_sec += time_sec
+    return np.array(waypoints)
 
 
-		##Check if any of the trash positions are near the uuv
-		##If yes, save the uuv position and trash position
-		all_trash_pos = np.array(trash_dict.values()).reshape(-1, 3)
-		uuv_trash_diff = np.hypot(*(uuv_pos - all_trash_pos).T)
-		detected_idx = np.where(abs(uuv_trash_diff) < 5)
-		print ("detected_idx: ", detected_idx)
+def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
+    '''
+    At each leg of the algorithm, 
+    "searches" for trash by detecting distance to the trash position.
+    Assumes the algorithm is the mowing the lawn pattern
 
-		pdb.set_trace()
+    Inputs:
+        cc_path (np.ndarray)  : waypoints to travel to
+        trash_dict (Dict)     : all the trash hotspot latest position
+        uuv (Obj)             : trash_utils/UUV.py to access (pos, max_thrust)
+        env (Obj)             : trash_utils/Env.py object to access
+                                (ufunc, vfunc, width, height, max_depth)
+        desired_speed (float) : uuv speed (meters/sec) for each step
 
-		##Surface
-		##broadcast the position of the trash to the base station
-		##Deal with surfacing somehow?
-		if len(detected_idx) > 0:
-			all_detected_trash_pos = all_trash_pos[detected_idx]
-			uuv_detected_pos = uuv.pos
-			detected_time = time_cost_sec		##use this to determine the u,v currents at that time
+    *args in order:
+        args1 (bool)          : True = Visualize trash and uuv movement
+        args2 (matplotlib)    : plt.figure() or subplot to plot in
 
-			## Surface
-			new_uuv_pos = [uuv_pos[0], uuv_pos[1], 0]
-			## energy, time_sec = cost_to_waypoint(uuv_pos, new_uuv_pos)
-			energy_cost += energy
-			time_cost_sec += time_sec
+    Returns:
+        energy_cost (float)   : amount of energy uuv needs to complete this path
+        time_cost_sec (int)   : amount of time in seconds to complete this path
+        eq_cost (float)       : cost calculated from Huynh, Dunbabin, Smith (ICRA 2015)
+                                Equation 6 which takes energy and time into account
 
-			uuv_pos = new_uuv_pos ##TODO: Do we need this?
+    '''
 
-			##TODO CARLOS: This is where you'd predict the trash locations
-			##self.uuv in nom_simulation has a all_found_trash data structure. Feel free to change it to whatever you need
+    energy_cost = 0
+    time_cost_sec = 0
+    total_cost = 0
+
+    # uuv_pos = uuv.pos
+    uuv_pos = np.copy(uuv.pos)
+    all_trash_pos = np.array(trash_dict.values()).reshape(-1, 3)
+    all_trash_pos[:,2] *= -1
+
+    np_args = np.array(args).flatten()
+    if np_args[0]:
+        fig = np_args[1]
+        ax1 = fig.add_subplot(122, projection='3d')
+        ##Plot all the waypoints to travel to
+        ax1.plot(cc_path[:,0], cc_path[:,1], cc_path[:,2], 'bo')
+        ax1.plot(cc_path[:,0], cc_path[:,1], cc_path[:,2], 'b--')
+        ##Final goal state as red dot
+        ax1.plot([cc_path[-1, 0]], [cc_path[-1, 1]], [cc_path[-1, 2]], 'ro')
+        ax1.text(cc_path[-1, 0], cc_path[-1, 1], cc_path[-1, 2], 'goal')
+        ##All trash positions labeled with green dot
+        ax1.plot(all_trash_pos[:,0], all_trash_pos[:,1], all_trash_pos[:,2], 'go')
+
+        maxx = max(cc_path[:,0])
+        minx = min(cc_path[:,0])
+        miny = min(cc_path[:,1])
+        maxy = max(cc_path[:,1])
+        minz = min(cc_path[:,2])
+        maxz = max(cc_path[:,2])
+
+        ax1.set_xlim([minx-10, maxx+10])
+        ax1.set_ylim([miny-10, maxy+10])
+        ax1.set_zlim([minz-3, maxz+3])
 
 
+    for pt_idx in range(len(cc_path)):
+        ##Follow the waypoint and calculate the cost of getting to that point
+        ##Check if any of the trash positions are near the uuv
+        ##If yes, save the uuv position and trash position
+        trash_info = {'trash_dict': all_trash_pos}
+        energy, time_sec, eq_cost, all_detected_trash_pos = follow_path_waypoints(
+                                                         np.array([cc_path[pt_idx]]),
+                                                         uuv, 
+                                                         env, 
+                                                         1.5, 
+                                                         False, **trash_info)
+        energy_cost += energy
+        time_cost_sec += time_sec
+        total_cost += eq_cost
 
-		else:
-			##TODO: Does this need to be updated here?
-			uuv_pos = cc_path[pt_idx]
+        ##TODO: Surface if trash detected during that leg
+        ##Broadcast the position of the trash to the base station
+        if len(all_detected_trash_pos) > 0:
+            uuv_detected_pos = uuv.pos
+            ##CARLOS: use detected_time_hrs to determine the u,v currents at that time
+            detected_time_hrs = time_cost_sec / 3600.0
+
+            if np_args[0]:
+                ax1.plot(all_detected_trash_pos[:,0], 
+                         all_detected_trash_pos[:,1],
+                         all_detected_trash_pos[:,2], 'mo')
+                for d in range(len(all_detected_trash_pos)):
+                    ax1.text(all_detected_trash_pos[d,0],
+                             all_detected_trash_pos[d,1],
+                             all_detected_trash_pos[d,2], 'found!')
+
+            ## Surface
+            new_uuv_pos = [uuv_pos[0], uuv_pos[1], 0]
+            ## energy, time_sec = cost_to_waypoint(uuv_pos, new_uuv_pos)
+            # energy_cost += energy
+            # time_cost_sec += time_sec
+            # pdb.set_trace()
+            uuv_pos = new_uuv_pos ##TODO: Do we need this?
+
+            ##TODO CARLOS: This is where you'd predict the trash locations
+            ##self.uuv in nom_simulation has a all_found_trash data structure. 
+            ##Feel free to change it to whatever you need
 
 
-	return energy_cost, time_cost_sec
+        if np_args[0]:
+            ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
+            ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
+            plt.pause(0.05)
+
+    if np_args[0]:
+        plt.show()
+
+    return energy_cost, time_cost_sec, eq_cost
 
 
 
 
 '''
 def simple_cc(search_bbox):
-	rotation = np.arange(0, 360, 10)
-	best_cost = 99999999999999999;
-	for r in range(len(rotation)):
-		rotated_bbox = sa.rotate(search_bbox, rotation[r]) ##Default, takes in rotation by degrees
-		waypts = calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
-		centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
-		np_centered_waypoints = np.array(zip(centered_waypoints.exterior.coords.xy[0], 
-								 centered_waypoints.exterior.coords.xy[1]))
-		cost = self.est_propulsion(np_centered_waypoints, best_cost, 
-										est_uuv_pos=False, use_bound=True, 
-										visualize=False)
+    rotation = np.arange(0, 360, 10)
+    best_cost = 99999999999999999;
+    for r in range(len(rotation)):
+        rotated_bbox = sa.rotate(search_bbox, rotation[r]) ##Default, takes in rotation by degrees
+        waypts = calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
+        centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
+        np_centered_waypoints = np.array(zip(centered_waypoints.exterior.coords.xy[0], 
+                                 centered_waypoints.exterior.coords.xy[1]))
+        cost = self.est_propulsion(np_centered_waypoints, best_cost, 
+                                        est_uuv_pos=False, use_bound=True, 
+                                        visualize=False)
 
-		if cost < best_cost:
-			best_cost = cost
-			best_waypoints = np_centered_waypoints
-			best_rotation = rotation[r]
-			# best_time = cost
+        if cost < best_cost:
+            best_cost = cost
+            best_waypoints = np_centered_waypoints
+            best_rotation = rotation[r]
+            # best_time = cost
 
-	return best_cost
-'''
-
-# def est_propulsion(waypoints, bound_cost, est_uuv_pos=True, use_bound=True, visualize=False):
-'''
-	For each waypoint in the path, iteratively calculate how long it would take to get there.
-	Do some vector math to calculate what direction/where you'd end up based 
-		on currents and the uuv's vector heading/power
-
-	Visualiztion shows an animation of the UUV's progress moving toward each waypoint
-
-	Calculates for each 1 second (since we are traveling at 5knots = 2.5722m/sec)
-	uuv_speed = constant for now
-
-	Inputs:
-		waypoints (np.ndarray) : Ordered waypoints that the UUV needs to take.
-		bound_cost (int) : Branch and bound optimization. The max cost that this method may take.
-		est_uuv_pos (bool) : True = Sets uuv position to be the first waypoint in the given waypoints.
-							False, uses the last known position of the uuv (self.uuv_position)
-		use_bound (bool) : Branch and bound optimization. If the timestep value is greater than
-							bound_cost, then the method immediately terminates and returns an
-							unreasonable cost.
-		visualize (bool) : Shows an animation of the UUV progressing toward each waypoint at each step
-	Returns:
-		timesteps (int) : number of timesteps it took to traverse all these waypoints
-
-'''
-
-'''
-	##Set uuv position to be the first waypoint
-	##Otherwise, use the uuv's current position as its starting location
-	if est_uuv_pos:
-		self.uuv_position = waypoints[1]
-
-	##Visualizes the path that will be taken
-	if visualize:
-		plt.subplots(111)
-		ax = plt.subplot(111)
-		plt.plot(waypoints[:,0], waypoints[:,1])
-	
-	timesteps = 0
-	for wp in range(len(waypoints)):
-		goal = waypoints[wp]
-
-		while abs(np.linalg.norm(self.uuv_position - goal)) > self.goal_threshold:
-			##Calculate the heading to that location
-			desired_heading = atan2(goal[1] - self.uuv_position[1], goal[0] - self.uuv_position[0])
-			goal_u = cos(desired_heading) * np.linalg.norm(goal - self.uuv_position)
-			goal_v = sin(desired_heading) * np.linalg.norm(goal - self.uuv_position)
-			current_time_hrs = (timesteps + self.global_timesteps)/3600
-
-			z = abs(dfunc(self.uuv_position))
-			current_u = ufunc([current_time_hrs, z, self.uuv_position[0], self.uuv_position[1]])[0]
-			current_v = vfunc([current_time_hrs, z, self.uuv_position[0], self.uuv_position[1]])[0]
-			# current_heading = atan2(current_v, current_u)
-
-			##vector math
-			desired_u = goal_u + current_u
-			desired_v = goal_v - current_v
-			resulting_heading = atan2(desired_v, desired_u)
-
-			uuv_u = cos(resulting_heading) * self.uuv_speed
-			uuv_v = sin(resulting_heading) * self.uuv_speed
-
-			resulting_speed = np.array([uuv_u + current_u, uuv_v + current_v])
-
-			##TODO: What does each Circle represent?
-			##TODO: What do each arrow represents?
-			if visualize:
-				ax.quiver(self.uuv_position[0], self.uuv_position[1], uuv_u, uuv_v, scale=1, scale_units='xy', color='green') ##uuv
-				wp_c = plt.Circle((goal[0], goal[1]), 1, color='black') ##waypoint
-				ax.add_artist(wp_c)
-				uuv_end = plt.Circle((self.uuv_position[0] + resulting_speed[0], self.uuv_position[1] + resulting_speed[1]), 1, color="blue")
-				ax.add_artist(uuv_end)
-				plt.pause(0.05)
-
-			self.uuv_position += resulting_speed
-			self.uuv_heading = resulting_heading
-
-			##add to timestep count (time)
-			timesteps += 1
-			if use_bound and timesteps > bound_cost:
-				return 99999999999999999
-
-	return timesteps
-
+    return best_cost
 '''
