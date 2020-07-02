@@ -112,7 +112,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
     total_cost = 0
 
     # uuv_pos = uuv.pos
-    uuv_pos = np.copy(uuv.pos)
+    # uuv_pos = np.copy(uuv.pos)
     all_trash_pos = np.array(trash_dict.values()).reshape(-1, 3)
     all_trash_pos[:,2] *= -1
 
@@ -133,7 +133,8 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
         minx = min(cc_path[:,0])
         miny = min(cc_path[:,1])
         maxy = max(cc_path[:,1])
-        minz = min(cc_path[:,2])
+        # minz = min(cc_path[:,2])
+        minz = 3
         maxz = max(cc_path[:,2])
 
         ax1.set_xlim([minx-10, maxx+10])
@@ -156,7 +157,12 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
         time_cost_sec += time_sec
         total_cost += eq_cost
 
-        ##TODO: Surface if trash detected during that leg
+        if np_args[0]:
+            ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
+            ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
+            plt.pause(0.05)
+
+        ##Surface if trash detected during that leg
         ##Broadcast the position of the trash to the base station
         if len(all_detected_trash_pos) > 0:
             uuv_detected_pos = uuv.pos
@@ -173,27 +179,28 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
                              all_detected_trash_pos[d,2], 'found!')
 
             ## Surface
-            new_uuv_pos = [uuv_pos[0], uuv_pos[1], 0]
-            ## energy, time_sec = cost_to_waypoint(uuv_pos, new_uuv_pos)
-            # energy_cost += energy
-            # time_cost_sec += time_sec
-            # pdb.set_trace()
-            uuv_pos = new_uuv_pos ##TODO: Do we need this?
+            surface_pos = np.array([[uuv.pos[0], uuv.pos[1], 0]])
+            energy, time_sec, eq_cost, empty = follow_path_waypoints(
+                                                surface_pos, uuv, env, 2.5, False)
+            energy_cost += energy
+            time_cost_sec += time_sec
+            total_cost += eq_cost
 
             ##TODO CARLOS: This is where you'd predict the trash locations
             ##self.uuv in nom_simulation has a all_found_trash data structure. 
             ##Feel free to change it to whatever you need
+            ##[your code here]
 
 
-        if np_args[0]:
-            ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
-            ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
-            plt.pause(0.05)
+            if np_args[0]:
+                ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
+                ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
+                plt.pause(0.05)
 
     if np_args[0]:
         plt.show()
 
-    return energy_cost, time_cost_sec, eq_cost
+    return energy_cost, time_cost_sec, total_cost
 
 
 
