@@ -151,7 +151,7 @@ class Nom_Simulation():
 
             if vis_dash == True:
                 fig = plt.figure()
-                vis_args = [True, fig]
+                # vis_args = [True, fig]
 
                 ##Adds 2D overview of the map
                 ax1 = fig.add_subplot(121)
@@ -185,17 +185,22 @@ class Nom_Simulation():
                                                                         self.desired_speed,
                                                                         vis_args)
 
+            print ("COST TO TRAVEL THIS LEG OF THE TRIP")
+            print ("energy cost   : ", energy_cost)
+            print ("time cost (s) : ", time_cost_sec)
+            print ("est cost      : ", est_cost)
+
+            ##Add up cost to travel this leg of the trip
+            total_trip_energy_cost += energy_cost
+            total_trip_time_sec += time_cost_sec
+            total_paper_cost += est_cost
+
             if uuv_path_state == 'path_following':
                 print ("switched to searching")
                 uuv_path_state = 'searching'
             elif uuv_path_state == 'searching':
                 print ("switched to following")
                 uuv_path_state = 'path_following'
-
-            ##Add up cost to travel this leg of the trip
-            total_trip_energy_cost += energy_cost
-            total_trip_time_sec += time_cost_sec
-            total_paper_cost += est_cost
 
         return total_trip_energy_cost, total_trip_time_sec, total_paper_cost
 
@@ -236,12 +241,17 @@ class Nom_Simulation():
             nominal_path.extend([all_cc_paths[hotspot_order[idx]], 
                                  all_hotspot_paths[hotspot_order[idx]]\
                                                   [hotspot_order[idx+1]]])
+        nominal_path.append(all_cc_paths[5])
 
         ##Execute the path
         total_energy_cost, total_time_sec, total_paper_cost = self.follow_path_order(
                                                                 nominal_path,
                                                                 hotspot_dict)
 
+        print ("FINAL COST VALUES:")
+        print ("total energy  : ", total_energy_cost)
+        print ("total time (s): ", total_time_sec)
+        print ("total cost eq : ", total_paper_cost)
 
 if __name__ == '__main__':
     HS = Nom_Simulation()
