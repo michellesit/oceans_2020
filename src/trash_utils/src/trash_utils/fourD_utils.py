@@ -82,12 +82,12 @@ def follow_path_waypoints(all_waypoints, uuv, env, desired_speed, *args, **kwarg
         total_energy += np.sum(controls[:,0])
         total_time += time_sec
 
-        print ("cost : ", cost)
-        print ("energy: ", np.sum(controls[:,0]))
-        print ("time:   ", time_sec)
+    #     print ("cost : ", cost)
+    #     print ("energy: ", np.sum(controls[:,0]))
+    #     print ("time:   ", time_sec)
 
-    print ("total energy: ", total_energy)
-    print ("total time  : ", total_time)
+    # print ("total energy: ", total_energy)
+    # print ("total time  : ", total_time)
     return total_energy, total_time, total_cost, detected_pos
 
 
@@ -139,7 +139,7 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
 
     threshold2 = 2  ##meters
     epoch2 = 0
-    max_num_epoch2 = 300
+    max_num_epoch2 = 700
     first_run = True
     timesteps = 0
     while (abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 < max_num_epoch2) \
@@ -207,10 +207,9 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
             uuv_energy = 0.0
             # print ("uuv_energy is 0")
 
-        ##If the needed thrust is greater than what the uuv can provide,
-        ##  return 9999999999 cost
+        ##If the needed thrust is greater than what the uuv can provide, return inf cost
         if uuv_vector > uuv.max_thrust:
-            print ("uuv_vector: ", uuv_vector)
+            print ("uuv_vector > max thrust: ", uuv_vector)
             return np.inf, np.inf, np.empty((0,6)), all_detected_idx
 
         uuv_controls.append([uuv_energy, desired_x, desired_y, desired_z,
