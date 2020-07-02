@@ -2,8 +2,16 @@
 Creates a docker image to run this simulation in.
 
 ## Creating Image
+The general command is:
+
 ```
-sudo docker build -t oceans20_demo:mar24 .
+sudo docker build -t [repo name]:[tag name] .
+```
+
+You can name yours for example to be:
+
+```
+sudo docker build -t oceans20_demo:july2_build .
 ```
 
 Note: This docker assumes the oceans_2020 repo is mounted on your local computer. Uncomment the install_uuv_pkgs.sh lines in the Dockerfile to automatically have it installed in the docker container (not recommended). OR run the same script on your local computer to have it install all the packages and folders as needed (recommended).
