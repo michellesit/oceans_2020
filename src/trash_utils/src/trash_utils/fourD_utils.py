@@ -12,13 +12,14 @@ Hotspot path planning algorithms
 
 '''
 
-def follow_path_waypoints(all_waypoints, uuv, env, desired_speed, *args, **kwargs):
+def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *args, **kwargs):
     '''
     Calculates preliminary info (pos, heading) needed to travel from the uuv to 
     each waypoint 
     
     Inputs:
         all_waypoints (np.ndarray)  : waypoint(s) to travel to
+        current_pos (np.ndarray)    : (x,y,z) uuv pos to calculate from
         uuv (Obj)                   : trash_utils/UUV.py to access (pos, max_thrust)
         env (Obj)                   : trash_utils/Env.py object to access
                                       (ufunc, vfunc, width, height, max_depth)
@@ -49,19 +50,19 @@ def follow_path_waypoints(all_waypoints, uuv, env, desired_speed, *args, **kwarg
     for pt in range(all_waypoints.shape[0]):
         ##Calculate heading
         goal_pt = all_waypoints[pt]
-        diff = goal_pt - uuv.pos
+        diff = goal_pt - current_pos
         goal_phi = acos((diff[2]/np.linalg.norm(diff)))
         goal_theta = atan2(diff[1], diff[0])
         mid_goal = np.array((sin(goal_phi)*cos(goal_theta), 
                              sin(goal_phi)*sin(goal_theta), 
                              cos(goal_phi)))*100
-        mid_goal = np.copy(uuv.pos) + mid_goal
+        mid_goal = np.copy(current_pos) + mid_goal
 
         if np_args[0]:
             fig = np_args[1]
             ax1 = fig.add_subplot(122, projection='3d')
-            ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'bo')
-            ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'start')
+            ax1.plot([current_pos[0]], [current_pos[1]], [current_pos[2]], 'bo')
+            ax1.text(current_pos[0], current_pos[1], current_pos[2], 'start')
 
             ax1.plot(all_waypoints[:,0], all_waypoints[:,1], all_waypoints[:,2], 'bo')
             ax1.plot(all_waypoints[:,0], all_waypoints[:,1], all_waypoints[:,2], 'b--')
@@ -70,7 +71,7 @@ def follow_path_waypoints(all_waypoints, uuv, env, desired_speed, *args, **kwarg
 
             plt.show()
 
-        cost, time_sec, controls, detected_pos = cost_to_waypoint_v1(uuv.pos, 
+        cost, time_sec, controls, detected_pos = cost_to_waypoint_v1(current_pos, 
                                                                      goal_pt,
                                                                      [goal_phi, goal_theta],
                                                                      0,
@@ -132,8 +133,8 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
     all_detected_idx = np.empty((0,3))
     uuv_controls = []
 
-    # pos = np.copy(input_start_pos)
-    pos = input_start_pos
+    pos = np.copy(input_start_pos)
+    # pos = input_start_pos
     goal_phi = goal_heading[0]
     goal_theta = goal_heading[1]
 
@@ -257,3 +258,98 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
         return np.inf, np.inf, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
     else:
         return cost, timesteps, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
+
+
+def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, vis_dash=True):
+    '''
+    
+    Inputs:
+        nominal_path (array) : Array of arrays. Each sub-array contains the waypoints 
+                               to do complete coverage within the hotspot
+                               or to travel from hotspot to hotspot
+        trash_dict (Dict)    : key = hotspot id number (currrent 1,2,..., num_hotspots)
+                               values = latest positions of all the trash in the hotspot
+        vis_dash (bool)      : True = visualize global path and 
+                               path for each hotspot searching or between hotspots
+        uuv (Obj)                    : trash_utils/UUV.py to access (pos, max_thrust)
+        env (Obj)                    : trash_utils/Env.py object to access
+                                       (ufunc, vfunc, width, height, max_depth)
+        desired_speed (float)        : uuv speed (meters/sec) for each step
+
+    Returns:
+        total_trip_energy_cost (float) : total amount of energy uuv uses for mission
+        total_trip_time_sec (int)      : total amount of time in sec to complete mission
+        total_paper_cost (float)       : total cost calculated from Huynh, Dunbabin,
+                                         Smith (ICRA 2015)
+                                         Equation 6 which takes energy and time into 
+                                         account
+
+    '''
+
+    ##Switch off between traveling to the cc areas and finding trash
+    total_trip_energy_cost = 0
+    total_trip_time_sec = 0
+    total_paper_cost = 0
+
+    vis_args = [False]
+    uuv_path_state = 'searching'
+    # uuv_path_state = 'path_following'
+
+    for np_idx in range(len(nominal_path)):
+        print ("NP_IDX: ", np_idx)
+        currently_following_path = nominal_path[np_idx]
+
+        if vis_dash == True:
+            fig = plt.figure()
+            # vis_args = [True, fig]
+
+            ##Adds 2D overview of the map
+            ax1 = fig.add_subplot(121)
+            np_nominal_path = np.vstack(nominal_path)
+            ##whole path
+            ax1.plot(np_nominal_path[:,0], np_nominal_path[:,1], 'b--')
+            ax1.plot(np_nominal_path[:,0], np_nominal_path[:,1], 'bo')
+            ##What the uuv will tackle next
+            ax1.plot(uuv.pos[0], uuv.pos[1], 'ro') ##uuv
+            ax1.plot([uuv.pos[0], currently_following_path[0,0]],
+                     [uuv.pos[1], currently_following_path[0,1]], 'k')
+            ax1.plot(currently_following_path[:,0], currently_following_path[:,1], 'k')
+            visualize_trash_step(trash_dict, [True, ax1])
+
+        if uuv_path_state == 'path_following':
+            print ("following")
+            energy_cost, time_cost_sec, est_cost, none = follow_path_waypoints(
+                                                         currently_following_path, 
+                                                                    uuv, 
+                                                                    env, 
+                                                                    desired_speed,
+                                                                    vis_args)
+
+        if uuv_path_state == 'searching':
+            print ('searching')
+            energy_cost, time_cost_sec, est_cost = search_for_trash(
+                                                   currently_following_path, 
+                                                                    trash_dict, 
+                                                                    uuv, 
+                                                                    env, 
+                                                                    desired_speed,
+                                                                    vis_args)
+
+        print ("COST TO TRAVEL THIS LEG OF THE TRIP")
+        print ("energy cost   : ", energy_cost)
+        print ("time cost (s) : ", time_cost_sec)
+        print ("est cost      : ", est_cost)
+
+        ##Add up cost to travel this leg of the trip
+        total_trip_energy_cost += energy_cost
+        total_trip_time_sec += time_cost_sec
+        total_paper_cost += est_cost
+
+        if uuv_path_state == 'path_following':
+            print ("switched to searching")
+            uuv_path_state = 'searching'
+        elif uuv_path_state == 'searching':
+            print ("switched to following")
+            uuv_path_state = 'path_following'
+
+    return total_trip_energy_cost, total_trip_time_sec, total_paper_cost

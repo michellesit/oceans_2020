@@ -149,6 +149,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
         trash_info = {'trash_dict': all_trash_pos}
         energy, time_sec, eq_cost, all_detected_trash_pos = follow_path_waypoints(
                                                          np.array([cc_path[pt_idx]]),
+                                                         uuv.pos,
                                                          uuv, 
                                                          env, 
                                                          1.5, 
@@ -181,7 +182,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
             ## Surface
             surface_pos = np.array([[uuv.pos[0], uuv.pos[1], 0]])
             energy, time_sec, eq_cost, empty = follow_path_waypoints(
-                                                surface_pos, uuv, env, 2.5, False)
+                                                surface_pos, uuv.pos, uuv, env, 2.5, False)
             energy_cost += energy
             time_cost_sec += time_sec
             total_cost += eq_cost

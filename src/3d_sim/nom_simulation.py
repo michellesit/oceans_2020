@@ -170,6 +170,7 @@ class Nom_Simulation():
                 print ("following")
                 energy_cost, time_cost_sec, est_cost, none = follow_path_waypoints(
                                                              currently_following_path, 
+                                                                        self.uuv.pos,
                                                                         self.uuv, 
                                                                         self.Env, 
                                                                         self.desired_speed,
