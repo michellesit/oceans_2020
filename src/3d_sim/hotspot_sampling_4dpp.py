@@ -38,9 +38,9 @@ class Nom_Simulation():
         #For 4D path planning
         self.desired_speed = 2.5722     ##meters/second (5 knots)
         self.goal_dist = 20
-        # self.max_num_epochs = 15000
-        self.max_num_epochs = 1000
-        self.E_appr = 15 ##Approximate, minimum energy per sampling time consumed by the vehicle at each time step
+        self.max_num_epochs = 15000
+        # self.max_num_epochs = 1000
+        self.E_appr = 75 ##Approximate, minimum energy per sampling time consumed by the vehicle at each time step
 
         self.base_h_angle = 45
 
@@ -57,8 +57,8 @@ class Nom_Simulation():
         d = grid_data(self.Env.dfunc, self.Env.xbound, self.Env.ybound, 50, [], [])
 
         ##Find the max current over a 4 day period (96 hrs total)
-        min_u = 999999
-        min_v = 999999
+        # min_u = 999999
+        # min_v = 999999
         max_u = -999999
         max_v = -999999
         for hrs in range(0, 96):
@@ -66,8 +66,8 @@ class Nom_Simulation():
             u *= self.Env.u_boost * np.random.normal(1, 0.5)
             v = grid_data(self.Env.vfunc, self.Env.xbound, self.Env.ybound, 50, d, [hrs])
             v *= self.Env.v_boost * np.random.normal(1, 0.5)
-            min_u = min(min_u, np.min(u))
-            min_v = min(min_v, np.min(v))
+            # min_u = min(min_u, np.min(u))
+            # min_v = min(min_v, np.min(v))
             max_u = max(max_u, np.max(u))
             max_v = max(max_v, np.max(v))
 
@@ -81,18 +81,18 @@ class Nom_Simulation():
         mid_goal_z = self.desired_speed * cos(goal_phi)
 
         ##Calculate the needed UUV offset and at what angle
-        desired_x_min = mid_goal_x - min_u
-        desired_y_min = mid_goal_y - min_v
+        # desired_x_min = mid_goal_x - min_u
+        # desired_y_min = mid_goal_y - min_v
         desired_x_max = mid_goal_x - max_u
         desired_y_max = mid_goal_y - max_v
         desired_z = mid_goal_z
-        uuv_vector_min = np.linalg.norm([desired_x_min, desired_y_min, desired_z])
+        # uuv_vector_min = np.linalg.norm([desired_x_min, desired_y_min, desired_z])
         uuv_vector_max = np.linalg.norm([desired_x_max, desired_y_max, desired_z])
 
-        denom = uuv_vector_min + np.linalg.norm([min_u, min_v])
-        # print("max total: ", uuv_vector_max + np.linalg.norm([max_u, max_v]))
-        # print ("denom: ", denom)
-        # denom = uuv_vector_max + np.linalg.norm([max_u, max_v])
+        # denom = uuv_vector_min + np.linalg.norm([min_u, min_v])
+        # print ("min denom: ", denom)
+        denom = uuv_vector_max + np.linalg.norm([max_u, max_v])
+        # print ("max denom: ", denom)
 
         # pdb.set_trace()
         return denom
@@ -107,7 +107,6 @@ class Nom_Simulation():
             all_cart_pos (np.ndarray)        : (x,y,z) pos of where UUV should explore
                                                 around its current pos
             all_sphere_headings (np.ndarray) : (phi, theta) headings of the cart pos
-
 
         '''
 
@@ -179,16 +178,18 @@ class Nom_Simulation():
             ending_control = ending speed in (u,v)
 
         TODO: double check this is correct
-        TODO: documentation formatting
 
         '''
+
         ##Do sorted dictionary to hold the cost, heuristic_cost, and total_cost values
         visited_dict = {}  ##add in the new values once they've been calculated
         to_be_visited_dict = {} ##This will just be the sorted dict keys list
 
         ##init starting node and its cost
         ##heuristic cost is taken from the paper
-        heuristic_cost = ( abs(np.linalg.norm([end_pos - start_pos]))/heuristic_denom )
+        # heuristic_cost = ( abs(np.linalg.norm([end_pos - start_pos]))/heuristic_denom )
+        print ("dist: ", np.linalg.norm([end_pos - start_pos]))
+        heuristic_cost = ( (np.linalg.norm([start_pos - end_pos]))/heuristic_denom )
         heuristic_cost *= self.E_appr
 
         '''
@@ -227,11 +228,12 @@ class Nom_Simulation():
         ##TODO: Can this be fed in so it doesn't have to calculate this every single time
         # ball_cart_pos, ball_sphere_headings = self.calc_all_headings()
 
+        last_current_pos = np.copy(start_pos)
         current_pos = np.copy(start_pos)
         parent_eq_cost = 0.0
         time_at_node_sec = float(time_start_sec)
         parent_energy_cost = 0.0
-        parent_path = np.empty((0,3))
+        parent_path = np.array(np.copy(start_pos))
         
         # found_goal = False ##do we need this?
         final_eq_cost = np.inf
@@ -268,7 +270,6 @@ class Nom_Simulation():
             ##Calculate the heuristic of getting to that point
             ##Save the point to the to_be_visted_list
             for angle_idx in range(ball_cart_pos.shape[0]):
-                # print ("ANGLE_IDX: ", angle_idx)
 
                 ##Calculate the desired point 10m into the distance
                 desired_cart_pos = ball_cart_pos[angle_idx]
@@ -280,19 +281,11 @@ class Nom_Simulation():
                     goal_x = self.Env.width/2 * np.sign(goal_x)
                 if abs(goal_y) > self.Env.height/2:
                     goal_y = self.Env.height/2 * np.sign(goal_y)
-
-                # print ("goal_z value. Check if neg: ", goal_z)
-                # pdb.set_trace()
-                # print ("UUV pos before z change: ", current_pos) 
-                # print ("goal_z before: ", goal_z)
                 if goal_z > 0:
                     goal_z = 0
-                if goal_z < -self.Env.max_depth: ##TODO: check this makes sense
+                if goal_z < -self.Env.max_depth:
                     goal_z = -self.Env.max_depth
                 goal_pos = np.array([goal_x, goal_y, goal_z])
-
-                # print ("goal_pos: ", goal_pos)
-                # pdb.set_trace()
 
                 ##If this point is within some distance to a previously calculated point,
                 ## then move onto next step
@@ -302,6 +295,21 @@ class Nom_Simulation():
                 # print ("not_valid: ", not_valid)
                 # print ("goal_dist -5 :", self.goal_dist-5)
                 # pdb.set_trace()
+                # print ("Switching to visited_dict")
+                for k in visited_dict.keys():
+                    # print ("k in visited_dict: ", k)
+                    check_dist = abs(np.linalg.norm([goal_pos - np.array(k)]))
+                    # print ("check_dist: ", check_dist)
+                    # print ("if state  : ", check_dist < self.goal_dist-5)
+                    if check_dist < self.goal_dist-5:
+                        not_valid = True
+
+                        ##Update this dict if this heuristic is smaller than what it has currently
+                        ##Add it back to the to_be_visited_dict
+
+                        break          
+
+                # print ("switching to to_be_visited_dict")
                 for k in to_be_visited_dict.keys():
                     # print ("k: ", k)
                     check_dist = abs(np.linalg.norm([goal_pos - np.array(k)]))
@@ -313,17 +321,10 @@ class Nom_Simulation():
                     # if check_dist < self.goal_dist-5 and check_dist_to_parent>5:
                     if check_dist < self.goal_dist-5:
                         not_valid = True
+                        ##Update this
                         break
 
-                # print ("Switching to visited_dict")
-                for k in visited_dict.keys():
-                    # print ("k in visited_dict: ", k)
-                    check_dist = abs(np.linalg.norm([goal_pos - np.array(k)]))
-                    # print ("check_dist: ", check_dist)
-                    # print ("if state  : ", check_dist < self.goal_dist-5)
-                    if check_dist < self.goal_dist-5:
-                        not_valid = True
-                        break                
+      
 
                 # print ("finished with checking dict. not_valid value: ", not_valid)
                 if not_valid:
@@ -337,6 +338,15 @@ class Nom_Simulation():
                 energy_cost, time_traveled_sec, eq_cost, empty = follow_path_waypoints(
                     np.array([goal_pos]), current_pos, self.uuv, self.Env, self.desired_speed, *[False])
 
+                # if energy_cost > 99999999999999999999:
+                #     print ("energy_cost: ", energy_cost)
+                #     print ("cost is inf")
+                #     pdb.set_trace()
+
+                # if energy_cost == np.inf:
+                #     print ("passing the next round")
+                #     continue
+
                 # print ("eq_cost: ", eq_cost)
                 # print ("time_traveled_sec: ", time_traveled_sec)
                 # print ("energy_cost: ", energy_cost)
@@ -344,7 +354,8 @@ class Nom_Simulation():
                 ##returns costs here?
 
                 self_and_parent_eq_cost = parent_eq_cost + eq_cost
-                heuristic_cost = (abs(np.linalg.norm([end_pos-goal_pos]))/heuristic_denom)
+                # heuristic_cost = (abs(np.linalg.norm([end_pos-goal_pos]))/heuristic_denom)
+                heuristic_cost = ((np.linalg.norm([goal_pos-end_pos]))/heuristic_denom)
                 # pdb.set_trace()
                 heuristic_cost *= self.E_appr
                 self_and_parent_time_cost_sec = time_at_node_sec + time_traveled_sec
@@ -379,15 +390,16 @@ class Nom_Simulation():
                 # ax1.plot([self.uuv.pos[0], goal_x],
                 #          [self.uuv.pos[1], goal_y],
                 #          [self.uuv.pos[2], goal_z], 'b--')
-                # ax1.text(goal_x, goal_y, goal_z, str(heuristic_cost))
+                # ax1.text(goal_x, goal_y, goal_z, str(round(heuristic_cost)))
                 # ax1.text(goal_x, goal_y, goal_z, str(self_and_parent_eq_cost))
-                # ax1.text(goal_x, goal_y, goal_z, str(heuristic_cost+self_and_parent_eq_cost))
-
+                # ax1.text(goal_x, goal_y, goal_z, str(round(heuristic_cost))+"\n"+str(round(self_and_parent_eq_cost)))
+            # pdb.set_trace()
             ##end method
 
             ##After we have calculated all these costs for all the headings, 
             ## figure out which node to calculate from next.
             ##Sort the unvisited list by cost
+            current_pos = np.copy(last_current_pos)
             visited_dict[tuple(current_pos)] = to_be_visited_dict[tuple(current_pos)]
             del to_be_visited_dict[tuple(current_pos)]
             sorted_cost_dict = sorted(to_be_visited_dict.items(), key=lambda x: (x[1]['total_eq_cost']))
@@ -422,6 +434,7 @@ class Nom_Simulation():
             time_at_node_sec   = lowest_cost_items['time_sec_at_this_node']
             parent_energy_cost = lowest_cost_items['total_energy_cost']
             parent_path        = lowest_cost_items['parent_path']
+            last_current_pos = np.copy(current_pos)
 
             # print ("next chosen node: ")
             # print ("current pos: ", current_pos)
@@ -446,12 +459,13 @@ class Nom_Simulation():
                 final_time_sec_cost = time_at_node_sec
                 final_energy_cost = parent_energy_cost
                 found_path = parent_path
+                found_path = np.vstack((parent_path, end_pos))
 
                 ##TODO: double check all this info is correct above
                 print ("final_eq_cost: ", final_eq_cost)
                 print ("final_time_sec_cost: ", final_time_sec_cost)
                 print ("final_energy_cost: ", final_energy_cost)
-                print ("final_path: ", final_path)
+                print ("found_path: ", found_path)
                 print ("start_pos: ", start_pos)
                 print ("end_pos: ", end_pos)
 
@@ -465,12 +479,19 @@ class Nom_Simulation():
                 # time_sec_cost = time_at_node_sec + last_leg_time_traveled
 
                 ax1.plot(found_path[:,0], found_path[:,1], found_path[:,2], 'k--')
+                ax1.set_xlabel("x-axis")
+                ax1.set_ylabel("y-axis")
+                ax1.set_zlabel("depth")
+                ax1.set_xlim(min(end_pos[0], start_pos[0]), max(end_pos[0], start_pos[0]))
+                ax1.set_ylim(min(end_pos[1], start_pos[1]), max(end_pos[1], start_pos[1]))
+                ax1.set_zlim(-self.Env.max_depth, 3)
+                plt.show()
 
-                pdb.set_trace()
+                # pdb.set_trace()
                 return final_eq_cost, final_time_sec_cost, final_energy_cost, found_path
+            # else:
+            #     ax1.plot(parent_path[:,0], parent_path[:,1], parent_path[:,2], 'g')
 
-
-        ax1.plot(parent_path[:,0], parent_path[:,1], parent_path[:,2], 'g')
         ax1.set_xlabel("x-axis")
         ax1.set_ylabel("y-axis")
         ax1.set_zlabel("depth")
@@ -492,10 +513,11 @@ class Nom_Simulation():
         Path to cover each hotspot is a mowing the lawn pattern
 
         Inputs:
-            hotspot_dict (Dict)    : key = hotspot id number (1,2,..., num_hotspots)
-                                     values = latest pos of all the trash in the hotspot
-            wpt_spacing (int)      : distance (meters) between the nominal waypoints
-            heuristic_denom (float): 
+            hotspot_dict (Dict)        : key = hotspot id number (1,2,..., num_hotspots)
+                                        values = latest pos of all the trash in the hotspot
+            wpt_spacing (int)          : distance (meters) between the nominal waypoints
+            heuristic_denom (float)    :  
+            ball_cart_pos (np.ndarray) : 
 
         Returns:
             cc_paths (np.ndarray)  : waypoints to do complete coverage of the hotspot
@@ -504,7 +526,6 @@ class Nom_Simulation():
                                      all_paths[1][4]
 
         TODO: handle return values here
-        TODO: handle new inputs to here
         '''
 
         ##For each of these hotspots, 
@@ -559,9 +580,11 @@ class Nom_Simulation():
                     pt2_3d = np.array([pt2.x, pt2.y, pt2_depth])
 
                     ##TODO: handle time_arr thing and appropriate costs
-                    astar_path, astar_cost, astart_time_sec = self.find_optimal_path_nrmpc(start_time_sec, pt1_3d, pt2_3d, heuristic_denom, ball_cart_pos)
+                    astr_eq_cost, astr_time_cost_sec, astr_energy_cost, astr_path = self.find_optimal_path_nrmpc(start_time_sec, pt1_3d, pt2_3d, heuristic_denom, ball_cart_pos)
 
-                    hotspot_paths.append(astar_path)
+                    print ("REACHED A COST")
+                    pdb.set_trace()
+                    hotspot_paths.append(astr_path)
                 all_paths.append(hotspot_paths)
 
             return cc_paths, all_paths

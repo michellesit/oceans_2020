@@ -146,7 +146,6 @@ class Nom_Simulation():
         # uuv_path_state = 'path_following'
 
         for np_idx in range(len(nominal_path)):
-            print ("NP_IDX: ", np_idx)
             currently_following_path = nominal_path[np_idx]
 
             if vis_dash == True:
@@ -190,6 +189,7 @@ class Nom_Simulation():
             print ("energy cost   : ", energy_cost)
             print ("time cost (s) : ", time_cost_sec)
             print ("est cost      : ", est_cost)
+            print ("nominal_path: ", nominal_path[np_idx])
 
             ##Add up cost to travel this leg of the trip
             total_trip_energy_cost += energy_cost

@@ -157,6 +157,9 @@ class Move_Cans(object):
                     print ("global_uv: ", global_uv)
                     # print ("LOCAL_CHANGE: ", local_change)
 
+                    ##Apply changes to the UUV
+                    model.state.pose.twist
+
                     if model_state.pose.position.z > 0:
                         model_state.pose.position.z = -0.1
                 
