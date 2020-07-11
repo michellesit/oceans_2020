@@ -12,3 +12,5 @@ class UUV():
 
 		self.trash_detection_dist = 5
 		self.found_trash = []	##Feel free to change this as needed
+
+		self.E_appr = 75 ##Approximate, minimum energy per sampling time consumed by the vehicle at each time step
