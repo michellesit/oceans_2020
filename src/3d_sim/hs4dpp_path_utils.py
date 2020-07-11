@@ -267,13 +267,13 @@ def find_optimal_path_nrmpc(time_start_sec, start_pos, end_pos, ball_cart_pos,
 
     ##Visualization
     if np_args[0]:
-        vis_args = [True, fig]
         fig = plt.figure()
         ax1 = fig.gca(projection='3d')
         ax1.plot([current_pos[0]], [current_pos[1]], [current_pos[2]], 'go')
         ax1.text(current_pos[0], current_pos[1], current_pos[2], 'uuv.pos')
         ax1.plot([end_pos[0]], [end_pos[1]], [end_pos[2]], 'ro')
         ax1.text(end_pos[0], end_pos[1], end_pos[2], 'end_pt')
+        vis_args = [True, fig]
 
 
     ##While still haven't reached the end point,
