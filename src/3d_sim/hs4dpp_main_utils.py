@@ -6,6 +6,11 @@ from shapely.ops import nearest_points
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+from trash_utils.finder_utils import (grid_data)
+from trash_utils.trash_lib import ( init_hotspots, 
+                                    visualize_trash_flow,
+                                    update_trash_pos,
+                                    visualize_trash_step)
 from trash_utils.cc_utils import calc_mowing_lawn, search_for_trash
 from trash_utils.fourD_utils import cost_to_waypoint_v1, follow_path_waypoints
 
