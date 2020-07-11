@@ -80,17 +80,13 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *
 
         if isnan(cost):
             print ("cost is nan: ", cost)
-            pdb.set_trace()
         if cost > 99999999999999999999999:
             print ("cost is inf: ", cost)
-            pdb.set_trace()
         en = np.sum(controls[:,0])
         if isnan(en):
             print ("energy is nan: ", en)
-            pdb.set_trace()
         if en > 999999999999999999999999:
             print ("en is inf: ", en)
-            pdb.set_trace()
 
         total_cost += cost
         total_energy += np.sum(controls[:,0])
@@ -372,3 +368,40 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, vis_das
             uuv_path_state = 'path_following'
 
     return total_trip_energy_cost, total_trip_time_sec, total_paper_cost
+
+
+def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
+    '''
+    Calculates a path between each hotspot by
+    - Calculating closest points between two hotspots
+    - Breaking the path down into smaller pieces
+    - Setting the waypoints to be those breakpoints with depth at the bottom of the map
+
+    Path to cover each hotspot is a mowing the lawn pattern
+
+    Inputs:
+        pt1 (np.ndarray)  :
+        pt2 (np.ndarray)  :
+        wpt_spacing (int) : distance (meters) between the nominal waypoints
+        env (object)      : 
+
+    Returns:
+        all_paths (np.ndarray) : Nominal waypoints to travel from hotspot to hotspot
+
+    '''
+
+    ##NOMINAL PATH
+    ##Calculate the waypoints needed to traverse along the bottom of the map
+    ##Split path into several points
+    ##Get the depth for all of those points
+    ##TODO? Smooth out the waypoints
+    num_pts = abs(pt1[0] - pt2[0])//wpt_spacing
+    if num_pts == 0:
+        path = np.array([pt1, pt2])
+    else:
+        waypts = np.array(zip(np.linspace(pt1[0], pt2[0], num_pts, endpoint=True), 
+                              np.linspace(pt1[1], pt2[1], num_pts, endpoint=True)))
+        waypts_depth = env.dfunc(waypts)
+        path = np.hstack((waypts, waypts_depth.reshape(-1,1) ))
+
+    return path
