@@ -8,7 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from trash_utils.Env import Env
 from trash_utils.UUV import UUV
-from trash_utils.finder_utils import (grid_data)
+from trash_utils.finder_utils import (grid_data, fix_waypoint_edges)
 from trash_utils.trash_lib import ( init_hotspots, 
                                     visualize_trash_flow,
                                     update_trash_pos,
@@ -141,7 +141,7 @@ class Nom_Simulation():
         return cc_paths, all_paths
 
 
-    def calculate_compare_paths(self, hotspot_dict, wpt_spacing, ball_cart_pos, path_order):
+    def calculate_compare_paths(self, hotspot_dict, wpt_spacing, ball_cart_pos, path_order, time_start_sec):
         '''
         Calculates the paths to compare to the nominal solution by:
         - Calculating closest points between two hotspots
@@ -200,12 +200,14 @@ class Nom_Simulation():
             cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines)
             cc_depths = self.env.dfunc(cc_wpts)
             cc_wpts = np.hstack((cc_wpts, cc_depths.reshape(-1,1)))
+            cc_wpts = fix_waypoint_edges(cc_wpts, self.env)
             ##Calculate the cost of traveling this cc_path at this time
             energy_cost, time_cost_sec, est_cost = search_for_trash(cc_wpts, 
                                                                     hotspot_dict, 
                                                                     self.uuv, 
                                                                     self.env, 
-                                                                    self.desired_speed, 
+                                                                    self.desired_speed,
+                                                                    time_start_sec, 
                                                                     *[False])
 
             total_energy_cost += energy_cost
@@ -294,10 +296,7 @@ class Nom_Simulation():
         ## Arbitrarily selected order of hotspot traversal
         ##Calculate the cost of traveling this whole route
         hotspot_order = [0, 1, 2, 3, 4, 5]
-        total_energy_cost, total_time_sec, total_paper_cost, total_path = self.calculate_compare_paths(hotspot_dict, 
-                                                                                                        50, 
-                                                                                                        ball_cart_pos,
-                                                                                                        hotspot_order)
+        total_energy_cost, total_time_sec, total_paper_cost, total_path = self.calculate_compare_paths(hotspot_dict, 50, ball_cart_pos, hotspot_order)
 
         ##Execute the path
         # self.uuv.pos = np.array([0.0, 0.0, 0.0])
