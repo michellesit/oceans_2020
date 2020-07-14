@@ -29,7 +29,9 @@ def calc_mowing_lawn(bbox, y_bbox, start_end='right'):
 
     Output:
         waypoints (np.ndarray) : ordered waypoints on how to traverse this bbox
+        
     '''
+
     all_intersections = []
     minx, miny, maxx, maxy = bbox.bounds
     for i in range(y_bbox.shape[0]):
@@ -63,7 +65,6 @@ def calc_mowing_lawn(bbox, y_bbox, start_end='right'):
 
         if all_intersections[i].ndim == 1:
             waypoints.append(line_pts)
-            # waypoints.extend((line_pts, line_pts))
             continue
 
         if start_end == "right":
@@ -81,7 +82,7 @@ def calc_mowing_lawn(bbox, y_bbox, start_end='right'):
     return np.array(waypoints)
 
 
-def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
+def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_sec, *args):
     '''
     At each leg of the algorithm, 
     "searches" for trash by detecting distance to the trash position.
@@ -94,6 +95,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
         env (Obj)             : trash_utils/Env.py object to access
                                 (ufunc, vfunc, width, height, max_depth)
         desired_speed (float) : uuv speed (meters/sec) for each step
+        time_start_sec (int)  : time to start searching algorithm (in sec)
 
     *args in order:
         args1 (bool)          : True = Visualize trash and uuv movement
@@ -133,7 +135,6 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
         minx = min(cc_path[:,0])
         miny = min(cc_path[:,1])
         maxy = max(cc_path[:,1])
-        # minz = min(cc_path[:,2])
         minz = 3
         maxz = max(cc_path[:,2])
 
@@ -153,6 +154,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
                                                          uuv, 
                                                          env, 
                                                          1.5, 
+                                                         time_start_sec,
                                                          False, **trash_info)
         energy_cost += energy
         time_cost_sec += time_sec
@@ -182,7 +184,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
             ## Surface
             surface_pos = np.array([[uuv.pos[0], uuv.pos[1], 0]])
             energy, time_sec, eq_cost, empty = follow_path_waypoints(
-                                                surface_pos, uuv.pos, uuv, env, 2.5, False)
+                                                surface_pos, uuv.pos, uuv, env, 2.5, time_start_sec, False)
             energy_cost += energy
             time_cost_sec += time_sec
             total_cost += eq_cost
@@ -207,18 +209,20 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, *args):
 
 
 '''
-def simple_cc(search_bbox):
-    rotation = np.arange(0, 360, 10)
+def simple_cc(cc_path, trash_dict, uuv, env, desired_speed, *args):
+    rotation = np.arange(0, 360, 30)
     best_cost = 99999999999999999;
     for r in range(len(rotation)):
+        search_bbox = cc_path
         rotated_bbox = sa.rotate(search_bbox, rotation[r]) ##Default, takes in rotation by degrees
-        waypts = calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
+        # waypts = calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
         centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
         np_centered_waypoints = np.array(zip(centered_waypoints.exterior.coords.xy[0], 
                                  centered_waypoints.exterior.coords.xy[1]))
-        cost = self.est_propulsion(np_centered_waypoints, best_cost, 
-                                        est_uuv_pos=False, use_bound=True, 
-                                        visualize=False)
+
+        # cost = self.est_propulsion(np_centered_waypoints, best_cost, 
+        #                                 est_uuv_pos=False, use_bound=True, 
+        #                                 visualize=False)
 
         if cost < best_cost:
             best_cost = cost
