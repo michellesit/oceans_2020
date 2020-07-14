@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from trash_utils.Env import Env
 from trash_utils.UUV import UUV
+from trash_utils.finder_utils import fix_waypoint_edges
 from trash_utils.trash_lib import ( init_hotspots, 
                                     visualize_trash_flow,
                                     update_trash_pos,
@@ -73,9 +74,10 @@ class Nom_Simulation():
             cc_y_lines = np.arange(miny, maxy, 5)
 
             ##Calculate the CC pattern on this hotspot
-            cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines)
+            cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines, self.Env)
             cc_depths = self.Env.dfunc(cc_wpts)
             cc_paths.append(np.hstack((cc_wpts, cc_depths.reshape(-1,1))))
+            cc_paths = fix_waypoint_edges(cc_wpts, self.Env)
 
             hotspot_paths = []
             for b_idx in range(self.num_hotspots):
@@ -150,7 +152,7 @@ class Nom_Simulation():
 
             if vis_dash == True:
                 fig = plt.figure()
-                # vis_args = [True, fig]
+                vis_args = [True, fig]
 
                 ##Adds 2D overview of the map
                 ax1 = fig.add_subplot(121)
@@ -173,6 +175,7 @@ class Nom_Simulation():
                                                                         self.uuv, 
                                                                         self.Env, 
                                                                         self.desired_speed,
+                                                                        total_trip_time_sec,
                                                                         vis_args)
 
             if uuv_path_state == 'searching':
@@ -183,6 +186,7 @@ class Nom_Simulation():
                                                                         self.uuv, 
                                                                         self.Env, 
                                                                         self.desired_speed,
+                                                                        0,
                                                                         vis_args)
 
             print ("COST TO TRAVEL THIS LEG OF THE TRIP")
@@ -247,7 +251,7 @@ class Nom_Simulation():
         ##Execute the path
         total_energy_cost, total_time_sec, total_paper_cost = self.follow_path_order(
                                                                 nominal_path,
-                                                                hotspot_dict)
+                                                                hotspot_dict, 0)
 
         print ("FINAL COST VALUES:")
         print ("total energy  : ", total_energy_cost)
