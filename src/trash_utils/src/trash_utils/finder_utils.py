@@ -461,6 +461,44 @@ def get_height(bbox):
     return haversine(bbox[1,0], bbox[1,1], bbox[2,0], bbox[2,1]) * 1000
 
 
+def filter_edges(waypoints, env_edge, col_idx):
+    '''
+    Used to limit the waypoints to the edges of the map
+    This specifically limits only one column at a time
+
+    waypoints (np.ndarray) : dim=nx3 array of points
+    env_edge (float)       : Either env.height/2, env.width/2, or env.max_depth
+    col_idx (int)          : Used to indicate which column to filter (ex = x,y,z position)
+
+    Returns
+        waypoints (np.ndarray) : array of points with single column within limits of +/-env_edge
+
+    '''
+    found_idx = abs(waypoints[:, col_idx]) > env_edge
+    waypoints[found_idx, col_idx] = env_edge*np.sign(waypoints[found_idx, col_idx])
+    return waypoints    
+
+
+def fix_waypoint_edges(waypoints, env):
+    '''
+    Used to limit the waypoints to the edges of the map
+
+    waypoints (np.ndarray) : dim=nx3 array of points
+    env (object)           : trash_utils/Env.py object to access
+                             (width, height, max_depth)
+
+    Returns:
+        waypoints(np.ndarray) : array of points within map limits
+
+    '''
+    waypoints = filter_edges(waypoints, env.width/2, 0)
+    waypoints = filter_edges(waypoints, env.height/2, 1)
+    waypoints = filter_edges(waypoints, env.max_depth, 2)
+
+    return waypoints
+
+
+
 def main():
     rospack = rospkg.RosPack()
     trash_finder_path = rospack.get_path("trash_finder")
