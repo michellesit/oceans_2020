@@ -56,7 +56,7 @@ def calc_ball_cost(current_pos, end_pos, to_be_visited_dict, visited_dict, ball_
     ##TODO: Do we need this section?
     if goal_dist > uuv_end_threshold and (np.linalg.norm([end_pos - current_pos]) < goal_dist):
         energy_cost, time_traveled_sec, eq_cost, empty = follow_path_waypoints(
-            np.array([end_pos]), current_pos, uuv, env, desired_speed, *[False])    
+            np.array([end_pos]), current_pos, uuv, env, desired_speed, time_at_node_sec, *[False])    
 
         self_and_parent_eq_cost = parent_eq_cost + eq_cost
         heuristic_cost = 0
@@ -77,7 +77,6 @@ def calc_ball_cost(current_pos, end_pos, to_be_visited_dict, visited_dict, ball_
 
                                 'parent_path': new_parent_path}
         print ("AHA. I should end now")
-        # pdb.set_trace()
         return to_be_visited_dict, visited_dict
 
 
@@ -99,17 +98,16 @@ def calc_ball_cost(current_pos, end_pos, to_be_visited_dict, visited_dict, ball_
             goal_y = env.height/2 * np.sign(goal_y)
         if goal_z > 0:
             goal_z = 0
-        if goal_z < -env.max_depth:
-            goal_z = -env.max_depth
+        # if goal_z < -env.max_depth:
+            # goal_z = -env.max_depth
+        if goal_z < env.dfunc([goal_x, goal_y])[0]:
+            goal_z = env.dfunc([goal_x, goal_y])[0]
         goal_pos = np.array([goal_x, goal_y, goal_z])
 
         ##Check that the goal_x dist is within range to the goal or make it shorter
         ##If the distance to the goal_pos is greater than the distance to the end_pos, 
         ##make goal_pos the end_pos
-        # print ("dist to end  : ", np.linalg.norm([end_pos - current_pos]))
-        # print ("dist to goal : ", np.linalg.norm([goal_pos - current_pos]))
         if np.linalg.norm([end_pos - current_pos]) < np.linalg.norm([goal_pos - current_pos]):
-            # pdb.set_trace()
             goal_pos = end_pos
 
         ##If this point is within some distance to a previously calculated point,
@@ -151,7 +149,7 @@ def calc_ball_cost(current_pos, end_pos, to_be_visited_dict, visited_dict, ball_
 
         ##Calculate the cost of getting to that goal
         energy_cost, time_traveled_sec, eq_cost, empty = follow_path_waypoints(
-            np.array([goal_pos]), current_pos, uuv, env, desired_speed, *[False])
+            np.array([goal_pos]), current_pos, uuv, env, desired_speed, time_at_node_sec, *[False])
 
         self_and_parent_eq_cost = parent_eq_cost + eq_cost
         heuristic_cost = ((np.linalg.norm([goal_pos-end_pos]))/heuristic_denom)
@@ -391,10 +389,7 @@ def find_optimal_path_nrmpc(time_start_sec, start_pos, end_pos, ball_cart_pos,
                 ax1.set_ylim(min(end_pos[1], start_pos[1]), max(end_pos[1], start_pos[1]))
                 ax1.set_zlim(-env.max_depth, 3)
                 plt.show()
-
-            ##TODO: Save all info to a file to be compared later against the nominal solution
-
-
+                
             return final_eq_cost, final_time_sec_cost, final_energy_cost, found_path
 
     if np_args[0]:
