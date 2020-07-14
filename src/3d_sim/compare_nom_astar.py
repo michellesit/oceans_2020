@@ -8,7 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from trash_utils.Env import Env
 from trash_utils.UUV import UUV
-from trash_utils.finder_utils import (grid_data)
+from trash_utils.finder_utils import (grid_data, fix_waypoint_edges)
 from trash_utils.trash_lib import ( init_hotspots, 
                                     visualize_trash_flow,
                                     update_trash_pos,
@@ -56,6 +56,11 @@ class Compare_Nom_AStar():
 
         Path to cover each hotspot is a mowing the lawn pattern
 
+        This is an apples to apples comparison between the two algorithms
+        The time to search the hotspot is added to both nom and astar costs
+        However, we use the astar total time to determine at what time the paths are executed
+        That way, we can compare the cost of traveling the path at the same times
+
         Inputs:
             hotspot_dict (Dict)        : key = hotspot id number (1,2,..., num_hotspots)
                                         values = latest pos of all the trash in the hotspot
@@ -95,10 +100,12 @@ class Compare_Nom_AStar():
 
             ##Update the trash positions up to this time
             if astar_total_time_sec > 0:
+                print ("Updating trash positions")
                 for diff_sec in range(int(last_trash_update_sec), int(astar_total_time_sec)):
                     diff_hrs = diff_sec/3600
                     hotspot_dict = update_trash_pos(hotspot_dict, diff_hrs, self.env)
                 last_trash_update_sec = astar_total_time_sec
+            print ("Finished updating trash pos")
 
 
             ## Get convex hull of each hotspot plus some buffer
@@ -112,14 +119,17 @@ class Compare_Nom_AStar():
             cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines)
             cc_depths = self.env.dfunc(cc_wpts)
             cc_wpts = np.hstack((cc_wpts, cc_depths.reshape(-1,1)))
+            cc_wpts = fix_waypoint_edges(cc_wpts, self.env)
 
             ##Calculate the cost of traveling this cc_path at this time
-            fig = plt.figure()
+            ##Add results to both nominal and astar costs
+            # fig = plt.figure()
             energy_cost, time_cost_sec, est_cost = search_for_trash(cc_wpts, 
                                                                     hotspot_dict, 
                                                                     self.uuv, 
                                                                     self.env, 
                                                                     self.desired_speed, 
+                                                                    astar_total_time_sec,
                                                                     *[False])
 
             nom_total_energy_cost += energy_cost
@@ -137,8 +147,6 @@ class Compare_Nom_AStar():
             print ("total cost eq : ", nom_total_paper_cost)
             print ("final_path    : ", final_path_nom)
 
-            # pdb.set_trace()
-
             results_txt_file = open('compare_soln.txt', "a")
             results_txt_file.write("SEARCH FOR TRASH AT HOTSPOT " + str(path_order[p_idx]))
             results_txt_file.write("\nTotal energy: " + str(energy_cost))
@@ -147,8 +155,8 @@ class Compare_Nom_AStar():
             results_txt_file.write("\n")
             results_txt_file.close()
 
-            ##Save the path itself for plotting
 
+            ## Get the convex hull of the corresponding hotspot plus some buffer
             convexhull_b = sg.MultiPoint(hotspot_dict[path_order[p_idx+1]][-1][:, 0:2]).convex_hull
             buffer_b = convexhull_b.buffer(5)
             bx, by = buffer_b.exterior.coords.xy
@@ -162,6 +170,7 @@ class Compare_Nom_AStar():
 
             last_uuv_pos = np.copy(self.uuv.pos)
 
+
             ##Calculate the nominal path
             nom_path = calculate_nominal_path_short(pt1_3d, pt2_3d, 50, self.env)
             nom_energy, nom_time_sec, nom_est_cost, none = follow_path_waypoints(nom_path,
@@ -169,6 +178,7 @@ class Compare_Nom_AStar():
                                                                         self.uuv,
                                                                         self.env,
                                                                         self.desired_speed,
+                                                                        astar_total_time_sec,
                                                                         *[False])
             nom_total_energy_cost += nom_energy
             nom_total_time_sec += nom_time_sec
@@ -176,7 +186,6 @@ class Compare_Nom_AStar():
             final_path_nom.extend([nom_path])
             self.uuv.pos = last_uuv_pos
 
-            ##TODO: handle time_arr thing and appropriate costs
             astr_eq_cost, astr_time_cost_sec, astr_energy_cost, astr_path = find_optimal_path_nrmpc(astar_total_time_sec, pt1_3d, pt2_3d, ball_cart_pos, self.uuv, self.env, self.heuristic_denom, self.desired_speed, self.astar_goal_dist,
                 self.uuv_end_threshold, self.max_num_epochs, *[False])
 
@@ -190,15 +199,12 @@ class Compare_Nom_AStar():
             print ("nom_total_cost: ", nom_energy)
             print ("nom_time_sec  : ", nom_time_sec)
             print ("nom cost_eq   : ", nom_est_cost)
-            # print ("Nom path      : ", nom_path)
 
             print ("ASTAR COSTS")
             print ("total energy  : ", astr_energy_cost)
             print ("total time (s): ", astr_time_cost_sec)
             print ("total cost eq : ", astr_eq_cost)
-            # print ("final_path    : ", final_path)            
 
-            ##Plot the nominal path and astar path
             plt.clf()
             fig = plt.figure()
             ax1 = fig.gca(projection='3d')
@@ -214,7 +220,6 @@ class Compare_Nom_AStar():
             plt.savefig('{0}_{1}_path'.format(path_order[p_idx], path_order[p_idx+1]))
             # plt.show()
 
-            # pdb.set_trace()
 
             results_txt_file = open('compare_soln.txt', "a")
             results_txt_file.write("\nHOTSPOT{0} TO HOTSPOT{1}\n".format(path_order[p_idx],
@@ -231,7 +236,53 @@ class Compare_Nom_AStar():
             results_txt_file.write("\n\n")
             results_txt_file.close()
 
-            # pdb.set_trace()
+
+        ## Run search pattern for the last hotspot in the order
+        convexhull_a = sg.MultiPoint(hotspot_dict[path_order[p_idx+1]][-1][:, 0:2]).convex_hull
+        buffer_a = convexhull_a.buffer(5)
+        ax, ay = buffer_a.exterior.coords.xy
+        [minx, miny, maxx, maxy] = buffer_a.bounds
+        cc_y_lines = np.arange(miny, maxy, 5)
+
+        ##Calculate the CC pattern on this hotspot
+        cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines)
+        cc_depths = self.env.dfunc(cc_wpts)
+        cc_wpts = np.hstack((cc_wpts, cc_depths.reshape(-1,1)))
+        cc_wpts = fix_waypoint_edges(cc_wpts, self.env)
+
+        ##Calculate the cost of traveling this cc_path at this time
+        # fig = plt.figure()
+        energy_cost, time_cost_sec, est_cost = search_for_trash(cc_wpts, 
+                                                                hotspot_dict, 
+                                                                self.uuv, 
+                                                                self.env, 
+                                                                self.desired_speed, 
+                                                                astar_total_time_sec,
+                                                                *[False])
+
+        nom_total_energy_cost += energy_cost
+        nom_total_time_sec += time_cost_sec
+        nom_total_paper_cost += est_cost
+        final_path_nom.extend([cc_wpts])
+
+        astar_total_energy_cost += energy_cost
+        astar_total_time_sec += time_cost_sec
+        astar_total_paper_cost += est_cost            
+        final_path_astar.extend([cc_wpts])
+
+        print ("total energy  : ", nom_total_energy_cost)
+        print ("total time (s): ", nom_total_time_sec)
+        print ("total cost eq : ", nom_total_paper_cost)
+        print ("final_path    : ", final_path_nom)
+
+        results_txt_file = open('compare_soln.txt', "a")
+        results_txt_file.write("SEARCH FOR TRASH AT HOTSPOT " + str(path_order[p_idx+1]))
+        results_txt_file.write("\nTotal energy: " + str(energy_cost))
+        results_txt_file.write("\nTotal time (sec) : " + str(time_cost_sec))
+        results_txt_file.write("\nTotal cost eq: " + str(est_cost))
+        results_txt_file.write("\n")
+        results_txt_file.close()
+
 
         ##print the final costs of the whole thing
         print ("TOTAL COSTS OVERALL")
@@ -285,7 +336,6 @@ class Compare_Nom_AStar():
 
         ball_cart_pos, ball_sphere_headings = calc_all_headings(self.base_h_angle)
         hotspot_order = [0, 1, 2, 3, 4, 5]
-        # hotspot_order = [0, 1, 2]
 
         self.compare(ball_cart_pos, hotspot_order, hotspot_dict)
 
