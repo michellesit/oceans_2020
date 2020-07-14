@@ -12,7 +12,7 @@ Hotspot path planning algorithms
 
 '''
 
-def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *args, **kwargs):
+def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, time_start_sec, *args, **kwargs):
     '''
     Calculates preliminary info (pos, heading) needed to travel from the uuv to 
     each waypoint 
@@ -24,6 +24,7 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *
         env (Obj)                   : trash_utils/Env.py object to access
                                       (ufunc, vfunc, width, height, max_depth)
         desired_speed (float)       : uuv speed (meters/sec) for each step
+        time_start_sec (int)        : time to start searching algorithm (in sec)
 
     *args in order:
         args1 (bool)                : True = visualize waypoints and uuv pos
@@ -47,15 +48,15 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *
     total_energy = 0
     total_time = 0
     for pt in range(all_waypoints.shape[0]):
-        ##Calculate heading
+        ##Calculate heading to get from current_pos to the next waypoint
         goal_pt = all_waypoints[pt]
         diff = goal_pt - current_pos
         goal_phi = acos((diff[2]/np.linalg.norm(diff)))
         goal_theta = atan2(diff[1], diff[0])
-        mid_goal = np.array((sin(goal_phi)*cos(goal_theta), 
-                             sin(goal_phi)*sin(goal_theta), 
-                             cos(goal_phi)))*100
-        mid_goal = np.copy(current_pos) + mid_goal
+        # mid_goal = np.array((sin(goal_phi)*cos(goal_theta), 
+        #                      sin(goal_phi)*sin(goal_theta), 
+        #                      cos(goal_phi)))*100
+        # mid_goal = np.copy(current_pos) + mid_goal
 
         if np_args[0]:
             fig = np_args[1]
@@ -70,10 +71,11 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *
 
             plt.show()
 
+        save_current_pos = np.copy(current_pos)
         cost, time_sec, controls, detected_pos = cost_to_waypoint_v1(current_pos, 
                                                                      goal_pt,
                                                                      [goal_phi, goal_theta],
-                                                                     0,
+                                                                     time_start_sec,
                                                                      uuv, env,
                                                                      desired_speed,
                                                                      *args, **kwargs)
@@ -88,6 +90,71 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *
         if en > 999999999999999999999999:
             print ("en is inf: ", en)
 
+
+        # ##If the cost is too high, then break down the waypoints into smaller pieces
+        # ##If this is still too high, THEN return inf
+        # ##TODO: if we have to do this, send the waypoints up the chain so we can plot this more accurately
+        # if cost > 99999999999999999999999:
+        #     print ("Trying to find a better solution!")
+        #     current_pos = save_current_pos
+        #     dist_goal = np.linalg.norm([goal_pt - current_pos])
+        #     sub_goal_pt = (goal_pt + current_pos)/2
+
+        #     print ("dist to goal: ", dist_goal)
+        #     while dist_goal > 0.5:
+        #         print ("Dist goal: ", dist_goal)
+        #         print ("sub_goal_pt : ", sub_goal_pt)
+        #         print ("current_pos: ", current_pos)
+        #         pdb.set_trace()
+
+        #         ##Calculate cost to get to this sub point
+        #         save_sub_current_pos = np.copy(current_pos)
+        #         cost, time_sec, controls, detected_pos = cost_to_waypoint_v1(
+        #                                                         current_pos, 
+        #                                                         sub_goal_pt,
+        #                                                         [goal_phi, goal_theta],
+        #                                                         time_start_sec,
+        #                                                         uuv, env,
+        #                                                         desired_speed,
+        #                                                         *args, **kwargs)
+        #         print ("Cost? : ", cost)
+
+        #         ##If success, update point and add costs 
+        #         if cost < 99999999999999999999999:
+        #             print ("reached subgoal!")
+        #             total_cost += cost
+        #             total_energy += np.sum(controls[:,0])
+        #             total_time += time_sec
+        #             current_pos = np.copy(sub_goal_pt)
+        #             sub_goal_pt = np.copy(goal_pt)
+        #             print ("Updating sub_goal_pt: ", sub_goal_pt)
+
+        #         ##Else, need to break it down again
+        #         ##If this is not working, maybe change the desired speed?
+        #         else:
+        #             if dist_goal > 1:
+        #                 print ("dist to goal is > 1")
+        #                 current_pos = save_sub_current_pos
+        #                 sub_goal_pt = (current_pos + goal_pt)/2
+        #                 print ("Updated sub_goal_pt to : ", sub_goal_pt)
+                        
+
+        #             elif np.linalg.norm([sub_goal_pt - goal_pt]) > np.linalg.norm([save_current_pos - goal_pt])*0.9 and desired_speed > 1:
+        #                 print ("lowering desired_speed")
+        #                 desired_speed = 1
+        #                 current_pos = save_current_pos
+        #                 sub_goal_pt = (goal_pt + current_pos)/2
+
+        #             elif np.linalg.norm([sub_goal_pt - goal_pt]) > np.linalg.norm([save_current_pos - goal_pt])*0.9 and desired_speed <= 1:
+        #                 print ("We can't reach this goal no matter what. Return inf cost")
+        #                 pdb.set_trace()
+        #                 return np.inf, np.inf, np.inf, detected_pos
+
+        #         ##Calc dist_goal
+        #         dist_goal = np.linalg.norm([goal_pt - current_pos])
+        #     print ("EXITING WHILE LOOP")
+
+        # else:
         total_cost += cost
         total_energy += np.sum(controls[:,0])
         total_time += time_sec
@@ -97,10 +164,7 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, *
         # print ("time:   ", time_sec)
 
     uuv.pos = current_pos
-    # print ("total energy: ", total_energy)
-    # print ("total time  : ", total_time)
-    # print ()
-    # pdb.set_trace()
+
     return total_energy, total_time, total_cost, detected_pos
 
 
@@ -152,11 +216,13 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
 
     threshold2 = 2  ##meters
     epoch2 = 0
-    max_num_epoch2 = 700
+    max_num_epoch2 = 10000
     first_run = True
     timesteps = 0
-    while (abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 < max_num_epoch2) \
-            or (first_run == True):
+    while (abs(np.linalg.norm([pos - goal_pos])) > threshold2 \
+          and epoch2 < max_num_epoch2) \
+          or (first_run == True):
+
         if np_args[0]:
             fig = np_args[1]
             ax1 = fig.add_subplot(122, projection='3d')
@@ -186,12 +252,12 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
         ##Adapt the mid_goal in respose to distance to actual point
         ##If the mid_goal is farther than what's left to the goal point, 
         ##   make mid_goal the remaining distance
-        if mid_goal_x > abs(np.linalg.norm([pos[0] - goal_pos[0]])):
-            mid_goal_x = np.linalg.norm([pos[0] - goal_pos[0]])
-        if mid_goal_y > abs(np.linalg.norm([pos[1] - goal_pos[1]])):
-            mid_goal_y = np.linalg.norm([pos[1] - goal_pos[1]])
-        if mid_goal_z > abs(np.linalg.norm([pos[2] - goal_pos[2]])):
-            mid_goal_z = np.linalg.norm([pos[2] - goal_pos[2]])
+        if abs(mid_goal_x) > abs(np.linalg.norm([pos[0] - goal_pos[0]])):
+            mid_goal_x = goal_pos[0] - pos[0]
+        if abs(mid_goal_y) > abs(np.linalg.norm([pos[1] - goal_pos[1]])):
+            mid_goal_y = goal_pos[1] - pos[1]
+        if abs(mid_goal_z) > abs(np.linalg.norm([pos[2] - goal_pos[2]])):
+            mid_goal_z = goal_pos[2] - pos[2]
 
         ##If mid_goal is outside the bounds of the map, then set to the edge
         if abs(pos[0]+mid_goal_x) > env.width/2:
@@ -249,20 +315,23 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
             ##Save the uuv stuff?
             ##Create dictionary of discovered trash?
 
-    # print ("epoch2: ", epoch2)
-
     if np_args[0]:
         ax1.set_xlabel("x-axis")
         ax1.set_ylabel("y-axis")
         ax1.set_zlabel("depth")
         plt.show()
 
+    ##If the cost is negative (meaning the uuv used no energy), then make cost = 0
     uuv_controls = np.array(uuv_controls)
     cost = (timesteps*(12.0/3600.0)) \
          + (timesteps * (np.sum((uuv_controls[:, 1:4]**3))**(0.333333))) * 0.70
     if isnan(cost):
         cost = 0.0
 
+    ##Filter out all repeat detections. Only return new trash detections
+    ##This could be its own method in the real sim
+    ##This would be where you do data association between observations to determine
+    ##  if you have detected the same two objects
     if len(all_detected_idx) > 0:
         all_detected_idx = np.unique(all_detected_idx, axis=0)
 
@@ -270,13 +339,10 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
         print ("WAS NOT ABLE TO FIND A SOLUTION")
         return np.inf, np.inf, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
     else:
-        # print ("cost: ", cost)
-        # print ("timesteps: ", timesteps)
-        # pdb.set_trace()
         return cost, timesteps, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
 
 
-def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, vis_dash=True):
+def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, time_start_sec, vis_dash=True):
     '''
     
     Inputs:
@@ -287,10 +353,10 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, vis_das
                                values = latest positions of all the trash in the hotspot
         vis_dash (bool)      : True = visualize global path and 
                                path for each hotspot searching or between hotspots
-        uuv (Obj)                    : trash_utils/UUV.py to access (pos, max_thrust)
-        env (Obj)                    : trash_utils/Env.py object to access
-                                       (ufunc, vfunc, width, height, max_depth)
-        desired_speed (float)        : uuv speed (meters/sec) for each step
+        uuv (Obj)            : trash_utils/UUV.py to access (pos, max_thrust)
+        env (Obj)            : trash_utils/Env.py object to access
+                               (ufunc, vfunc, width, height, max_depth)
+        desired_speed (float): uuv speed (meters/sec) for each step
 
     Returns:
         total_trip_energy_cost (float) : total amount of energy uuv uses for mission
@@ -339,6 +405,7 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, vis_das
                                                                     uuv, 
                                                                     env, 
                                                                     desired_speed,
+                                                                    time_start_sec,
                                                                     vis_args)
 
         if uuv_path_state == 'searching':
@@ -349,6 +416,7 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, vis_das
                                                                     uuv, 
                                                                     env, 
                                                                     desired_speed,
+                                                                    time_start_sec,
                                                                     vis_args)
 
         print ("COST TO TRAVEL THIS LEG OF THE TRIP")
@@ -377,11 +445,13 @@ def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
     - Breaking the path down into smaller pieces
     - Setting the waypoints to be those breakpoints with depth at the bottom of the map
 
-    Path to cover each hotspot is a mowing the lawn pattern
+    Path from hotspot to hotspot is the euclidean distance at the bottom of the map
+    
+    TODO? Smooth out the waypoints
 
     Inputs:
-        pt1 (np.ndarray)  :
-        pt2 (np.ndarray)  :
+        pt1 (np.ndarray)  : (x,y,z) of starting point
+        pt2 (np.ndarray)  : (x,y,z) of ending point
         wpt_spacing (int) : distance (meters) between the nominal waypoints
         env (object)      : 
 
@@ -390,11 +460,6 @@ def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
 
     '''
 
-    ##NOMINAL PATH
-    ##Calculate the waypoints needed to traverse along the bottom of the map
-    ##Split path into several points
-    ##Get the depth for all of those points
-    ##TODO? Smooth out the waypoints
     num_pts = abs(pt1[0] - pt2[0])//wpt_spacing
     if num_pts == 0:
         path = np.array([pt1, pt2])
