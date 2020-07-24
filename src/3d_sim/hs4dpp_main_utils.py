@@ -41,6 +41,7 @@ def calc_heuristic_denom(env, desired_speed):
 
     '''
 
+    np.random.seed(8)
     d = grid_data(env.dfunc, env.xbound, env.ybound, 50, [], [])
 
     ##Find the max current over a 4 day period (96 hrs total)

@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import numpy as np
 import shapely.geometry as sg
 import shapely.affinity as sa
@@ -156,6 +158,11 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
                                                          1.5, 
                                                          time_start_sec,
                                                          False, **trash_info)
+        # print ("this thing here 1")
+        # print (np.array([cc_path[pt_idx]]))
+        # print ("adding energy: ", energy)
+        # print ("adding time  : ", time_sec)
+        # print ("adding eq cos: ", eq_cost)
         energy_cost += energy
         time_cost_sec += time_sec
         total_cost += eq_cost
@@ -168,7 +175,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
         ##Surface if trash detected during that leg
         ##Broadcast the position of the trash to the base station
         if len(all_detected_trash_pos) > 0:
-            uuv_detected_pos = uuv.pos
+            uuv_detected_pos = deepcopy(uuv.pos)
             ##CARLOS: use detected_time_hrs to determine the u,v currents at that time
             detected_time_hrs = time_cost_sec / 3600.0
 
@@ -185,6 +192,12 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
             surface_pos = np.array([[uuv.pos[0], uuv.pos[1], 0]])
             energy, time_sec, eq_cost, empty = follow_path_waypoints(
                                                 surface_pos, uuv.pos, uuv, env, 2.5, time_start_sec, False)
+
+            # print ("this thing here 2")
+            # print (surface_pos, uuv.pos)
+            # print ("adding energy: ", energy)
+            # print ("adding time  : ", time_sec)
+            # print ("adding eq cos: ", eq_cost)
             energy_cost += energy
             time_cost_sec += time_sec
             total_cost += eq_cost

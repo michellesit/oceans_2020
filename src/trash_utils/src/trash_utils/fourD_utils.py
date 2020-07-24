@@ -1,8 +1,12 @@
 from math import atan2, sin, cos, acos, isnan
+from copy import deepcopy
 
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+
+from trash_utils.trash_lib import visualize_trash_step
+import trash_utils.cc_utils
 
 import pdb
 
@@ -47,16 +51,16 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, t
     total_cost = 0
     total_energy = 0
     total_time = 0
+    detected_pos = []
+    # print ("UUV POS BEFORE: ", current_pos, uuv.pos)
     for pt in range(all_waypoints.shape[0]):
         ##Calculate heading to get from current_pos to the next waypoint
         goal_pt = all_waypoints[pt]
         diff = goal_pt - current_pos
+        if np.linalg.norm([goal_pt - current_pos]) < 0.5:
+            continue
         goal_phi = acos((diff[2]/np.linalg.norm(diff)))
         goal_theta = atan2(diff[1], diff[0])
-        # mid_goal = np.array((sin(goal_phi)*cos(goal_theta), 
-        #                      sin(goal_phi)*sin(goal_theta), 
-        #                      cos(goal_phi)))*100
-        # mid_goal = np.copy(current_pos) + mid_goal
 
         if np_args[0]:
             fig = np_args[1]
@@ -71,7 +75,7 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, t
 
             plt.show()
 
-        save_current_pos = np.copy(current_pos)
+        save_current_pos = deepcopy(current_pos)
         cost, time_sec, controls, detected_pos = cost_to_waypoint_v1(current_pos, 
                                                                      goal_pt,
                                                                      [goal_phi, goal_theta],
@@ -80,6 +84,9 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, t
                                                                      desired_speed,
                                                                      *args, **kwargs)
 
+        # print ("INNER LOOP")
+        # print ("cost       : ")
+
         if isnan(cost):
             print ("cost is nan: ", cost)
         if cost > 99999999999999999999999:
@@ -87,74 +94,10 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, t
         en = np.sum(controls[:,0])
         if isnan(en):
             print ("energy is nan: ", en)
+            pdb.set_trace()
         if en > 999999999999999999999999:
             print ("en is inf: ", en)
 
-
-        # ##If the cost is too high, then break down the waypoints into smaller pieces
-        # ##If this is still too high, THEN return inf
-        # ##TODO: if we have to do this, send the waypoints up the chain so we can plot this more accurately
-        # if cost > 99999999999999999999999:
-        #     print ("Trying to find a better solution!")
-        #     current_pos = save_current_pos
-        #     dist_goal = np.linalg.norm([goal_pt - current_pos])
-        #     sub_goal_pt = (goal_pt + current_pos)/2
-
-        #     print ("dist to goal: ", dist_goal)
-        #     while dist_goal > 0.5:
-        #         print ("Dist goal: ", dist_goal)
-        #         print ("sub_goal_pt : ", sub_goal_pt)
-        #         print ("current_pos: ", current_pos)
-        #         pdb.set_trace()
-
-        #         ##Calculate cost to get to this sub point
-        #         save_sub_current_pos = np.copy(current_pos)
-        #         cost, time_sec, controls, detected_pos = cost_to_waypoint_v1(
-        #                                                         current_pos, 
-        #                                                         sub_goal_pt,
-        #                                                         [goal_phi, goal_theta],
-        #                                                         time_start_sec,
-        #                                                         uuv, env,
-        #                                                         desired_speed,
-        #                                                         *args, **kwargs)
-        #         print ("Cost? : ", cost)
-
-        #         ##If success, update point and add costs 
-        #         if cost < 99999999999999999999999:
-        #             print ("reached subgoal!")
-        #             total_cost += cost
-        #             total_energy += np.sum(controls[:,0])
-        #             total_time += time_sec
-        #             current_pos = np.copy(sub_goal_pt)
-        #             sub_goal_pt = np.copy(goal_pt)
-        #             print ("Updating sub_goal_pt: ", sub_goal_pt)
-
-        #         ##Else, need to break it down again
-        #         ##If this is not working, maybe change the desired speed?
-        #         else:
-        #             if dist_goal > 1:
-        #                 print ("dist to goal is > 1")
-        #                 current_pos = save_sub_current_pos
-        #                 sub_goal_pt = (current_pos + goal_pt)/2
-        #                 print ("Updated sub_goal_pt to : ", sub_goal_pt)
-                        
-
-        #             elif np.linalg.norm([sub_goal_pt - goal_pt]) > np.linalg.norm([save_current_pos - goal_pt])*0.9 and desired_speed > 1:
-        #                 print ("lowering desired_speed")
-        #                 desired_speed = 1
-        #                 current_pos = save_current_pos
-        #                 sub_goal_pt = (goal_pt + current_pos)/2
-
-        #             elif np.linalg.norm([sub_goal_pt - goal_pt]) > np.linalg.norm([save_current_pos - goal_pt])*0.9 and desired_speed <= 1:
-        #                 print ("We can't reach this goal no matter what. Return inf cost")
-        #                 pdb.set_trace()
-        #                 return np.inf, np.inf, np.inf, detected_pos
-
-        #         ##Calc dist_goal
-        #         dist_goal = np.linalg.norm([goal_pt - current_pos])
-        #     print ("EXITING WHILE LOOP")
-
-        # else:
         total_cost += cost
         total_energy += np.sum(controls[:,0])
         total_time += time_sec
@@ -163,7 +106,8 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, t
         # print ("energy: ", np.sum(controls[:,0]))
         # print ("time:   ", time_sec)
 
-    uuv.pos = current_pos
+    # print ("FPW pos: ", current_pos, uuv.pos)
+    uuv.pos = deepcopy(current_pos)
 
     return total_energy, total_time, total_cost, detected_pos
 
@@ -205,6 +149,7 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
 
     '''
     np_args = np.array(args).flatten()
+    np.random.seed(8)
     
     all_detected_idx = np.empty((0,3))
     uuv_controls = []
@@ -214,7 +159,7 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
     goal_phi = goal_heading[0]
     goal_theta = goal_heading[1]
 
-    threshold2 = 2  ##meters
+    threshold2 = 0.5  ##meters
     epoch2 = 0
     max_num_epoch2 = 10000
     first_run = True
@@ -288,6 +233,7 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
         ##If the needed thrust is greater than what the uuv can provide, return inf cost
         if uuv_vector > uuv.max_thrust:
             print ("uuv_vector > max thrust: ", uuv_vector)
+            # pdb.set_trace()
             return np.inf, np.inf, np.empty((0,6)), all_detected_idx
 
         uuv_controls.append([uuv_energy, desired_x, desired_y, desired_z,
@@ -327,6 +273,9 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
          + (timesteps * (np.sum((uuv_controls[:, 1:4]**3))**(0.333333))) * 0.70
     if isnan(cost):
         cost = 0.0
+    if cost > 999999999999999999999999:
+        pdb.set_trace()
+        cost = 0.0
 
     ##Filter out all repeat detections. Only return new trash detections
     ##This could be its own method in the real sim
@@ -337,14 +286,21 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
 
     if abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 >= max_num_epoch2:
         print ("WAS NOT ABLE TO FIND A SOLUTION")
+        pdb.set_trace()
         return np.inf, np.inf, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
     else:
+
+        en = np.sum(uuv_controls[:,0])
+        if isnan(en):
+            pdb.set_trace()
         return cost, timesteps, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
 
 
-def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, time_start_sec, vis_dash=True):
+def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, time_start_sec, 
+    **kwargs):
     '''
-    
+    Switches off between following paths to the cc areas and searching for trash
+
     Inputs:
         nominal_path (array) : Array of arrays. Each sub-array contains the waypoints 
                                to do complete coverage within the hotspot
@@ -367,22 +323,31 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, time_st
                                          account
 
     '''
-
-    ##Switch off between traveling to the cc areas and finding trash
+    vis_dash = False
+    vis_args = [False]
+    
     total_trip_energy_cost = 0
     total_trip_time_sec = 0
     total_paper_cost = 0
+    run_start_time_sec = total_trip_time_sec + time_start_sec
 
-    vis_args = [False]
-    uuv_path_state = 'searching'
-    # uuv_path_state = 'path_following'
+    if 'uuv_path_state' in kwargs.keys():
+        print ("state in kwargs")
+        uuv_path_state = kwargs['uuv_path_state']
+    else:
+        uuv_path_state = 'searching'
+
+    if 'vis_args' in kwargs.keys():
+        print ('vis_args in kwargs')
+        vis_dash = kwargs['vis_args'][0]
+
 
     for np_idx in range(len(nominal_path)):
         currently_following_path = nominal_path[np_idx]
 
         if vis_dash == True:
             fig = plt.figure()
-            # vis_args = [True, fig]
+            vis_args = [True, fig]
 
             ##Adds 2D overview of the map
             ax1 = fig.add_subplot(121)
@@ -397,7 +362,7 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, time_st
             ax1.plot(currently_following_path[:,0], currently_following_path[:,1], 'k')
             visualize_trash_step(trash_dict, [True, ax1])
 
-        if uuv_path_state == 'path_following':
+        if uuv_path_state == 'following':
             print ("following")
             energy_cost, time_cost_sec, est_cost, none = follow_path_waypoints(
                                                          currently_following_path, 
@@ -405,18 +370,18 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, time_st
                                                                     uuv, 
                                                                     env, 
                                                                     desired_speed,
-                                                                    time_start_sec,
+                                                                    run_start_time_sec,
                                                                     vis_args)
 
         if uuv_path_state == 'searching':
             print ('searching')
-            energy_cost, time_cost_sec, est_cost = search_for_trash(
+            energy_cost, time_cost_sec, est_cost = trash_utils.cc_utils.search_for_trash(
                                                    currently_following_path, 
                                                                     trash_dict, 
                                                                     uuv, 
                                                                     env, 
                                                                     desired_speed,
-                                                                    time_start_sec,
+                                                                    run_start_time_sec,
                                                                     vis_args)
 
         print ("COST TO TRAVEL THIS LEG OF THE TRIP")
@@ -427,6 +392,7 @@ def follow_path_order(nominal_path, trash_dict, uuv, env, desired_speed, time_st
         total_trip_energy_cost += energy_cost
         total_trip_time_sec += time_cost_sec
         total_paper_cost += est_cost
+        run_start_time_sec += time_cost_sec
 
         if uuv_path_state == 'path_following':
             print ("switched to searching")
