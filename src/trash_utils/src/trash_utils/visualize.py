@@ -200,7 +200,8 @@ def visualize_multi_current(bbox, currents1_path, currents2_path, topo_path):
     depths += 1
     depths_flat = depths.flatten()
     # time_range = range(0, 145, 3)
-    time_range = range(25, 48, 3)
+    # time_range = range(25, 48, 3)
+    time_range = np.arange(0, 72, 0.5)
 
     ##init figure outside
     ##8 figures for each day
@@ -211,9 +212,9 @@ def visualize_multi_current(bbox, currents1_path, currents2_path, topo_path):
                       np.linspace(-height/2, height/2, depths.shape[0], endpoint=True))    
 
     fig = plt.figure(1)
-    fig.suptitle('Current vector field over time (day2)')
-    rows = 2
-    cols = 4
+    # fig.suptitle('Current vector field over time (day2)')
+    # rows = 2
+    # cols = 4
 
     for t_step in range(len(time_range)):
         u = grid_data(ufunc, xwidth, yheight, 100, depths, [time_range[t_step]])
@@ -222,8 +223,9 @@ def visualize_multi_current(bbox, currents1_path, currents2_path, topo_path):
 
         vmin = np.min(uv)
         vmax = np.max(uv)
-        
-        ax1 = fig.add_subplot(rows, cols, t_step+1)
+
+        ax1 = fig.add_subplot(1,1)        
+        # ax1 = fig.add_subplot(rows, cols, t_step+1)
         ax1.set_title("(time(hrs)={0})".format(time_range[t_step]))
         ax1.set_xlabel('latitude')
         ax1.set_ylabel('longitude')
@@ -236,6 +238,8 @@ def visualize_multi_current(bbox, currents1_path, currents2_path, topo_path):
         ax1.set_xlim([w[0][0]-0.01, w[0][-1]+0.01])
         ax1.set_ylim([h[0][0]-0.01, h[0][-1]+0.03])
         ax1.axis('equal')
+
+        
 
     fig.colorbar(im1, orientation='horizontal')
     im1.set_clim(0, 0.15)
