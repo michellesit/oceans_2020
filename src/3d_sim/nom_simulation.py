@@ -35,7 +35,7 @@ class Nom_Simulation():
         
         #For 4D path planning
         self.desired_speed = 2.5722     ##meters/second (5 knots)
-        self.goal_dist = 50
+        self.goal_dist = 1000
 
 
     def calculate_nominal_paths(self, hotspot_dict, wpt_spacing):
@@ -74,10 +74,15 @@ class Nom_Simulation():
             cc_y_lines = np.arange(miny, maxy, 5)
 
             ##Calculate the CC pattern on this hotspot
-            cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines, self.Env)
+            cc_wpts = calc_mowing_lawn(buffer_a, cc_y_lines)
             cc_depths = self.Env.dfunc(cc_wpts)
-            cc_paths.append(np.hstack((cc_wpts, cc_depths.reshape(-1,1))))
-            cc_paths = fix_waypoint_edges(cc_wpts, self.Env)
+            cc_3d = np.hstack((cc_wpts, cc_depths.reshape(-1,1)))
+            cc_3d = fix_waypoint_edges(cc_3d, self.Env)
+            cc_paths.append(cc_3d)
+            # cc_3d.append(np.hstack((cc_wpts, cc_depths.reshape(-1,1))))
+            # cc_paths = np.array(cc_paths)
+            # cc_paths = fix_waypoint_edges(cc_paths, self.Env)
+            # pdb.set_trace()
 
             hotspot_paths = []
             for b_idx in range(self.num_hotspots):
@@ -113,7 +118,12 @@ class Nom_Simulation():
                 hotspot_paths.append(path)
             all_paths.append(hotspot_paths)
 
-        return cc_paths, all_paths
+        # pdb.set_trace()
+        # cc_paths = np.array(cc_paths)
+        # pdb.set_trace()
+        # cc_paths = fix_waypoint_edges(cc_paths, self.Env)
+        # pdb.set_trace()
+        return np.array(cc_paths), all_paths
 
 
     def follow_path_order(self, nominal_path, trash_dict, vis_dash=True):
@@ -148,7 +158,8 @@ class Nom_Simulation():
         # uuv_path_state = 'path_following'
 
         for np_idx in range(len(nominal_path)):
-            currently_following_path = nominal_path[np_idx]
+            currently_following_path = np.array(nominal_path[np_idx]).reshape(-1, 3)
+            print ("currently_following_path: ", currently_following_path)
 
             if vis_dash == True:
                 fig = plt.figure()
@@ -166,6 +177,11 @@ class Nom_Simulation():
                          [self.uuv.pos[1], currently_following_path[0,1]], 'k')
                 ax1.plot(currently_following_path[:,0], currently_following_path[:,1], 'k')
                 visualize_trash_step(trash_dict, [True, ax1])
+                if uuv_path_state == 'path_following':
+                    plt.title("Following line from hotspot{0} to hotspot{1}".format(np_idx//2, np_idx//2+1))
+                if uuv_path_state == 'searching':
+                    plt.title("searching at hotspot {0}".format(np_idx//2))
+
 
             if uuv_path_state == 'path_following':
                 print ("following")
@@ -186,7 +202,7 @@ class Nom_Simulation():
                                                                         self.uuv, 
                                                                         self.Env, 
                                                                         self.desired_speed,
-                                                                        0,
+                                                                        1,
                                                                         vis_args)
 
             print ("COST TO TRAVEL THIS LEG OF THE TRIP")
@@ -212,10 +228,14 @@ class Nom_Simulation():
 
     def main(self):
         ## Create hotspots of trash and (optinal) visualize
-        trash_x_centers = np.array([-250.98494701, -504.8406451, \
-                                    -132, 345, 876, 423]).reshape(-1,1)
-        trash_y_centers = np.array([-508.96243035, -877.89326774, \
-                                    -687, 354, 120, 348]).reshape(-1,1)
+        # trash_x_centers = np.array([-250.98494701, -504.8406451, \
+        #                             -132, 345, 876, 423]).reshape(-1,1)
+        # trash_y_centers = np.array([-508.96243035, -877.89326774, \
+        #                             -687, 354, 120, 348]).reshape(-1,1)
+        np.random.seed(29435)
+        trash_x_centers = np.random.randint(self.Env.xbound[0], self.Env.xbound[1], 6).reshape(-1,1)
+        trash_y_centers = np.random.randint(self.Env.ybound[0], self.Env.ybound[1], 6).reshape(-1,1)
+
         ##Can specify trash distribution covariance for all hotspots:
         # trash_sigma = [[0.5, 0], [0, 0.1]]
         ##Use this to auto generate gaussian trash distributions:
@@ -236,7 +256,7 @@ class Nom_Simulation():
         # plt.show()
 
         ##Calculate all complete coverage and inter-hotspot paths
-        all_cc_paths, all_hotspot_paths = self.calculate_nominal_paths(hotspot_dict, 50)
+        all_cc_paths, all_hotspot_paths = self.calculate_nominal_paths(hotspot_dict, 1000)
 
         ## Arbitrarily selected order of hotspot traversal
         ## Get the path to follow
@@ -251,7 +271,7 @@ class Nom_Simulation():
         ##Execute the path
         total_energy_cost, total_time_sec, total_paper_cost = self.follow_path_order(
                                                                 nominal_path,
-                                                                hotspot_dict, 0)
+                                                                hotspot_dict, True)
 
         print ("FINAL COST VALUES:")
         print ("total energy  : ", total_energy_cost)
