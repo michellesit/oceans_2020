@@ -7,10 +7,10 @@ class Env():
 	'''
 
 	def __init__(self, uboost=1, vboost=1):
-		self.place_bbox, self.ufunc, self.vfunc, self.dfunc = load_currents()
+		self.place_bbox, self.ufunc, self.vfunc, self.dfunc, self.uvfunc = load_currents()
 		self.width = get_width(self.place_bbox)
 		self.height = get_height(self.place_bbox)
-		self.max_depth = 50
+		self.max_depth = 950
 		self.u_boost = uboost
 		self.v_boost = vboost
 
