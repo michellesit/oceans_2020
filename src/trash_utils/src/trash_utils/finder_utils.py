@@ -426,14 +426,17 @@ def load_currents():
     topo_path = data_path + '/' + topo
 
     all_locations = pickle.load( open(trash_finder_path + "/config/locations.p", "rb"))
-    place_bbox = all_locations["mission_bay_flatter_bbox"]
+    # place_bbox = all_locations["mission_bay_flatter_bbox"]
+    place_bbox = all_locations["santa_monica_basin"]
+    # place_bbox = all_locations["san_pedro_basin"]
+    # place_bbox = all_locations["catalina_basin"]
 
     ufunc, vfunc, uvfunc = get_multi_current_block(place_bbox, 
                                                    currents_path1,
                                                    currents_path2)
     d_area, dfunc = get_depth_block(place_bbox, topo_path)
 
-    return place_bbox, ufunc, vfunc, dfunc
+    return place_bbox, ufunc, vfunc, dfunc, uvfunc
 
 
 def get_width(bbox):
@@ -476,7 +479,7 @@ def filter_edges(waypoints, env_edge, col_idx):
     '''
     found_idx = abs(waypoints[:, col_idx]) > env_edge
     waypoints[found_idx, col_idx] = env_edge*np.sign(waypoints[found_idx, col_idx])
-    return waypoints    
+    return waypoints
 
 
 def fix_waypoint_edges(waypoints, env):
@@ -493,7 +496,8 @@ def fix_waypoint_edges(waypoints, env):
     '''
     waypoints = filter_edges(waypoints, env.width/2, 0)
     waypoints = filter_edges(waypoints, env.height/2, 1)
-    waypoints = filter_edges(waypoints, env.max_depth, 2)
+    if waypoints.shape[1] > 2:
+        waypoints = filter_edges(waypoints, env.max_depth, 2)
 
     return waypoints
 
