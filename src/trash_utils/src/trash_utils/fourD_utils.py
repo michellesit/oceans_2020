@@ -260,9 +260,6 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
                 detected_trash_pos = all_trash_pos[detected_idx]
                 all_detected_idx = np.vstack((all_detected_idx, detected_trash_pos))
 
-            ##Save the uuv stuff?
-            ##Create dictionary of discovered trash?
-
     if np_args[0]:
         ax1.set_xlabel("x-axis")
         ax1.set_ylabel("y-axis")
@@ -438,42 +435,3 @@ def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
         path = np.hstack((waypts, waypts_depth.reshape(-1,1) ))
 
     return path
-
-
-# def create_nom_cost_matrix(wpt1, wpt2, wpt_spacing, desired_speed, trash_dict, uuv, env, vis=True):
-#     '''
-#     Calculates the 
-
-#     '''
-#     nom_path = calculate_nominal_path_short(wpt1, wpt2, wpt_spacing, env)
-
-#     time_hrs = np.arange(0, 144, 0.5)
-#     energy_cost_matrix = []
-#     time_cost_matrix = []
-#     est_cost_matrix = []
-#     for t in range(len(time)):
-#         nom_energy, nom_time_sec, nom_est_cost, none = follow_path_waypoints(nom_path,
-#                                                                 wpt1,
-#                                                                 uuv,
-#                                                                 env,
-#                                                                 desired_speed,
-#                                                                 time_hrs[t],
-#                                                                 *[False])
-#         energy_cost_matrix.append(nom_energy)
-#         time_cost_matrix.append(nom_time_sec)
-#         est_cost_matrix.append(nom_est_cost)
-
-#     ##visualize
-#     if vis == True:
-#         fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
-#         fig.suptitle('Comparing path costs for wpt1{0} to wpt2{1}')
-#         ax1.plot(time_hrs, energy_cost_matrix, 'o-')
-#         ax1.set_ylabel('Energy Cost')
-#         ax2.plot(time_hrs, time_cost_matrix, 'o-')
-#         ax2.set_ylabel('Time cost (sec)')
-#         ax3.plot(time_hrs, nom_est_cost, 'o-')
-#         ax3.set_ylabel('Est Cost')
-#         ax3.set_xlabel('time (hrs)')
-#         plt.show()
-
-#     return np.array(energy_cost_matrix), np.array(time_cost_matrix), np.array(est_cost_matrix)

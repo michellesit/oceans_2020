@@ -79,10 +79,6 @@ class Nom_Simulation():
             cc_3d = np.hstack((cc_wpts, cc_depths.reshape(-1,1)))
             cc_3d = fix_waypoint_edges(cc_3d, self.Env)
             cc_paths.append(cc_3d)
-            # cc_3d.append(np.hstack((cc_wpts, cc_depths.reshape(-1,1))))
-            # cc_paths = np.array(cc_paths)
-            # cc_paths = fix_waypoint_edges(cc_paths, self.Env)
-            # pdb.set_trace()
 
             hotspot_paths = []
             for b_idx in range(self.num_hotspots):
@@ -105,7 +101,6 @@ class Nom_Simulation():
                 ##Calculate the waypoints needed to traverse along the bottom of the map
                 ##Split path into several points
                 ##Get the depth for all of those points
-                ##TODO? Smooth out the waypoints
                 num_pts = abs(pt1.x - pt2.x)//wpt_spacing
                 if num_pts == 0:
                     path = np.array([pt1_3d, pt2_3d])
@@ -118,11 +113,6 @@ class Nom_Simulation():
                 hotspot_paths.append(path)
             all_paths.append(hotspot_paths)
 
-        # pdb.set_trace()
-        # cc_paths = np.array(cc_paths)
-        # pdb.set_trace()
-        # cc_paths = fix_waypoint_edges(cc_paths, self.Env)
-        # pdb.set_trace()
         return np.array(cc_paths), all_paths
 
 
@@ -155,7 +145,6 @@ class Nom_Simulation():
 
         vis_args = [False]
         uuv_path_state = 'searching'
-        # uuv_path_state = 'path_following'
 
         for np_idx in range(len(nominal_path)):
             currently_following_path = np.array(nominal_path[np_idx]).reshape(-1, 3)

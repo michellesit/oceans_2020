@@ -160,11 +160,6 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
                                                          1.5, 
                                                          time_start_sec,
                                                          False, **trash_info)
-        # print ("this thing here 1")
-        # print (np.array([cc_path[pt_idx]]))
-        # print ("adding energy: ", energy)
-        # print ("adding time  : ", time_sec)
-        # print ("adding eq cos: ", eq_cost)
         energy_cost += energy
         time_cost_sec += time_sec
         total_cost += eq_cost
@@ -216,31 +211,3 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
         plt.show()
 
     return energy_cost, time_cost_sec, total_cost
-
-
-
-
-'''
-def simple_cc(cc_path, trash_dict, uuv, env, desired_speed, *args):
-    rotation = np.arange(0, 360, 30)
-    best_cost = 99999999999999999;
-    for r in range(len(rotation)):
-        search_bbox = cc_path
-        rotated_bbox = sa.rotate(search_bbox, rotation[r]) ##Default, takes in rotation by degrees
-        # waypts = calc_mowing_lawn(rotated_bbox, y_bbox0, start_end="left")
-        centered_waypoints = sa.rotate(sh.Polygon(waypts), -rotation[r])
-        np_centered_waypoints = np.array(zip(centered_waypoints.exterior.coords.xy[0], 
-                                 centered_waypoints.exterior.coords.xy[1]))
-
-        # cost = self.est_propulsion(np_centered_waypoints, best_cost, 
-        #                                 est_uuv_pos=False, use_bound=True, 
-        #                                 visualize=False)
-
-        if cost < best_cost:
-            best_cost = cost
-            best_waypoints = np_centered_waypoints
-            best_rotation = rotation[r]
-            # best_time = cost
-
-    return best_cost
-'''
