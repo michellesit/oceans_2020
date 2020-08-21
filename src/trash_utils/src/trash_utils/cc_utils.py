@@ -137,7 +137,7 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
         minx = min(cc_path[:,0])
         miny = min(cc_path[:,1])
         maxy = max(cc_path[:,1])
-        minz = 3
+        minz = min(cc_path[:,2])
         maxz = max(cc_path[:,2])
 
         ax1.set_xlim([minx-10, maxx+10])
@@ -145,7 +145,9 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
         ax1.set_zlim([minz-3, maxz+3])
 
 
-    for pt_idx in range(len(cc_path)):
+    for pt_idx in range(cc_path.shape[0]):
+        print ("pt_idx: ", pt_idx)
+        print ("cc_path[p_idx] ", cc_path[pt_idx])
         ##Follow the waypoint and calculate the cost of getting to that point
         ##Check if any of the trash positions are near the uuv
         ##If yes, save the uuv position and trash position
@@ -166,6 +168,8 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
         energy_cost += energy
         time_cost_sec += time_sec
         total_cost += eq_cost
+
+        print ("uuv pos: ", uuv.pos)
 
         if np_args[0]:
             ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
@@ -189,18 +193,13 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
                              all_detected_trash_pos[d,2], 'found!')
 
             ## Surface
-            surface_pos = np.array([[uuv.pos[0], uuv.pos[1], 0]])
-            energy, time_sec, eq_cost, empty = follow_path_waypoints(
-                                                surface_pos, uuv.pos, uuv, env, 2.5, time_start_sec, False)
+            # surface_pos = np.array([[uuv.pos[0], uuv.pos[1], 0]])
+            # energy, time_sec, eq_cost, empty = follow_path_waypoints(
+            #                                     surface_pos, uuv.pos, uuv, env, 2.5, time_start_sec, False)
 
-            # print ("this thing here 2")
-            # print (surface_pos, uuv.pos)
-            # print ("adding energy: ", energy)
-            # print ("adding time  : ", time_sec)
-            # print ("adding eq cos: ", eq_cost)
-            energy_cost += energy
-            time_cost_sec += time_sec
-            total_cost += eq_cost
+            # energy_cost += energy
+            # time_cost_sec += time_sec
+            # total_cost += eq_cost
 
             ##TODO CARLOS: This is where you'd predict the trash locations
             ##self.uuv in nom_simulation has a all_found_trash data structure. 
