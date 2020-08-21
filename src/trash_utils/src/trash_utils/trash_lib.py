@@ -59,11 +59,14 @@ def init_hotspots(trash_x_centers, trash_y_centers, input_sigma, num_soda_cans, 
     '''
 
     trash_dict = {}
+    np.random.seed(35484)
     for hotspot_idx in range(len(trash_x_centers)):
         if not input_sigma[0]:
             sigma = [[np.random.rand(), 0], [0, np.random.rand()]]
         else:
             sigma = input_sigma
+
+        print ("sigma: ", sigma)
 
         hotspot_trash_coords = trash_2d_gauss([trash_x_centers[hotspot_idx][0],
                                                trash_y_centers[hotspot_idx][0]],
