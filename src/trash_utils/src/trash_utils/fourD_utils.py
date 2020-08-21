@@ -94,7 +94,7 @@ def follow_path_waypoints(all_waypoints, current_pos, uuv, env, desired_speed, t
         en = np.sum(controls[:,0])
         if isnan(en):
             print ("energy is nan: ", en)
-            pdb.set_trace()
+            # pdb.set_trace()
         if en > 999999999999999999999999:
             print ("en is inf: ", en)
 
@@ -160,8 +160,10 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
     goal_theta = goal_heading[1]
 
     threshold2 = 0.5  ##meters
+    # threshold2 = 50
     epoch2 = 0
-    max_num_epoch2 = 10000
+    # max_num_epoch2 = 10000
+    max_num_epoch2 = 30000
     first_run = True
     timesteps = 0
     while (abs(np.linalg.norm([pos - goal_pos])) > threshold2 \
@@ -274,7 +276,7 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
     if isnan(cost):
         cost = 0.0
     if cost > 999999999999999999999999:
-        pdb.set_trace()
+        # pdb.set_trace()
         cost = 0.0
 
     ##Filter out all repeat detections. Only return new trash detections
@@ -286,13 +288,13 @@ def cost_to_waypoint_v1(input_start_pos, goal_pos, goal_heading, time_now, uuv, 
 
     if abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 >= max_num_epoch2:
         print ("WAS NOT ABLE TO FIND A SOLUTION")
-        pdb.set_trace()
+        # pdb.set_trace()
         return np.inf, np.inf, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
     else:
 
         en = np.sum(uuv_controls[:,0])
-        if isnan(en):
-            pdb.set_trace()
+        # if isnan(en):
+            # pdb.set_trace()
         return cost, timesteps, np.array(uuv_controls).reshape((-1, 6)), all_detected_idx
 
 
@@ -436,3 +438,42 @@ def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
         path = np.hstack((waypts, waypts_depth.reshape(-1,1) ))
 
     return path
+
+
+# def create_nom_cost_matrix(wpt1, wpt2, wpt_spacing, desired_speed, trash_dict, uuv, env, vis=True):
+#     '''
+#     Calculates the 
+
+#     '''
+#     nom_path = calculate_nominal_path_short(wpt1, wpt2, wpt_spacing, env)
+
+#     time_hrs = np.arange(0, 144, 0.5)
+#     energy_cost_matrix = []
+#     time_cost_matrix = []
+#     est_cost_matrix = []
+#     for t in range(len(time)):
+#         nom_energy, nom_time_sec, nom_est_cost, none = follow_path_waypoints(nom_path,
+#                                                                 wpt1,
+#                                                                 uuv,
+#                                                                 env,
+#                                                                 desired_speed,
+#                                                                 time_hrs[t],
+#                                                                 *[False])
+#         energy_cost_matrix.append(nom_energy)
+#         time_cost_matrix.append(nom_time_sec)
+#         est_cost_matrix.append(nom_est_cost)
+
+#     ##visualize
+#     if vis == True:
+#         fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+#         fig.suptitle('Comparing path costs for wpt1{0} to wpt2{1}')
+#         ax1.plot(time_hrs, energy_cost_matrix, 'o-')
+#         ax1.set_ylabel('Energy Cost')
+#         ax2.plot(time_hrs, time_cost_matrix, 'o-')
+#         ax2.set_ylabel('Time cost (sec)')
+#         ax3.plot(time_hrs, nom_est_cost, 'o-')
+#         ax3.set_ylabel('Est Cost')
+#         ax3.set_xlabel('time (hrs)')
+#         plt.show()
+
+#     return np.array(energy_cost_matrix), np.array(time_cost_matrix), np.array(est_cost_matrix)
