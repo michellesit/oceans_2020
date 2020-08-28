@@ -1,5 +1,6 @@
 from math import atan2, sin, cos, acos, isnan
 from copy import deepcopy
+import math
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -432,6 +433,303 @@ def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
         waypts = np.array(zip(np.linspace(pt1[0], pt2[0], num_pts, endpoint=True), 
                               np.linspace(pt1[1], pt2[1], num_pts, endpoint=True)))
         waypts_depth = env.dfunc(waypts)
+        path = np.hstack((waypts, waypts_depth.reshape(-1,1) ))
+
+    return path
+
+
+
+
+
+
+
+
+
+def follow_path_waypoints_v2(all_waypoints, env, desired_speed, time_start_sec, *args, **kwargs):
+    '''
+    Calculates preliminary info (pos, heading) needed to travel from the uuv to 
+    each waypoint 
+    
+    Inputs:
+        all_waypoints (np.ndarray)  : waypoint(s) to travel to
+        current_pos (np.ndarray)    : (x,y,z) uuv pos to calculate from
+        uuv (Obj)                   : trash_utils/UUV.py to access (pos, max_thrust)
+        env (Obj)                   : trash_utils/Env.py object to access
+                                      (ufunc, vfunc, width, height, max_depth)
+        desired_speed (float)       : uuv speed (meters/sec) for each step
+        time_start_sec (int)        : time to start searching algorithm (in sec)
+
+    *args in order:
+        args1 (bool)                : True = visualize waypoints and uuv pos
+        args2 (matplotlib)          : plt.figure() or subplot to plot points in
+
+    **kwargs items and keys:
+        'trash_dict'=all_trash_pos (np.ndarray) : all the trash piece (x,y,z) pos.
+                                                  dim=(-1,3)
+
+    Returns:
+        energy_cost (float)       : amount of energy uuv needs to complete this path
+        time_cost_sec (int)       : amount of time in seconds to complete this path
+        eq_cost (float)           : cost calculated from Huynh, Dunbabin, Smith (ICRA 2015)
+                                    Equation 6 which takes energy and time into account
+        detected_pos (np.ndarray) : (x,y,z) positions of detected trash. dim=(-1,3)
+
+    '''
+    np_args = np.array(args).flatten()
+
+    total_cost = 0
+    total_energy = 0
+    total_time = 0
+
+
+    current_pos = all_waypoints[0]
+    for pt in range(1, all_waypoints.shape[0]):
+        ##Calculate heading to get from current_pos to the next waypoint
+        goal_pt = all_waypoints[pt]
+        # if np.linalg.norm([goal_pt - current_pos]) < 0.5:
+            # continue
+
+        if np_args[0]:
+            fig = np_args[1]
+            ax1 = fig.add_subplot(122, projection='3d')
+            ax1.plot([current_pos[0]], [current_pos[1]], [current_pos[2]], 'bo')
+            ax1.text(current_pos[0], current_pos[1], current_pos[2], 'start')
+
+            ax1.plot(all_waypoints[:,0], all_waypoints[:,1], all_waypoints[:,2], 'bo')
+            ax1.plot(all_waypoints[:,0], all_waypoints[:,1], all_waypoints[:,2], 'b--')
+            ax1.text(all_waypoints[-1, 0], all_waypoints[-1, 1], all_waypoints[-1, 2],
+                     'goal')
+
+            plt.show()
+
+        heuristic_numer = np.linalg.norm([current_pos - goal_pt])
+        energy, time_sec, empty, path_taken = cost_to_waypoint_v2(current_pos, 
+                                                             goal_pt,
+                                                             time_start_sec,
+                                                             env,
+                                                             desired_speed,
+                                                             *args, **kwargs)
+
+        heuristic_cost = (heuristic_numer/(desired_speed) ) * 50
+
+        current_pos = deepcopy(goal_pt)
+
+        total_cost += heuristic_cost
+        total_energy += energy
+        total_time += time_sec
+
+    return total_energy, total_time, total_cost, path_taken
+
+
+def cost_to_waypoint_v2(input_start_pos, goal_pos, time_now, env, \
+                        desired_speed, *args, **kwargs):
+    '''
+    Given headings and positions, iteratively calculate the cost of getting to that position
+    Returns cost as timesteps and uuv_controls
+
+    Input:
+        input_start_pos (np.ndarray) : uuv position (x,y,z)
+        goal_pos (np.ndarray)        : waypoint (x,y,z)
+        goal_heading (np.ndarray)    : radians [phi, theta]
+        time_now (int)               : time in seconds
+        uuv (Obj)                    : trash_utils/UUV.py to access (pos, max_thrust)
+        env (Obj)                    : trash_utils/Env.py object to access
+                                       (ufunc, vfunc, width, height, max_depth)
+        desired_speed (float)        : uuv speed (meters/sec) for each step
+
+    *args in order:
+        args1 (bool)                 : True = visualize waypoints and uuv pos
+        args2 (matplotlib)           : plt.figure() or subplot to plot points in
+
+    **kwargs items and keys:
+        'trash_dict'=all_trash_pos (np.ndarray) : all the latest trash piece (x,y,z) pos.
+                                                  dim=(-1,3)
+
+    Returns:
+        cost (float)                  : cost calculated from Huynh, Dunbabin, Smith (2015)
+                                        Equation 6 which takes energy and time into account
+        timesteps (int)               : time it took to travel to the goal node in seconds
+        controls (np.ndarray)         : amount of energy uuv and all the control params
+                                        needed to get to the goal waypoint
+        all_detected_idx (np.ndarray) : (x,y,z) positions of detected trash to this waypt.
+                                        dim=(-1,3)
+
+    '''
+    np_args = np.array(args).flatten()
+    np.random.seed(8)
+
+    pos = input_start_pos
+    diff = goal_pos - input_start_pos
+    goal_vector = math.sqrt(diff[0]**2 + diff[1]**2)
+    goal_theta = math.atan2(diff[1], diff[0])
+    # goal_x = goal_pos[0]
+    # goal_y = goal_pos[1]
+
+    # small_goal_x = goal_pos[0]
+    # small_goal_y = goal_pos[1]
+
+    small_goal_x = diff[0]
+    small_goal_y = diff[1]
+
+    path_taken = []
+
+    total_energy = 0
+    threshold2 = 3 ##meters
+    # threshold2 = 50
+    epoch2 = 0
+    # max_num_epoch2 = 10000
+    max_num_epoch2 = 30000
+    first_run = True
+    timesteps = 0
+    while (abs(np.linalg.norm([pos - goal_pos])) > threshold2 \
+          and epoch2 < max_num_epoch2) \
+          or (first_run == True):
+
+        if np_args[0]:
+            fig = np_args[1]
+            # ax1 = fig.add_subplot(122, projection='3d')
+            ax1 = fig.add_subplot(111, projection='3d')
+            ##Plots start and end goal pos with blue connecting line
+            ax1.plot([input_start_pos[0]], [input_start_pos[1]], [input_start_pos[2]], 'bo')
+            ax1.text(input_start_pos[0], input_start_pos[1], input_start_pos[2], 'start')
+
+            ax1.plot([goal_pos[0]], [goal_pos[1]], [goal_pos[2]], 'bo')
+            ax1.text(goal_pos[0], goal_pos[1], goal_pos[2], 'goal')
+            ax1.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1],
+                      goal_pos[1]], [input_start_pos[2], goal_pos[2]], 'b--')
+
+
+        time_now_hrs = (time_now + timesteps)/3600.0
+        ##Calculate ocean u,v currents
+        current_u = env.ufunc([time_now_hrs, abs(goal_pos[2]), pos[0], pos[1]])[0] \
+                  * env.u_boost * np.random.normal(1, 0.5)
+        current_v = env.vfunc([time_now_hrs, abs(goal_pos[2]), pos[0], pos[1]])[0] \
+                  * env.v_boost * np.random.normal(1, 0.5)
+        current_vector = np.sqrt(current_u**2 + current_v**2)
+        current_theta = atan2(current_v, current_u)
+
+        diff = goal_pos - pos
+        # print ("diff: ", diff)
+        goal_theta = math.atan2(diff[1], diff[0])
+        # uuv_x = (goal_theta*desired_speed) + current_u + pos[0]
+        # uuv_y = (goal_theta*desired_speed) + current_v + pos[1]
+
+        # uuv_resulting_speed = math.sqrt( current_vector**2 + desired_speed**2 - 2*current_vector*desired_speed*cos(current_theta))
+        # total_energy += uuv_resulting_speed
+
+        # print ("current_u: ", current_u)
+        # print ("current_v: ", current_v)
+        # print ("uuv_resulting_speed: ", uuv_resulting_speed)
+
+        uuv_x = (desired_speed * math.cos(goal_theta)) + pos[0]
+        uuv_y = (desired_speed * math.sin(goal_theta)) + pos[1]
+
+        uuv_thrust = math.sqrt((desired_speed*math.cos(goal_theta) - current_u)**2 + (desired_speed*math.sin(goal_theta) + current_v)**2 )
+        # print ("uuv_thrust: ", uuv_thrust)
+
+        if uuv_thrust > 0:
+            total_energy += uuv_thrust
+        # pdb.set_trace()
+
+        # uuv_theta = math.acos( ( (small_goal_x*(small_goal_x-current_u)) + (small_goal_y*(small_goal_y-current_v)) ) / 
+        #                        ( (math.sqrt(small_goal_x**2 + small_goal_y**2)) * (math.sqrt( (small_goal_x - current_u)**2 + (small_goal_y - current_v)**2 )) )
+        #                      )
+
+        # # uuv_theta = math.atan( (goal_vector*math.sin(goal_theta) - current_v)/
+        # #                         (goal_vector*math.cos(goal_theta) - current_u) )
+
+        # uuv_x = (desired_speed * math.cos(uuv_theta)) + pos[0]
+        # uuv_y = (desired_speed * math.sin(uuv_theta)) + pos[1]
+
+
+        pos = np.array([uuv_x, uuv_y, goal_pos[2]])
+        path_taken.append([uuv_x, uuv_y, goal_pos[2]])
+
+        timesteps += 1
+        # total_energy += desired_speed
+
+        ##set pos to be this new position
+        epoch2 += 1
+        first_run = False
+
+        # print ("Pos     : ", pos)
+        # print ("goal_pos: ", goal_pos)
+        # print ("timesteps: ", timesteps)
+
+        # pdb.set_trace()
+
+        #Visualize uuv pos as it travels to its next waypoint
+        if np_args[0]:
+            ax1.plot([pos[0]], [pos[1]], [pos[2]], 'ro')
+            # plt.pause(0.5)
+
+    if np_args[0]:
+        ax1.set_xlabel("x-axis")
+        ax1.set_ylabel("y-axis")
+        ax1.set_zlabel("depth")
+        plt.show()
+
+    if abs(np.linalg.norm([pos - goal_pos])) > threshold2 and epoch2 >= max_num_epoch2:
+        print ("WAS NOT ABLE TO FIND A SOLUTION")
+        return np.inf, np.inf, np.inf, path_taken
+    
+    else:
+        path_taken = np.array(path_taken)
+        # plt.clf()
+        # fig = plt.figure()
+        # plt.plot(input_start_pos[0], input_start_pos[1])
+        # plt.plot(goal_pos[0], goal_pos[1])
+        # plt.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1], goal_pos[1]])
+        # plt.plot(path_taken[:,0], path_taken[:,1])
+        # plt.show()
+
+        # total_energy = timesteps*desired_speed
+
+        ##If the cost is negative (meaning the uuv used no energy), then make cost = 0
+        # cost = (timesteps*(12.0/3600.0)) \
+        #      + (timesteps * (total_energy**3))**(0.333333) * 0.70
+
+        # cost = (timesteps* )
+        # if isnan(cost):
+        #     cost = 0.0
+        # if cost > 999999999999999999999999:
+        #     cost = 0.0
+
+        return total_energy, timesteps, 0.0, path_taken
+
+
+
+
+def calculate_nominal_path_short_top(pt1, pt2, wpt_spacing, env):
+    '''
+    Calculates a path between each hotspot by
+    - Calculating closest points between two hotspots
+    - Breaking the path down into smaller pieces
+    - Setting the waypoints to be those breakpoints with depth at the bottom of the map
+
+    Path from hotspot to hotspot is the euclidean distance at the bottom of the map
+    
+    TODO? Smooth out the waypoints
+
+    Inputs:
+        pt1 (np.ndarray)  : (x,y,z) of starting point
+        pt2 (np.ndarray)  : (x,y,z) of ending point
+        wpt_spacing (int) : distance (meters) between the nominal waypoints
+        env (object)      : 
+
+    Returns:
+        all_paths (np.ndarray) : Nominal waypoints to travel from hotspot to hotspot
+
+    '''
+
+    num_pts = abs(pt1[0] - pt2[0])//wpt_spacing
+    if num_pts == 0:
+        path = np.array([pt1, pt2])
+    else:
+        waypts = np.array(zip(np.linspace(pt1[0], pt2[0], num_pts, endpoint=True), 
+                              np.linspace(pt1[1], pt2[1], num_pts, endpoint=True)))
+        # waypts_depth = env.dfunc(waypts)
+        waypts_depth = np.zeros((2,1))
         path = np.hstack((waypts, waypts_depth.reshape(-1,1) ))
 
     return path
