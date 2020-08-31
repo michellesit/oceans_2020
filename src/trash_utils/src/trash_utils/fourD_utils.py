@@ -445,6 +445,33 @@ def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
 
 
 
+def currents_score(input_start_pos, goal_pos, time_now, env):
+    time_now_hrs = time_now/3600.0
+
+    point_vector_x = goal_pos[0] - input_start_pos[0]
+    point_vector_y = goal_pos[1] - input_start_pos[1]
+    point_vector_mag = math.sqrt(point_vector_x**2 + point_vector_y**2)
+
+    current_u = env.ufunc([time_now_hrs, abs(goal_pos[2]), goal_pos[0], goal_pos[1]])[0] \
+              * env.u_boost * np.random.normal(1, 0.5)
+    current_v = env.vfunc([time_now_hrs, abs(goal_pos[2]), goal_pos[0], goal_pos[1]])[0] \
+              * env.v_boost * np.random.normal(1, 0.5)
+    current_mag = math.sqrt(current_u**2 + current_v**2)
+
+    score = math.acos( ((point_vector_x*current_u) + (point_vector_y*current_v)) / (point_vector_mag*current_mag))
+    adjusted_score = 1 - (score/math.pi)
+
+    # print ("dist_score: ", dist_score)
+    # pdb.set_trace()
+    # astar_score = alpha*adjusted_score + (1-alpha)*(1-dist_score)
+    # astar_score = dist_score
+
+    return adjusted_score
+
+
+
+
+
 def follow_path_waypoints_v2(all_waypoints, env, desired_speed, time_start_sec, *args, **kwargs):
     '''
     Calculates preliminary info (pos, heading) needed to travel from the uuv to 
@@ -481,13 +508,10 @@ def follow_path_waypoints_v2(all_waypoints, env, desired_speed, time_start_sec, 
     total_energy = 0
     total_time = 0
 
-
     current_pos = all_waypoints[0]
     for pt in range(1, all_waypoints.shape[0]):
         ##Calculate heading to get from current_pos to the next waypoint
         goal_pt = all_waypoints[pt]
-        # if np.linalg.norm([goal_pt - current_pos]) < 0.5:
-            # continue
 
         if np_args[0]:
             fig = np_args[1]
@@ -559,45 +583,36 @@ def cost_to_waypoint_v2(input_start_pos, goal_pos, time_now, env, \
     np.random.seed(8)
 
     pos = input_start_pos
-    diff = goal_pos - input_start_pos
-    goal_vector = math.sqrt(diff[0]**2 + diff[1]**2)
-    goal_theta = math.atan2(diff[1], diff[0])
-    # goal_x = goal_pos[0]
-    # goal_y = goal_pos[1]
-
-    # small_goal_x = goal_pos[0]
-    # small_goal_y = goal_pos[1]
-
-    small_goal_x = diff[0]
-    small_goal_y = diff[1]
-
     path_taken = []
 
     total_energy = 0
+    timesteps = 0
+
     threshold2 = 3 ##meters
     # threshold2 = 50
     epoch2 = 0
     # max_num_epoch2 = 10000
     max_num_epoch2 = 30000
     first_run = True
-    timesteps = 0
+
+    if np_args[0]:
+        # fig = np_args[1]
+        fig = plt.figure()
+        # ax1 = fig.add_subplot(122, projection='3d')
+        ax1 = fig.add_subplot(111, projection='3d')
+        ##Plots start and end goal pos with blue connecting line
+        ax1.plot([input_start_pos[0]], [input_start_pos[1]], [input_start_pos[2]], 'bo')
+        ax1.text(input_start_pos[0], input_start_pos[1], input_start_pos[2], 'start')
+
+        ax1.plot([goal_pos[0]], [goal_pos[1]], [goal_pos[2]], 'bo')
+        ax1.text(goal_pos[0], goal_pos[1], goal_pos[2], 'goal')
+        ax1.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1],
+                  goal_pos[1]], [input_start_pos[2], goal_pos[2]], 'b--')
+
     while (abs(np.linalg.norm([pos - goal_pos])) > threshold2 \
+          and ((abs(pos[0]) <= abs(goal_pos[0])) or (abs(pos[1]) <= abs(goal_pos[1])))
           and epoch2 < max_num_epoch2) \
           or (first_run == True):
-
-        if np_args[0]:
-            fig = np_args[1]
-            # ax1 = fig.add_subplot(122, projection='3d')
-            ax1 = fig.add_subplot(111, projection='3d')
-            ##Plots start and end goal pos with blue connecting line
-            ax1.plot([input_start_pos[0]], [input_start_pos[1]], [input_start_pos[2]], 'bo')
-            ax1.text(input_start_pos[0], input_start_pos[1], input_start_pos[2], 'start')
-
-            ax1.plot([goal_pos[0]], [goal_pos[1]], [goal_pos[2]], 'bo')
-            ax1.text(goal_pos[0], goal_pos[1], goal_pos[2], 'goal')
-            ax1.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1],
-                      goal_pos[1]], [input_start_pos[2], goal_pos[2]], 'b--')
-
 
         time_now_hrs = (time_now + timesteps)/3600.0
         ##Calculate ocean u,v currents
@@ -605,63 +620,54 @@ def cost_to_waypoint_v2(input_start_pos, goal_pos, time_now, env, \
                   * env.u_boost * np.random.normal(1, 0.5)
         current_v = env.vfunc([time_now_hrs, abs(goal_pos[2]), pos[0], pos[1]])[0] \
                   * env.v_boost * np.random.normal(1, 0.5)
-        current_vector = np.sqrt(current_u**2 + current_v**2)
+        current_mag = np.sqrt(current_u**2 + current_v**2)
         current_theta = atan2(current_v, current_u)
 
         diff = goal_pos - pos
-        # print ("diff: ", diff)
         goal_theta = math.atan2(diff[1], diff[0])
-        # uuv_x = (goal_theta*desired_speed) + current_u + pos[0]
-        # uuv_y = (goal_theta*desired_speed) + current_v + pos[1]
 
-        # uuv_resulting_speed = math.sqrt( current_vector**2 + desired_speed**2 - 2*current_vector*desired_speed*cos(current_theta))
-        # total_energy += uuv_resulting_speed
+        # print ("current_theta: ", current_theta)
+        # print ("current_x : ", current_u)
+        # print ("current_y : ", current_v)
+        # print ("goal_theta: ", goal_theta)
 
-        # print ("current_u: ", current_u)
-        # print ("current_v: ", current_v)
-        # print ("uuv_resulting_speed: ", uuv_resulting_speed)
+        ##use law of sines to calculate the uvv_theta, and ground_speed
+        if current_theta>0:
+            uuv_theta = math.asin(current_mag * (sin(goal_theta+current_theta)))
+        else:
+            uuv_theta = math.asin(current_mag * (sin(goal_theta-current_theta)))
 
-        uuv_x = (desired_speed * math.cos(goal_theta)) + pos[0]
-        uuv_y = (desired_speed * math.sin(goal_theta)) + pos[1]
-
-        uuv_thrust = math.sqrt((desired_speed*math.cos(goal_theta) - current_u)**2 + (desired_speed*math.sin(goal_theta) + current_v)**2 )
-        # print ("uuv_thrust: ", uuv_thrust)
-
-        if uuv_thrust > 0:
-            total_energy += uuv_thrust
-        # pdb.set_trace()
-
-        # uuv_theta = math.acos( ( (small_goal_x*(small_goal_x-current_u)) + (small_goal_y*(small_goal_y-current_v)) ) / 
-        #                        ( (math.sqrt(small_goal_x**2 + small_goal_y**2)) * (math.sqrt( (small_goal_x - current_u)**2 + (small_goal_y - current_v)**2 )) )
-        #                      )
-
-        # # uuv_theta = math.atan( (goal_vector*math.sin(goal_theta) - current_v)/
-        # #                         (goal_vector*math.cos(goal_theta) - current_u) )
-
-        # uuv_x = (desired_speed * math.cos(uuv_theta)) + pos[0]
-        # uuv_y = (desired_speed * math.sin(uuv_theta)) + pos[1]
-
-
-        pos = np.array([uuv_x, uuv_y, goal_pos[2]])
-        path_taken.append([uuv_x, uuv_y, goal_pos[2]])
+        uuv_a = goal_theta + current_theta
+        goal_c = 180 - uuv_a - uuv_theta
+        ground_speed = abs(desired_speed * (math.sin(goal_c)/math.sin(uuv_a)))
 
         timesteps += 1
-        # total_energy += desired_speed
-
-        ##set pos to be this new position
         epoch2 += 1
-        first_run = False
+        first_run = False        
 
-        # print ("Pos     : ", pos)
-        # print ("goal_pos: ", goal_pos)
-        # print ("timesteps: ", timesteps)
+        traveled_x = ground_speed*math.cos(goal_theta)
+        traveled_y = ground_speed*math.sin(goal_theta)
 
-        # pdb.set_trace()
+        # print ()
+        # print ("ground_speed: ", ground_speed)
+        # print ("traveled_x  : ", traveled_x)
+        # print ("traveled_y  : ", traveled_y)
+
+        # print ()
+        # print ("pos: ", pos)
+        # print ("new pos: ", pos + np.array([traveled_x, traveled_y, 0.0]))
+
+        new_pos = pos + np.array([traveled_x, traveled_y, 0.0])
+        path_taken.append(new_pos)
 
         #Visualize uuv pos as it travels to its next waypoint
         if np_args[0]:
             ax1.plot([pos[0]], [pos[1]], [pos[2]], 'ro')
-            # plt.pause(0.5)
+            ax1.plot([pos[0], new_pos[0]], [pos[1], new_pos[1]], 'r-')
+            plt.pause(0.05)
+
+        pos = deepcopy(new_pos)
+
 
     if np_args[0]:
         ax1.set_xlabel("x-axis")
@@ -675,26 +681,9 @@ def cost_to_waypoint_v2(input_start_pos, goal_pos, time_now, env, \
     
     else:
         path_taken = np.array(path_taken)
-        # plt.clf()
-        # fig = plt.figure()
-        # plt.plot(input_start_pos[0], input_start_pos[1])
-        # plt.plot(goal_pos[0], goal_pos[1])
-        # plt.plot([input_start_pos[0], goal_pos[0]], [input_start_pos[1], goal_pos[1]])
-        # plt.plot(path_taken[:,0], path_taken[:,1])
-        # plt.show()
+        total_energy = timesteps * 50
 
-        # total_energy = timesteps*desired_speed
-
-        ##If the cost is negative (meaning the uuv used no energy), then make cost = 0
-        # cost = (timesteps*(12.0/3600.0)) \
-        #      + (timesteps * (total_energy**3))**(0.333333) * 0.70
-
-        # cost = (timesteps* )
-        # if isnan(cost):
-        #     cost = 0.0
-        # if cost > 999999999999999999999999:
-        #     cost = 0.0
-
+        # pdb.set_trace()
         return total_energy, timesteps, 0.0, path_taken
 
 
