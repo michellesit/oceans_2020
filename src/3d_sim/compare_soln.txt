@@ -1,0 +1,1949 @@
+SEARCH FOR TRASH AT HOTSPOT 0SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 371.243195231
+Total time (sec) : 844
+Total cost eq: 681.441976662
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 331.941975416
+Total time (sec) : 803
+Total cost eq: 558.261153648
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 176
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 22.9199224009
+total time (s): 879.0
+total cost eq : 71180.5675097
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 331.941975416
+Time (sec) : 979.0
+Eq cost    : 558.261153648
+TOTAL ASTAR COSTS: 
+Energy cost: 354.861897817
+Time (sec) : 1682.0
+Eq cost    : 71738.8286633
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 317.691478101
+Total time (sec) : 778
+Total cost eq: 486.524742905
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 179
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 49.8154566824
+total time (s): 852.0
+total cost eq : 67537.3511881
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 416.985927792
+Total time (sec) : 903
+Total cost eq: 741.894897605
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 180
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 62.4525327155
+total time (s): 972.0
+total cost eq : 64508.9080122
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 854.526098239
+Total time (sec) : 1109
+Total cost eq: 1669.43875355
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 505.988295812
+nom_time_sec  : 176
+nom cost_eq   : 719.290619925
+ASTAR COSTS
+total energy  : 75.7707892875
+total time (s): 3032.0
+total cost eq : 29851.73606
+
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 1777.50032184
+Time (sec) : 2368.0
+Eq cost    : 3130.62427108
+TOTAL ASTAR COSTS: 
+Energy cost: 1409.73534803
+Time (sec) : 6016.0
+Eq cost    : 96771.9777233
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 322.906053652
+Total time (sec) : 783
+Total cost eq: 530.319589974
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 180
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 85.9897039609
+total time (s): 863.0
+total cost eq : 66444.9032861
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 676.267166305
+Total time (sec) : 871
+Total cost eq: 1345.3613583
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 455.618858398
+nom_time_sec  : 151
+nom cost_eq   : 748.688742876
+ASTAR COSTS
+total energy  : 69.7133284981
+total time (s): 2558.0
+total cost eq : 23182.1883436
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 1259.15084914
+Total time (sec) : 1394
+Total cost eq: 2551.54662447
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1630.50097462
+nom_time_sec  : 499
+nom cost_eq   : 3529.94591442
+ASTAR COSTS
+total energy  : 59.0990303361
+total time (s): 6608.0
+total cost eq : 314950.803545
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 1868.75800641
+Total time (sec) : 2863
+Total cost eq: 5127.83394149
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 60.5125958736
+nom_time_sec  : 252
+nom cost_eq   : 637.300933108
+ASTAR COSTS
+total energy  : 61.6083254857
+total time (s): 16030.0
+total cost eq : 97243.9148274
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 956.597823499
+Total time (sec) : inf
+Total cost eq: inf
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 96
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 0.255285886079
+total time (s): inf
+total cost eq : 16226.3652648
+
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 7230.3123279
+Time (sec) : inf
+Eq cost    : inf
+TOTAL ASTAR COSTS: 
+Energy cost: 5360.34557317
+Time (sec) : inf
+Eq cost    : inf
+
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 1242.0173787
+Total time (sec) : 941
+Total cost eq: 5706.16291107
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 189
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 6.49409569871
+total time (s): 1010.0
+total cost eq : 56697.2429124
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 226.743673308
+Total time (sec) : 350
+Total cost eq: 403.946095221
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 1468.76105201
+Time (sec) : 1480.0
+Eq cost    : 6110.10900629
+TOTAL ASTAR COSTS: 
+Energy cost: 1475.25514771
+Time (sec) : 2301.0
+Eq cost    : 62807.3519186
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 366.10114388
+Total time (sec) : 837
+Total cost eq: 632.297762408
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 180
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 85.3333319982
+total time (s): 910.0
+total cost eq : 53435.1574272
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 666.734588739
+Total time (sec) : 876
+Total cost eq: 1217.78438603
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 494.998187325
+nom_time_sec  : 162
+nom cost_eq   : 721.390974031
+ASTAR COSTS
+total energy  : 114.020374272
+total time (s): 2676.0
+total cost eq : 31148.1699176
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 1181.6074324
+Total time (sec) : inf
+Total cost eq: inf
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 303.819061767
+Total time (sec) : 756
+Total cost eq: 547.81721156
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 369.052078744
+Total time (sec) : 852
+Total cost eq: 628.680331873
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 180
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 62.7502411764
+total time (s): 932.0
+total cost eq : 67297.2338179
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 755.521134696
+Total time (sec) : 1014
+Total cost eq: 1575.30424738
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 467.708631723
+nom_time_sec  : 156
+nom cost_eq   : 781.014313069
+ASTAR COSTS
+total energy  : 110.39518092
+total time (s): 2860.0
+total cost eq : 32287.5246999
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 3789.13212959
+Total time (sec) : inf
+Total cost eq: inf
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1687.49672344
+nom_time_sec  : 509
+nom cost_eq   : 3438.01190968
+ASTAR COSTS
+total energy  : 154.906291456
+total time (s): inf
+total cost eq : 467567.140273
+
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 309.111011389
+Total time (sec) : 767
+Total cost eq: 561.681966182
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 183
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 25.7169793997
+total time (s): 843.0
+total cost eq : 69476.1431712
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 611.413246314
+Total time (sec) : 801
+Total cost eq: 1079.47762884
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 498.340868022
+nom_time_sec  : 150
+nom cost_eq   : 727.598343963
+ASTAR COSTS
+total energy  : 107.17212111
+total time (s): 2458.0
+total cost eq : 35321.1010976
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 939.392347829
+Total time (sec) : 1299
+Total cost eq: 2021.26582568
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1668.36742422
+nom_time_sec  : 509
+nom cost_eq   : 3594.17977723
+ASTAR COSTS
+total energy  : 101.936778805
+total time (s): 6348.0
+total cost eq : 435117.459532
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 1561.82009937
+Total time (sec) : 2369
+Total cost eq: 3430.43225979
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 45.8089807901
+nom_time_sec  : 291
+nom cost_eq   : 654.35411929
+ASTAR COSTS
+total energy  : 103.486761363
+total time (s): 14995.0
+total cost eq : 130814.655094
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 3463.39009922
+Total time (sec) : inf
+Total cost eq: inf
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 106
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 8.0686411678
+total time (s): inf
+total cost eq : 19593.2518516
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 4629.69478387
+Total time (sec) : inf
+Total cost eq: inf
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 13727.338861
+Time (sec) : inf
+Eq cost    : inf
+TOTAL ASTAR COSTS: 
+Energy cost: 11861.2028698
+Time (sec) : inf
+Eq cost    : inf
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 1234.74479848
+Total time (sec) : 924
+Total cost eq: 5505.93761429
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 197
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 15.0888694476
+total time (s): 1013.0
+total cost eq : 71945.3712224
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 241.376398092
+Total time (sec) : 488
+Total cost eq: 422.656499291
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 1476.12119657
+Time (sec) : 1609.0
+Eq cost    : 5928.59411358
+TOTAL ASTAR COSTS: 
+Energy cost: 1491.21006602
+Time (sec) : 2425.0
+Eq cost    : 77873.965336
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 1182.59733407
+Total time (sec) : 857
+Total cost eq: 5440.70639029
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 197
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 2.7610871912
+total time (s): 940.0
+total cost eq : 73868.8592479
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 265.50235436
+Total time (sec) : 331
+Total cost eq: 452.990367946
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 1448.09968843
+Time (sec) : 1385.0
+Eq cost    : 5893.69675823
+TOTAL ASTAR COSTS: 
+Energy cost: 1450.86077562
+Time (sec) : 2128.0
+Eq cost    : 79762.5560061
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 967.558881406
+Total time (sec) : 1996
+Total cost eq: 2521.73460039
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 283.962613334
+Total time (sec) : 1256
+Total cost eq: 718.22324326
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 5.61888044097
+nom_time_sec  : 190
+nom cost_eq   : 88.0428958845
+ASTAR COSTS
+total energy  : 5.28338857149
+total time (s): 16339.0
+total cost eq : 70812.3557952
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 2642.99849775
+Total time (sec) : 3294
+Total cost eq: 6789.7415984
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 2932.57999152
+Time (sec) : 4740.0
+Eq cost    : 7596.00773754
+TOTAL ASTAR COSTS: 
+Energy cost: 2932.24449965
+Time (sec) : 35884.0
+Eq cost    : 78320.3206369
+
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 387.477657315
+Total time (sec) : 841
+Total cost eq: 680.924084525
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 175
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 25.708113194
+total time (s): 915.0
+total cost eq : 70749.7855785
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 619.183322748
+Total time (sec) : 888
+Total cost eq: 1136.65006068
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 470.3230917
+nom_time_sec  : 144
+nom cost_eq   : 692.542683448
+ASTAR COSTS
+total energy  : 85.1850372844
+total time (s): 2698.0
+total cost eq : 34378.4283638
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 1231.66833173
+Total time (sec) : 1681
+Total cost eq: 2610.97535108
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1629.50670916
+nom_time_sec  : 490
+nom cost_eq   : 3268.96841673
+ASTAR COSTS
+total energy  : 111.264384296
+total time (s): 7197.0
+total cost eq : 415470.557848
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 2855.94547724
+Total time (sec) : 4082
+Total cost eq: 7537.87403134
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 116.465606795
+nom_time_sec  : 246
+nom cost_eq   : 792.924757875
+ASTAR COSTS
+total energy  : 87.312063623
+total time (s): 18389.0
+total cost eq : 95266.9030288
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 584.878661593
+Total time (sec) : 943
+Total cost eq: 2005.07846293
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 78
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 0.0
+total time (s): 37669.0
+total cost eq : 9621.69397233
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 313.150962985
+Total time (sec) : 495
+Total cost eq: 944.684757251
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 8208.59982127
+Time (sec) : 10063.0
+Eq cost    : 19670.6226059
+TOTAL ASTAR COSTS: 
+Energy cost: 6301.77401201
+Time (sec) : 75798.0
+Eq cost    : 640403.55554
+
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.846662257
+Total time (sec) : 742
+Total cost eq: 522.312403355
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 176
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 44.7019049089
+total time (s): 829.0
+total cost eq : 71423.7598924
+
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 316.5183951
+Total time (sec) : 779
+Total cost eq: 533.583298452
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 174
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 51.288849861
+total time (s): 860.0
+total cost eq : 72113.2944726
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 734.463104665
+Total time (sec) : 940
+Total cost eq: 1269.40948978
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 479.977091355
+nom_time_sec  : 144
+nom cost_eq   : 677.625699705
+ASTAR COSTS
+total energy  : 119.629071041
+total time (s): 2632.0
+total cost eq : 31290.5905945
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 963.123697735
+Total time (sec) : 1271
+Total cost eq: 1816.77989614
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1717.08190538
+nom_time_sec  : 499
+nom cost_eq   : 3458.79657927
+ASTAR COSTS
+total energy  : 125.803035293
+total time (s): 6658.0
+total cost eq : 427322.609692
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 2365.40604166
+Total time (sec) : 3113
+Total cost eq: 5579.41797729
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 183.004056921
+nom_time_sec  : 261
+nom cost_eq   : 843.092936918
+ASTAR COSTS
+total energy  : 94.3506137871
+total time (s): 16335.0
+total cost eq : 80525.0061067
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 322.311200082
+Total time (sec) : 455
+Total cost eq: 922.552080497
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 89
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 10.287273464
+total time (s): 33090.0
+total cost eq : 13812.5360872
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 555.611148074
+Total time (sec) : 771
+Total cost eq: 1719.43589066
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 7637.49664097
+Time (sec) : 8496.0
+Eq cost    : 16820.6938487
+TOTAL ASTAR COSTS: 
+Energy cost: 5658.79243076
+Time (sec) : 66904.0
+Eq cost    : 636905.215586
+
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 371.1507476
+Total time (sec) : 833
+Total cost eq: 664.368720054
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 171
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 29.3745556624
+total time (s): 913.0
+total cost eq : 65398.7505624
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 759.927520502
+Total time (sec) : 971
+Total cost eq: 1447.10938503
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 516.077367554
+nom_time_sec  : 163
+nom cost_eq   : 880.115298609
+ASTAR COSTS
+total energy  : 124.812537786
+total time (s): 2778.0
+total cost eq : 30052.9080496
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 1616.9941293
+Total time (sec) : 2013
+Total cost eq: 3637.67472712
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1545.48937964
+nom_time_sec  : 470
+nom cost_eq   : 3594.18631894
+ASTAR COSTS
+total energy  : 101.374165793
+total time (s): 7677.0
+total cost eq : 383261.951738
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 3300.30798655
+Total time (sec) : 4508
+Total cost eq: 7839.71336183
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 93.00831985
+nom_time_sec  : 277
+nom cost_eq   : 710.33486801
+ASTAR COSTS
+total energy  : 99.4946997618
+total time (s): 19775.0
+total cost eq : 77561.9314426
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 468.445696447
+Total time (sec) : 706
+Total cost eq: 1402.86976911
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 83
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 0.0
+total time (s): 40209.0
+total cost eq : 10807.7844457
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 568.572567435
+Total time (sec) : 797
+Total cost eq: 1828.4949425
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 9239.97371488
+Time (sec) : 10992.0
+Eq cost    : 22004.8673912
+TOTAL ASTAR COSTS: 
+Energy cost: 7440.45460683
+Time (sec) : 81180.0
+Eq cost    : 583903.557144
+
+
+astar_path_check.npy
+nom_path_check.npy
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 307.096623102
+Total time (sec) : 764
+Total cost eq: 507.806852548
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 175
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 31.0936123768
+total time (s): 849.0
+total cost eq : 74556.5771524
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 626.141158455
+Total time (sec) : 806
+Total cost eq: 1144.92272301
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 503.917138849
+nom_time_sec  : 155
+nom cost_eq   : 754.611289854
+ASTAR COSTS
+total energy  : 147.917591771
+total time (s): 2485.0
+total cost eq : 35734.9755804
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 898.071052011
+Total time (sec) : 1173
+Total cost eq: 1775.59976119
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1710.28689011
+nom_time_sec  : 511
+nom cost_eq   : 3728.85764708
+ASTAR COSTS
+total energy  : 139.906020937
+total time (s): 6265.0
+total cost eq : 446398.377635
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 3324.25527352
+Total time (sec) : 4306
+Total cost eq: 8221.84200791
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 83.7314147686
+nom_time_sec  : 274
+nom cost_eq   : 708.984313755
+ASTAR COSTS
+total energy  : 88.0742758882
+total time (s): 16738.0
+total cost eq : 93869.4818716
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 493.031441087
+Total time (sec) : 1023
+Total cost eq: 1477.11136943
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 117
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 19.3491040313
+total time (s): 34469.0
+total cost eq : 28835.1029504
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 572.101117307
+Total time (sec) : 809
+Total cost eq: 1812.19080429
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 8518.63210922
+Time (sec) : 10113.0
+Eq cost    : 20131.9267691
+TOTAL ASTAR COSTS: 
+Energy cost: 6647.03727049
+Time (sec) : 69687.0
+Eq cost    : 694333.988709
+
+
+
+nom_check_2.npy
+astar_check_2.npy
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.648445196
+Total time (sec) : 751
+Total cost eq: 504.03196175
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 176
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 33.8916837727
+total time (s): 831.0
+total cost eq : 71534.7501382
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 625.378032386
+Total time (sec) : 763
+Total cost eq: 1052.82369894
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 494.43454672
+nom_time_sec  : 151
+nom cost_eq   : 725.717302843
+ASTAR COSTS
+total energy  : 105.709927818
+total time (s): 2399.0
+total cost eq : 34537.6398958
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 1184.53207334
+Total time (sec) : 1342
+Total cost eq: 2472.84582538
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1636.83839456
+nom_time_sec  : 480
+nom cost_eq   : 3278.01411517
+ASTAR COSTS
+total energy  : 152.388328467
+total time (s): 6275.0
+total cost eq : 419460.544652
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 2283.64743934
+Total time (sec) : 3185
+Total cost eq: 5321.81781132
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 199.227407131
+nom_time_sec  : 256
+nom cost_eq   : 849.600828662
+ASTAR COSTS
+total energy  : 104.741241105
+total time (s): 15632.0
+total cost eq : 85173.1045021
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 564.139929362
+Total time (sec) : 879
+Total cost eq: 1772.34951129
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 110
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 3.58311225709
+total time (s): 32106.0
+total cost eq : 20788.407252
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 495.444223386
+Total time (sec) : 845
+Total cost eq: 1455.5861734
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 7780.29049142
+Time (sec) : 8938.0
+Eq cost    : 17432.7872287
+TOTAL ASTAR COSTS: 
+Energy cost: 5850.10443642
+Time (sec) : 65008.0
+Eq cost    : 644073.901422
+
+
+
+
+NOM/ASTAR Path Seed results
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 178
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 26.1559970094
+total time (s): 827.0
+total cost eq : 68014.0008506
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 597.571304825
+Total time (sec) : 750
+Total cost eq: 1043.65669392
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 498.037059321
+nom_time_sec  : 153
+nom cost_eq   : 766.514102691
+ASTAR COSTS
+total energy  : 88.554139163
+total time (s): 2379.0
+total cost eq : 33890.6717921
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 696.901251579
+Total time (sec) : 869
+Total cost eq: 1223.33523894
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1654.64452231
+nom_time_sec  : 486
+nom cost_eq   : 3333.3201571
+ASTAR COSTS
+total energy  : 136.624407033
+total time (s): 5754.0
+total cost eq : 408806.333522
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 2347.31262124
+Total time (sec) : 3177
+Total cost eq: 5245.78092117
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 121.767684724
+nom_time_sec  : 255
+nom cost_eq   : 712.4097038
+ASTAR COSTS
+total energy  : 89.5225904571
+total time (s): 14590.0
+total cost eq : 85188.9671303
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 468.460164379
+Total time (sec) : 715
+Total cost eq: 1495.3295723
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 167
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 0.738386855208
+total time (s): 29850.0
+total cost eq : 16996.3491839
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 359.050546695
+Total time (sec) : 549
+Total cost eq: 1076.34787618
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 7034.11881583
+Time (sec) : 8047.0
+Eq cost    : 15384.5764455
+TOTAL ASTAR COSTS: 
+Energy cost: 5101.26506999
+Time (sec) : 60208.0
+Eq cost    : 623468.654961
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 178
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 0.0
+total time (s): 902.0
+total cost eq : 123439.303557
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 872.588953529
+Total time (sec) : 1078
+Total cost eq: 1637.70750768
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 290.373660756
+Total time (sec) : 748
+Total cost eq: 487.882179343
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 178
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 0.0
+total time (s): 902.0
+total cost eq : 123439.303557
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 178
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 0.0
+total time (s): 902.0
+total cost eq : 123439.303557
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 661.980728713
+Total time (sec) : 817
+Total cost eq: 1283.4233332
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 505.004373776
+nom_time_sec  : 158
+nom cost_eq   : 795.394728671
+ASTAR COSTS
+total energy  : 442.60180135
+total time (s): 2600.0
+total cost eq : 88286.175523
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 296.730933514
+Total time (sec) : 780
+Total cost eq: 527.072985068
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 291.745606022
+Total time (sec) : 748
+Total cost eq: 489.365869287
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 49.4632635568
+total time (s): 229.0
+total cost eq : 70330.3911492
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 617.504205927
+Total time (sec) : 798
+Total cost eq: 1133.96887635
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 509.187456649
+nom_time_sec  : 169
+nom cost_eq   : 850.169672324
+ASTAR COSTS
+total energy  : 496.059795677
+total time (s): 159.0
+total cost eq : 27954.8909024
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 568.157096466
+Total time (sec) : 720
+Total cost eq: 982.111979324
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 49.4632635568
+total time (s): 229.0
+total cost eq : 70330.3911492
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 663.099911666
+Total time (sec) : 839
+Total cost eq: 1202.97456689
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+
+
+
+####################################################
+RERUN AFTER FIXING ALL SORTS OF ISSUES
+U/V BOOST = NONE
+trash_x_centers = np.array([-250.98494701, -504.8406451, \
+                            -132, 345, 876, 423]).reshape(-1,1)
+trash_y_centers = np.array([-508.96243035, -877.89326774, \
+                            -687, 354, 120, 348]).reshape(-1,1)
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 49.3573579641
+total time (s): 245
+total cost eq : 65.5865959927
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 663.099911666
+Total time (sec) : 839
+Total cost eq: 1202.97456689
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 507.22613182
+nom_time_sec  : 166
+nom cost_eq   : 834.775488929
+ASTAR COSTS
+total energy  : 504.263492112
+total time (s): 182
+total cost eq : 833.321490146
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 611.308204091
+Total time (sec) : 777
+Total cost eq: 1094.30530667
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1608.6113863
+nom_time_sec  : 473
+nom cost_eq   : 3126.51855554
+ASTAR COSTS
+total energy  : 1610.41801716
+total time (s): 493
+total cost eq : 2335.70619922
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 1013.98811914
+Total time (sec) : 1262
+Total cost eq: 2217.16056581
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 257.760633795
+nom_time_sec  : 240
+nom cost_eq   : 919.2517241
+ASTAR COSTS
+total energy  : 390.42251792
+total time (s): 288
+total cost eq : 532.599342675
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 1083.15155635
+Total time (sec) : 1406
+Total cost eq: 2287.20080413
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 202
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 110.785556207
+total time (s): 239
+total cost eq : 269.066366805
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 1427.63153979
+Total time (sec) : 1774
+Total cost eq: 3284.27927438
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 7467.47574265
+Time (sec) : 8090.0
+Eq cost    : 15488.2107356
+TOTAL ASTAR COSTS: 
+Energy cost: 7759.12453209
+Time (sec) : 8275.0
+Eq cost    : 14643.9449618
+
+
+
+
+U/V BOOST = NONE
+trash_x_centers = np.array([-250.98494701, -504.8406451, \
+                            -132, 345, 876, 423]).reshape(-1,1)
+trash_y_centers = np.array([-508.96243035, -877.89326774, \
+                            -687, 354, 120, 348]).reshape(-1,1)
+
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 294.698259695
+Total time (sec) : 770
+Total cost eq: 521.7444491
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 19.3177188112
+total time (s): 212
+total cost eq : 26.701900221
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 927.375163482
+Total time (sec) : 1160
+Total cost eq: 1809.30742863
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 483.492526133
+nom_time_sec  : 157
+nom cost_eq   : 763.026758803
+ASTAR COSTS
+total energy  : 483.493203137
+total time (s): 168
+total cost eq : 596.57675026
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 967.736615684
+Total time (sec) : 1174
+Total cost eq: 1973.97205703
+
+
+
+
+U/V BOOST = 5
+trash_x_centers = np.array([-250.98494701, -504.8406451, \
+                            -132, 345, 876, 423]).reshape(-1,1)
+trash_y_centers = np.array([-508.96243035, -877.89326774, \
+                            -687, 354, 120, 348]).reshape(-1,1)
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 306.334318473
+Total time (sec) : 770
+Total cost eq: 514.232350059
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 306.334318473
+Total time (sec) : 770
+Total cost eq: 514.232350059
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.0
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 53.6497048307
+total time (s): 245
+total cost eq : 75.5171835114
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 745.20529437
+Total time (sec) : 839
+Total cost eq: 1211.88376786
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 566.01617484
+nom_time_sec  : 166
+nom cost_eq   : 880.013764007
+ASTAR COSTS
+total energy  : 551.202976297
+total time (s): 182
+total cost eq : 874.722353146
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 731.862552412
+Total time (sec) : 777
+Total cost eq: 1122.95349266
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1777.02469114
+nom_time_sec  : 473
+nom cost_eq   : 3534.17755385
+ASTAR COSTS
+total energy  : 1747.65975389
+total time (s): 493
+total cost eq : 2732.54470733
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 1177.52956112
+Total time (sec) : 1262
+Total cost eq: 2232.82900136
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 323.337079299
+nom_time_sec  : 240
+nom cost_eq   : 927.85761404
+ASTAR COSTS
+total energy  : 435.245734435
+total time (s): 288
+total cost eq : 530.388243499
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 1382.76518763
+Total time (sec) : 1406
+Total cost eq: 2347.32194912
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 0.685248322921
+nom_time_sec  : 202
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 125.816123579
+total time (s): 240
+total cost eq : 325.466235998
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 1759.10057587
+Total time (sec) : 1774
+Total cost eq: 3378.19603954
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 8769.86068347
+Time (sec) : 8090.0
+Eq cost    : 16149.4655325
+TOTAL ASTAR COSTS: 
+Energy cost: 9016.3717829
+Time (sec) : 8276.0
+Eq cost    : 15346.0553241
+
+
+
+U/V BOOST = 10
+trash_x_centers = np.array([-250.98494701, -504.8406451, \
+                            -132, 345, 876, 423]).reshape(-1,1)
+trash_y_centers = np.array([-508.96243035, -877.89326774, \
+                            -687, 354, 120, 348]).reshape(-1,1)
+
+
+
+SAVETIME: 20200721000558
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 321.086438393
+Total time (sec) : 770
+Total cost eq: 514.238958523
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 0.171675359379
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 69.105391376
+total time (s): 245
+total cost eq : 123.11807285
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 795.811257194
+Total time (sec) : 757
+Total cost eq: 1197.44046604
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 601.544743703
+nom_time_sec  : 155
+nom cost_eq   : 867.316405546
+ASTAR COSTS
+total energy  : 560.497789955
+total time (s): 167
+total cost eq : 824.237901396
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 1294.54235032
+Total time (sec) : 1083
+Total cost eq: 2014.91887713
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 1893.30575305
+nom_time_sec  : 454
+nom cost_eq   : 4126.42069162
+ASTAR COSTS
+total energy  : 1850.93818437
+total time (s): 476
+total cost eq : 3198.58111082
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 2182.45867716
+Total time (sec) : 1937
+Total cost eq: 4252.08374983
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 316.325429362
+nom_time_sec  : 237
+nom cost_eq   : 947.950326519
+ASTAR COSTS
+total energy  : 462.05029161
+total time (s): 288
+total cost eq : 654.036472496
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 3217.49691826
+Total time (sec) : 2335
+Total cost eq: 6009.16893909
+
+HOTSPOT4 TO HOTSPOT5
+NOMINAL PATH COSTS
+nom_total_cost: 56.9653655701
+nom_time_sec  : 186
+nom cost_eq   : 614.448393331
+ASTAR COSTS
+total energy  : 208.504892101
+total time (s): 218
+total cost eq : 672.578166252
+
+SEARCH FOR TRASH AT HOTSPOT 5
+Total energy: 4705.95677628
+Total time (sec) : 3621
+Total cost eq: 9731.09329005
+
+TOTAL COSTS OVERALL
+TOTAL NOM COSTS
+Energy cost: 15385.6653847
+Time (sec) : 11716.0
+Eq cost    : 30275.0800977
+TOTAL ASTAR COSTS: 
+Energy cost: 15668.448967
+Time (sec) : 11897.0
+Eq cost    : 29191.4960045
+
+
+
+U/V BOOST = 20
+trash_x_centers = np.array([-250.98494701, -504.8406451, \
+                            -132, 345, 876, 423]).reshape(-1,1)
+trash_y_centers = np.array([-508.96243035, -877.89326774, \
+                            -687, 354, 120, 348]).reshape(-1,1)
+
+
+
+SAVETIME: 20200721110106
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 353.94974245
+Total time (sec) : 770
+Total cost eq: 536.29740389
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 4.19396659121
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 42.9123574622
+total time (s): 228
+total cost eq : 51.2261146341
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 1721.56118987
+Total time (sec) : 1161
+Total cost eq: 3656.92019586
+
+
+
+SAVETIME: 20200721111246
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 353.94974245
+Total time (sec) : 770
+Total cost eq: 536.29740389
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 4.19396659121
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 42.9123574622
+total time (s): 228
+total cost eq : 51.2261146341
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 1721.56118987
+Total time (sec) : 1161
+Total cost eq: 3656.92019586
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 769.369530709
+nom_time_sec  : 161
+nom cost_eq   : 1262.13843288
+ASTAR COSTS
+total energy  : 718.427079135
+total time (s): 181
+total cost eq : 1136.43514369
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 2456.28296929
+Total time (sec) : 1212
+Total cost eq: 6045.6729306
+
+
+
+SAVETIME: 20200721111647
+SEARCH FOR TRASH AT HOTSPOT 0
+Total energy: 353.94974245
+Total time (sec) : 770
+Total cost eq: 536.29740389
+
+HOTSPOT0 TO HOTSPOT1
+NOMINAL PATH COSTS
+nom_total_cost: 4.19396659121
+nom_time_sec  : 181
+nom cost_eq   : 0.0
+ASTAR COSTS
+total energy  : 42.9123574622
+total time (s): 228
+total cost eq : 51.2261146341
+
+SEARCH FOR TRASH AT HOTSPOT 1
+Total energy: 1721.56118987
+Total time (sec) : 1161
+Total cost eq: 3656.92019586
+
+HOTSPOT1 TO HOTSPOT2
+NOMINAL PATH COSTS
+nom_total_cost: 769.369530709
+nom_time_sec  : 161
+nom cost_eq   : 1262.13843288
+ASTAR COSTS
+total energy  : 718.427079135
+total time (s): 181
+total cost eq : 1136.43514369
+
+SEARCH FOR TRASH AT HOTSPOT 2
+Total energy: 2456.28296929
+Total time (sec) : 1212
+Total cost eq: 6045.6729306
+
+HOTSPOT2 TO HOTSPOT3
+NOMINAL PATH COSTS
+nom_total_cost: 4.66484164343
+nom_time_sec  : inf
+nom cost_eq   : inf
+ASTAR COSTS
+total energy  : 2657.35945143
+total time (s): 571
+total cost eq : 4533.17681275
+
+SEARCH FOR TRASH AT HOTSPOT 3
+Total energy: 4373.52940186
+Total time (sec) : 2719
+Total cost eq: 11839.3494647
+
+HOTSPOT3 TO HOTSPOT4
+NOMINAL PATH COSTS
+nom_total_cost: 723.306071531
+nom_time_sec  : 266
+nom cost_eq   : 1403.70211073
+ASTAR COSTS
+total energy  : 926.775736392
+total time (s): 318
+total cost eq : 1725.28150129
+
+SEARCH FOR TRASH AT HOTSPOT 4
+Total energy: 2011.87133543
+Total time (sec) : inf
+Total cost eq: inf

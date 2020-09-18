@@ -1,0 +1,48 @@
+<launch>
+<!-- Global params -->
+    <arg name="set_timeout" default="false"/>
+    <arg name="timeout" default="1005"/>
+
+    <!-- Controller parameters -->
+    <arg name="K" default="5,5,5,5,5,5"/>
+    <arg name="Kd" default="4118.98,4118.98,4118.98,8000.0,8000.0,8000.0"/>
+    <arg name="Ki" default="0.06144,0.06144,0.06144,0.078,0.078,0.078"/>
+    <arg name="slope" default="0.182,0.182,0.182,3.348,3.348,3.348"/>
+
+    <include file="$(find trash_worlds)/launch/mission_bay_flatter.launch">
+        <arg name="set_timeout" value="true"/>
+        <arg name="timeout" value="$(arg timeout)"/>
+    </include>
+
+<!-- For the UUV: -->
+    <arg name="uuv_x" default="0"/>
+    <arg name="uuv_y" default="0"/>
+    <arg name="uuv_z" default="-10"/>
+    <arg name="uuv_yaw" default="0"/>
+    <arg name="uuv_name" default="rexrov"/>
+
+    <include file="$(find uuv_descriptions)/launch/upload_rexrov.launch">
+        <arg name="x" default="$(arg uuv_x)"/>
+        <arg name="y" default="$(arg uuv_y)"/>
+        <arg name="z" default="$(arg uuv_z)"/>
+        <arg name="yaw" default="$(arg uuv_yaw)"/>
+        <arg name="namespace" default="$(arg uuv_name)"/>
+    </include>
+
+    <include file="$(find uuv_trajectory_control)/launch/rov_nmb_sm_controller.launch">
+        <arg name="uuv_name" value="$(arg uuv_name)"/>
+        <arg name="model_name" value="rexrov"/>
+        <arg name="K" value="$(arg K)"/>
+        <arg name="Kd" value="$(arg Kd)"/>
+        <arg name="Ki" value="$(arg Ki)"/>
+        <arg name="slope" value="$(arg slope)"/>
+    </include>
+
+    <include file="$(find trash_finder)/launch/produce_hydrodynamic_forces.launch">
+        <arg name="uuv_name" value="$(arg uuv_name)"/>
+        <arg name="current_file_path" value="$(find data_files)/ca_subCA_das_2020010615.nc"/>
+    </include>
+
+<!-- All the trash (20 cans in total) -->
+
+</launch>

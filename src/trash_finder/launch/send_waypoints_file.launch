@@ -1,6 +1,6 @@
 <launch>
   <arg name="uuv_name" />
-  <arg name="filename" default="$(find trash_finder)/config/mowing_lawn_waypts_tutorial.yaml"/>
+  <arg name="filename" default="$(find trash_finder)/config/mowing_lawn_waypts.yaml"/>
   <arg name="start_time" default="-1"/>
   <arg name="interpolator" default="lipb"/>
 

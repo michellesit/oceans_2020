@@ -1,0 +1,242 @@
+inertial_frame_id: world
+waypoints:
+- heading: 0
+  max_forward_speed: 0.4
+  point: [538.5499780218707, -808.2041731778327, -22.000000000000004]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [518.0074120793538, -777.6117994320047, -22.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [497.46484613683697, -747.0194256861766, -22.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [476.9222801943201, -716.4270519403487, -21.197439455105158]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [456.3797142518032, -685.8346781945207, -21.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [435.8371483092863, -655.2423044486927, -21.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [415.2945823667694, -624.6499307028647, -20.713340562608074]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [394.7520164242525, -594.0575569570367, -20.219280888141512]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [374.20945048173564, -563.4651832112088, -20.010578707148966]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [353.6668845392187, -532.8728094653807, -20.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [333.12431859670187, -502.28043571955277, -19.732745887494524]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [312.5817526541849, -471.68806197372476, -19.000000000000004]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [292.03918671166804, -441.09568822789674, -18.860759437339844]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [271.49662076915115, -410.5033144820688, -18.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [250.95405482663426, -379.9109407362408, -18.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [230.41148888411738, -349.3185669904128, -18.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [209.8689229416005, -318.7261932445848, -18.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [189.3263569990836, -288.1338194987568, -17.957099934569545]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [168.7837910565667, -257.5414457529288, -17.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [148.24122511404983, -226.94907200710088, -17.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [127.69865917153294, -196.35669826127287, -16.45421239762171]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [107.15609322901605, -165.76432451544486, -16.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [86.61352728649916, -135.17195076961684, -16.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [66.07096134398228, -104.57957702378883, -15.970113505124628]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [45.52839540146533, -73.98720327796082, -15.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [24.9858294589485, -43.39482953213292, -14.999999999999998]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [4.443263516431557, -12.802455786304904, -14.672988942847798]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-16.099302426085274, 17.78991795952311, -14.322567252733133]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-36.64186836860222, 48.38229170535112, -14.000000000000002]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-57.18443431111905, 78.97466545117913, -14.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-77.72700025363599, 109.56703919700703, -12.999999999999998]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-98.26956619615282, 140.15941294283505, -12.679183125132422]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-118.81213213866977, 170.75178668866306, -12.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-139.3546980811867, 201.34416043449107, -12.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-159.89726402370354, 231.9365341803191, -12.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-180.4398299662205, 262.528907926147, -11.033717935136316]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-200.98239590873732, 293.1212816719751, -10.915505046276765]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-221.52496185125426, 323.713655417803, -10.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-242.0675277937711, 354.3060291636309, -10.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-262.61009373628804, 384.89840290945904, -10.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-283.15265967880487, 415.49077665528694, -9.185774638845853]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-303.6952256213218, 446.08315040111506, -9.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-324.23779156383864, 476.67552414694296, -8.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-344.7803575063556, 507.26789789277086, -8.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-365.3229234488724, 537.860271638599, -7.874620844440136]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-385.86548939138936, 568.4526453844269, -7.611599644925995]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-406.4080553339062, 599.045019130255, -7.248366187712697]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-426.95062127642313, 629.6373928760829, -7.057411736403656]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-447.4931872189401, 660.229766621911, -7.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-468.0357531614569, 690.8221403677389, -6.774589770149944]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-488.57831910397374, 721.4145141135668, -5.999999999999999]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-509.1208850464908, 752.006887859395, -6.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-529.6634509890076, 782.5992616052229, -6.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-550.2060169315245, 813.191635351051, -6.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-570.7485828740413, 843.7840090968789, -4.999999999999999]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-591.2911488165583, 874.3763828427068, -4.999999999999999]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-611.8337147590752, 904.9687565885349, -4.645025687656762]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-632.376280701592, 935.5611303343628, -4.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-652.9188466441088, 966.1535040801909, -4.0]
+  use_fixed_heading: False
+- heading: 0
+  max_forward_speed: 0.4
+  point: [-673.4614125866259, 996.7458778260187, -3.160926795159686]
+  use_fixed_heading: False

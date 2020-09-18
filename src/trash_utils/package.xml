@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>trash_utils</name>
+  <version>0.0.0</version>
+  <description>Helper functions for trash finder</description>
+
+  <maintainer email="mcsit@eng.ucsd.edu"> Michelle Sit</maintainer>
+
+  <author email="mcsit@eng.ucsd.edu">Michelle Sit</author>
+  <author email="cnieto@eng.ucsd.edu">Carlos Nieto-Granda</author>
+
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>gazebo_ros</depend>
+  <!-- <exec_depend>rexrov2_description</exec_depend> -->
+  <!-- <exec_depend>rexrov2_control</exec_depend> -->
+  <exec_depend>rospy</exec_depend>
+  <!-- <exec_depend>gazebo_msgs</exec_depend> -->
+<!--   <exec_depend>uuv_world_ros_plugins_msgs</exec_depend>
+  <exec_depend>uuv_gazebo_ros_plugins_msgs</exec_depend> -->
+  <exec_depend>python-numpy</exec_depend>
+<!--   <exec_depend>uuv_control_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>python-yaml</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>uuv_trajectory_control</exec_depend> -->
+
+
+  <export>
+    <gazebo_ros gazebo_media_path="${prefix}"
+                gazebo_model_path="${prefix}/models"/>
+
+  </export>
+</package>

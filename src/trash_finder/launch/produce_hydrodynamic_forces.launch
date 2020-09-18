@@ -1,0 +1,11 @@
+<launch>
+	<arg name="uuv_name" default="soda_can0"/>
+
+	<node pkg="trash_finder"
+		  type="uuv_local_current.py"
+		  name="publish_hydroforecast_$(arg uuv_name)"
+		  args="$(arg uuv_name)"
+		  output="screen">
+	</node>
+
+</launch>

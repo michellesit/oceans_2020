@@ -1,0 +1,11 @@
+<launch>
+	<arg name="uuv_name" default="soda_can0"/>
+
+	<node pkg="trash_finder"
+		  type="trashcans_utils.py"
+		  name="check_pos_$(arg uuv_name)"
+		  args="$(arg uuv_name)"
+		  output="screen">
+	</node>
+
+</launch>
