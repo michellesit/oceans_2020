@@ -1,0 +1,91 @@
+Given: 
+	uuv_pos = (x,y) location of where the uuv is located
+	point = {a set of known (x,y) locations around the uuv_pos that are being considered}
+	current.x, current.y = current at each point location (this varies from point to point)
+
+For each point:
+	##Calculate the score of how well the direction of the uuv-> point is aligned to the direction of the current at that point
+	##Higher adjusted_score  = we are traveling in the same direction as the current
+	##Higher dist_score = we are close to the goal
+
+	point_vector.x = point.x - uuv_pos.x
+	point_vector.y = point.y - uuv_pos.y
+	point_vector.mag = sqrt(point_vector.x^2 + point_vector.x^2)
+
+	current.mag = sqrt(current.x^2 + current.y^2)
+
+	score = acos ((point_vector.x * current.x) + (point_vector.y * current.y) / (point_vector.mag * current.mag))
+	adjusted_score = 1 - (score/pi) ##higher
+
+	dist_score = norm_dist(point, goal)
+	astar_score = (alpha = 0.5)(adjusted_score) + (1 - alpha)(1 - dist_score)
+	save_point_scores.append(astar_score)
+
+selected_point = max(save_point_scores)
+uuv_pos = selected_point
+
+##Things to think about: wrapping astar in a gradient descent algorithm to tune the alpha value
+##ie, run astar with varying alphas
+
+
+##Do this until you reach the goal
+##Now, to calculate the actual uuv energy to travel the path, we assume a constant ground speed
+
+Given:
+	waypoints = {(x,y) locations to travel}
+	ground_speed = 2.5 m/sec
+	current.x, current.y = current at each waypoint (this varies from waypoint to waypoint)
+
+
+##Calculate the uuv's speed at each timestep
+ground_speed = 
+
+
+
+Wrong Dist function:
+htest = np.array([-500, 500,0])  ##Ref = 2850, 57  , Astar = 17850, 357
+htest = np.array([-500, -500,0])   ##
+htest = np.array([-1000, -1000,0])   ##Ref = 34050, 681     , Astar = 32800, 656 = 3.6%
+htest = np.array([-2000, -2000,0])    ##Ref = 69450, 1389   , Astar = 68900, 1378 = 0.7%
+
+
+
+Manhattan Dist function, alpha 0.2:
+htest = np.array([-1000, -1000,0])    ##Ref = 34050, 681,   , Astar = 34000, 680, 10 iters = -0%
+htest = np.array([-2000, -2000,0])    ##Ref = 69450, 1389   , Astar = 71350, 1427, 22 iters = -2.7%
+htest = np.array([-3000, -3000,0])    ##Ref = 103500, 2070  , Astar = 112650, 2253, 86 iters = -8%
+htest = np.array([-800, -200, 0])     ##Ref = 49350, 987    , Astar = 27550, 551, 8 iters = 44.1%
+htest = np.array([-1800, -1200, 0])   ##Ref = 71050, 1421   , Astar = 70150, 1403, 19 iters = 1.26%
+
+htest = np.array([-500, 500,0])       ##Ref = 4500, 90      , Astar = 11750, 235, 8 iters = -161%
+
+
+Manhattan Dist function, alpha 0.5:
+htest = np.array([-1000, -1000,0])    ##Ref = 34050, 681,   , Astar = 32050, 641, 12 iters = 5.8%
+htest = np.array([-2000, -2000,0])    ##Ref = 69450, 1389   , Astar = 68650, 1373, 50 iters = 1.1%
+htest = np.array([-3000, -3000,0])    ##Ref = 103500, 2070  , Astar = 103800, 2076, 251 iters = 0.2%
+htest = np.array([-800, -200, 0])     ##Ref = 49350, 987    , Astar = 23200, 464, 22 iters = 52.98%
+htest = np.array([-1800, -1200, 0])   ##Ref = 71050, 1421   , Astar = 59950, 1199, 94 iters = 15.6%
+
+htest = np.array([-500, 500,0])       ##Ref = 4500, 90      , Astar = 9550, 191, 42 iters = -112%
+
+
+Manhattan Dist function, alpha 0.6:
+htest = np.array([-3000, -3000,0])    ##Ref = 103500, 2070  , Astar = 114800, 2296, 338 iters = %
+
+
+Manhattan Dist function, alpha 0.8:
+htest = np.array([-1000, -1000,0])    ##Ref = 34050, 681,   , Astar = 34750, 695, 15 iters = -2%
+htest = np.array([-2000, -2000,0])    ##Ref = 69450, 1389   , Astar = 68250, 1365, 58 iters = 1.7%
+htest = np.array([-3000, -3000,0])    ##Ref = 103500, 2070  , Astar = np.inf, np.inf, 500 iters = %
+htest = np.array([-800, -200, 0])     ##Ref = 49350, 987    , Astar = 19300, 386, 69 iters = %
+htest = np.array([-1800, -1200, 0])   ##Ref = 71050, 1421   , Astar = 63700, 1274, 217 iters = %
+
+htest = np.array([-500, 500,0])       ##Ref = 4500, 90      , Astar = 6750, 135, 158 iters = -50%
+
+
+
+
+
+H0 to [-1000 -1000     0],Dist function,Alpha,REF Energy,REF Time,ASR Energy,ASR Time,Iters,Percent
+htest = [-1000 -1000     0],Euclidean,0.2,34050,681,34000,680,10,0.0
