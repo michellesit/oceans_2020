@@ -166,10 +166,10 @@ def main():
 	cov = np.array([[1.5, 0], [0, 1.5]])
 	num_soda_cans = 10
 
-	M = Mowing_Lawn_BBox_Search(xy_dim)
-	all_bbox, np_all_bbox = M.global_decomp()
-	reshaped = np_all_bbox.reshape((-1,2))
-	plt.plot(reshaped[:,0], reshaped[:,1], color="black", linewidth=3)
+	# M = Mowing_Lawn_BBox_Search(xy_dim)
+	# all_bbox, np_all_bbox = M.global_decomp()
+	# reshaped = np_all_bbox.reshape((-1,2))
+	# plt.plot(reshaped[:,0], reshaped[:,1], color="black", linewidth=3)
 
 
 	trash_movements = trash_sim(mean, cov, num_soda_cans, dfunc, ufunc, vfunc, width, height)

@@ -84,7 +84,7 @@ def calc_mowing_lawn(bbox, y_bbox, start_end='right'):
     return np.array(waypoints)
 
 
-def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_sec, *args):
+def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_sec, htsp_num, *args):
     '''
     At each leg of the algorithm, 
     "searches" for trash by detecting distance to the trash position.
@@ -122,8 +122,13 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
 
     np_args = np.array(args).flatten()
     if np_args[0]:
-        fig = np_args[1]
-        ax1 = fig.add_subplot(122, projection='3d')
+        # fig = np_args[1]
+        # ax1 = fig.add_subplot(122, projection='3d')
+
+        ##3D graph
+        plt.clf()
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111, projection='3d')
         ##Plot all the waypoints to travel to
         ax1.plot(cc_path[:,0], cc_path[:,1], cc_path[:,2], 'bo')
         ax1.plot(cc_path[:,0], cc_path[:,1], cc_path[:,2], 'b--')
@@ -143,6 +148,19 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
         ax1.set_xlim([minx-10, maxx+10])
         ax1.set_ylim([miny-10, maxy+10])
         ax1.set_zlim([minz-3, maxz+3])
+        ax1.set_title('Searching for Trash at Hotspot{0}'.format(htsp_num/2))
+        # plt.show()
+        plt.savefig('./UUVWaypoints/hotspot{0}_3d.png'.format(htsp_num/2))
+
+        ##2D Graph
+        fig = plt.figure()
+        plt.plot(cc_path[:,0], cc_path[:,1], 'b--')
+        plt.xlim([minx-10, maxx+10])
+        plt.ylim([miny-10, maxy+10])
+
+        plt.title('Searching for Trash at Hotspot{0}'.format(htsp_num/2))
+        # plt.show()
+        plt.savefig('./UUVWaypoints/hotspot{0}_2d.png'.format(htsp_num/2))
 
 
     for pt_idx in range(cc_path.shape[0]):
@@ -166,10 +184,10 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
 
         print ("uuv pos: ", uuv.pos)
 
-        if np_args[0]:
-            ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
-            ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
-            plt.pause(0.05)
+        # if np_args[0]:
+        #     ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
+        #     ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
+        #     plt.pause(0.05)
 
         ##Surface if trash detected during that leg
         ##Broadcast the position of the trash to the base station
@@ -182,10 +200,10 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
                 ax1.plot(all_detected_trash_pos[:,0], 
                          all_detected_trash_pos[:,1],
                          all_detected_trash_pos[:,2], 'mo')
-                for d in range(len(all_detected_trash_pos)):
-                    ax1.text(all_detected_trash_pos[d,0],
-                             all_detected_trash_pos[d,1],
-                             all_detected_trash_pos[d,2], 'found!')
+                # for d in range(len(all_detected_trash_pos)):
+                #     ax1.text(all_detected_trash_pos[d,0],
+                #              all_detected_trash_pos[d,1],
+                #              all_detected_trash_pos[d,2], 'found!')
 
             ## Surface
             # surface_pos = np.array([[uuv.pos[0], uuv.pos[1], 0]])
@@ -202,12 +220,12 @@ def search_for_trash(cc_path, trash_dict, uuv, env, desired_speed, time_start_se
             ##[your code here]
 
 
-            if np_args[0]:
-                ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
-                ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
-                plt.pause(0.05)
+            # if np_args[0]:
+            #     ax1.plot([uuv.pos[0]], [uuv.pos[1]], [uuv.pos[2]], 'ro')
+            #     ax1.text(uuv.pos[0], uuv.pos[1], uuv.pos[2], 'uuv')
+            #     plt.pause(0.05)
 
-    if np_args[0]:
-        plt.show()
+    # if np_args[0]:
+        # plt.show()
 
     return energy_cost, time_cost_sec, total_cost

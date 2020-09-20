@@ -21,6 +21,25 @@ stay.txt
 
 /src/3d_sim/*.pyc
 /src/3d_sim/*.png
+/src/3d_sim/Pictures/
+/src/3d_sim/*.csv
+/src/3d_sim/check/
+/src/3d_sim/check_blobs/
+/src/3d_sim/check_blobs_san_pedro/
+/src/3d_sim/check_blobs_santa_monica/
+/src/3d_sim/hotspot0/
+/src/3d_sim/hotspot1/
+/src/3d_sim/hotspot2/
+/src/3d_sim/hotspot3/
+/src/3d_sim/hotspot4/
+/src/3d_sim/hotspot5/
+/src/3d_sim/mission_bay_costs/
+/src/3d_sim/san_nicolas_costs/
+/src/3d_sim/santa_monica_costs/
+/src/3d_sim/surface_costs/
+/src/3d_sim/.ipynb_checkpoints/
+/src/3d_sim/astar_costs/
+
 /src/trash_finder/scripts/old/
 /src/trash_finder/scripts/nominal_pics/
 /src/trash_finder/scripts/*.txt

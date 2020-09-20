@@ -29,6 +29,7 @@ def trash_2d_gauss(mu, sigma, num_soda_cans, dfunc):
     sc_x, sc_y = multivariate_normal(mu, sigma, num_soda_cans).T
     xy_pos = np.array(zip(sc_x, sc_y))
     z_pos = abs(dfunc(xy_pos))
+    z_pos = np.zeros(xy_pos.shape[0])
     sc_pos = np.hstack((xy_pos, z_pos.reshape(-1,1)))
 
     return sc_pos
@@ -130,6 +131,7 @@ def update_trash_pos(trash_dict, time_now_hrs, e, tracking=False):
         cans[:,2][cans[:,2] < -e.height/2] = -e.height/2
 
         new_z = -e.dfunc(cans[:, 1:3])
+        new_z = np.zeros(cans.shape[0])
         new_cans = np.hstack((cans[:, 1:3], new_z.reshape((-1,1))))
 
         ##Add it to the dictionary and update last_pos

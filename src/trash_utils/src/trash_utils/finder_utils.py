@@ -389,7 +389,7 @@ def wpts_to_yaml(input_waypoints, save_path):
         yaml.dump(all_dict, outfile, default_flow_style=False)
 
 
-def load_currents():
+def load_currents(mission_area="san_nicolas"):
     '''
     Initialize survey area bbox, u,v,depth functions
 
@@ -427,9 +427,10 @@ def load_currents():
 
     all_locations = pickle.load( open(trash_finder_path + "/config/locations.p", "rb"))
     # place_bbox = all_locations["mission_bay_flatter_bbox"]
-    place_bbox = all_locations["santa_monica_basin"]
+    # place_bbox = all_locations["santa_monica_basin"]
     # place_bbox = all_locations["san_pedro_basin"]
     # place_bbox = all_locations["catalina_basin"]
+    place_bbox = all_locations[mission_area]
 
     ufunc, vfunc, uvfunc = get_multi_current_block(place_bbox, 
                                                    currents_path1,

@@ -1,4 +1,5 @@
 from math import atan2, sin, cos, acos
+import math
 from copy import deepcopy
 from datetime import datetime
 import csv
@@ -33,6 +34,7 @@ from hs4dpp_path_utils import calc_ball_cost, find_optimal_path_nrmpc
 import pdb
 
 import pickle
+from tqdm import tqdm
 
 import rospkg
 from scipy.io import netcdf
@@ -109,7 +111,7 @@ class RRT_AStar():
         remove = []
         keep = []
         for i in range(len(flatx)):
-            if (flatx[i] < env.xbound[0]) or (flatx[i] > env.xbound[1] ) or (flaty[i] < env.ybound[0]) or (flaty[i] > env.ybound[1]):
+            if (flatx[i] <= env.xbound[0]) or (flatx[i] >= env.xbound[1] ) or (flaty[i] <= env.ybound[0]) or (flaty[i] >= env.ybound[1]):
                 remove.append(i)
             else:
                 keep.append(i)
@@ -131,7 +133,7 @@ class RRT_AStar():
 
 
 
-    def step_to_point(self, point1, point2, sample_sec):
+    def step_to_point(self, point1, point2, sample_sec, alpha, dist_func, score_func):
         sample_hrs = sample_sec/3600.0
         # fig, ax1 = plt.subplots()
         # print ("point2", point2)
@@ -169,8 +171,35 @@ class RRT_AStar():
         # im1 = ax1.quiver(w,h, u, v, uv)
 
 
+        min_width = min(point1[0], point2[0])
+        max_width = max(point1[0], point2[0])
+        min_height = min(point1[1], point2[1])
+        max_height = max(point1[1], point2[1])
+
+        width = abs(max_width - min_width)
+        height = abs(max_height - min_height)
+        xwidth = [min_width, max_width]
+        yheight = [min_height, max_height]
+
+        ufunc, vfunc, uvfunc = get_multi_current_block(place_bbox, currents_path1, currents_path2)
+        d_area, dfunc = get_depth_block(place_bbox, topo_path)
+        depths = grid_data(dfunc, xwidth, yheight, 100, [], [])
+        depths = np.ones((depths.shape[0], depths.shape[1]))*0
+        depths_flat = depths.flatten()
+
+        w,h = np.meshgrid(np.linspace(xwidth[0], xwidth[1], depths.shape[1], endpoint=True),
+                            np.linspace(yheight[0], yheight[1], depths.shape[0], endpoint=True))    
+
+        u = grid_data(ufunc, xwidth, yheight, 500, depths, [sample_hrs])
+        v = grid_data(vfunc, xwidth, yheight, 500, depths, [sample_hrs])
+        uv = grid_data(uvfunc, xwidth, yheight, 500, depths, [sample_hrs])
+
+        vmin = np.min(uv)
+        vmax = np.max(uv)
+
+
         step_size = 100 ##m
-        step_iters = 100
+        step_iters = 500
         step = 0
 
         start_root = Point(point1[0], point1[1], point1[2], None)
@@ -182,205 +211,200 @@ class RRT_AStar():
         closed_loc = []
         open_loc.append(start_root)
 
-        largest_dist = abs(np.linalg.norm([point1 - point2]))
-        alpha = 0.8
+        if dist_func == "L2":
+            max_dist = abs(np.linalg.norm([point1 - point2]))
+        if (dist_func == "Log-L1") or (dist_func == "L1"):
+            max_dist = sum(abs(point1 - point2))
+        if dist_func == "Log-L2":
+            max_dist = abs(np.linalg.norm([point1 - point2]))
 
-        while len(open_loc) > 0 and step<step_iters:
-            fig, ax1 = plt.subplots(figsize=(25, 25))
-            print ("point2", point2)
-            ax1.plot(point1[0], point1[1], '*')
-            ax1.text(point1[0]+5, point1[1]+5, 'START')
-            ax1.plot(point2[0], point2[1], '*')
-            ax1.text(point2[0]+5, point2[1]+5, 'END')
+        with tqdm(total=step_iters) as pbar:
+            while len(open_loc) > 0 and step<step_iters:
+                # fig, ax1 = plt.subplots(figsize=(25, 25))
+                # ax1.plot(point1[0], point1[1], '*')
+                # ax1.text(point1[0]+5, point1[1]+5, 'START')
+                # ax1.plot(point2[0], point2[1], '*')
+                # ax1.text(point2[0]+5, point2[1]+5, 'END')
 
-            min_width = min(point1[0], point2[0])
-            max_width = max(point1[0], point2[0])
-            min_height = min(point1[1], point2[1])
-            max_height = max(point1[1], point2[1])
+                # min_width = min(point1[0], point2[0])
+                # max_width = max(point1[0], point2[0])
+                # min_height = min(point1[1], point2[1])
+                # max_height = max(point1[1], point2[1])
 
-            width = abs(max_width - min_width)
-            height = abs(max_height - min_height)
-            xwidth = [min_width, max_width]
-            yheight = [min_height, max_height]
+                # width = abs(max_width - min_width)
+                # height = abs(max_height - min_height)
+                # xwidth = [min_width, max_width]
+                # yheight = [min_height, max_height]
 
-            ufunc, vfunc, uvfunc = get_multi_current_block(place_bbox, currents_path1, currents_path2)
-            d_area, dfunc = get_depth_block(place_bbox, topo_path)
-            depths = grid_data(dfunc, xwidth, yheight, 100, [], [])
-            depths = np.ones((depths.shape[0], depths.shape[1]))*0
-            depths_flat = depths.flatten()
+                # ufunc, vfunc, uvfunc = get_multi_current_block(place_bbox, currents_path1, currents_path2)
+                # d_area, dfunc = get_depth_block(place_bbox, topo_path)
+                # depths = grid_data(dfunc, xwidth, yheight, 100, [], [])
+                # depths = np.ones((depths.shape[0], depths.shape[1]))*0
+                # depths_flat = depths.flatten()
 
-            w,h = np.meshgrid(np.linspace(xwidth[0], xwidth[1], depths.shape[1], endpoint=True),
-                              np.linspace(yheight[0], yheight[1], depths.shape[0], endpoint=True))    
+                # w,h = np.meshgrid(np.linspace(xwidth[0], xwidth[1], depths.shape[1], endpoint=True),
+                #                   np.linspace(yheight[0], yheight[1], depths.shape[0], endpoint=True))    
 
-            u = grid_data(ufunc, xwidth, yheight, 500, depths, [sample_hrs])
-            v = grid_data(vfunc, xwidth, yheight, 500, depths, [sample_hrs])
-            uv = grid_data(uvfunc, xwidth, yheight, 500, depths, [sample_hrs])
+                # u = grid_data(ufunc, xwidth, yheight, 500, depths, [sample_hrs])
+                # v = grid_data(vfunc, xwidth, yheight, 500, depths, [sample_hrs])
+                # uv = grid_data(uvfunc, xwidth, yheight, 500, depths, [sample_hrs])
 
-            vmin = np.min(uv)
-            vmax = np.max(uv)
+                # vmin = np.min(uv)
+                # vmax = np.max(uv)
 
-            im1 = ax1.quiver(w,h, u, v, uv)
-
-
-
-            current_pos = open_loc[0]
-            current_idx = 0
-            for idx, item in enumerate(open_loc):
-                print ('item.f    : ', item.f)
-                print ("current.f : ", current_pos.f)
-                if item.f >= current_pos.f:
-                    current_pos = deepcopy(item)
-                    current_idx = deepcopy(idx)
-
-                    top_score = deepcopy(item.f)
-                    next_pos = deepcopy(item)
-
-                if item.get_pos() == end_root.get_pos():
-                    current_pos = deepcopy(item)
-                    current_idx = deepcopy(idx)
-                    break
-
-            ##Take current_pos off the open list, add to closed list
-            open_loc.pop(current_idx)
-            closed_loc.append(current_pos)
-            print ("TOP SCORE: ", top_score)
-            print ("next_pos : ", next_pos.get_pos())
-
-            # ax1.plot(current_pos.get_x(), current_pos.get_y(), current_pos.get_z(), 'o')
-
-            # print ("end_root: ", end_root.get_pos())
-            # print ("dist to end goal: ", np.linalg.norm([current_pos.get_pos() - point2]))
-            if abs(np.linalg.norm([current_pos.get_pos() - point2])) < step_size:
-                ans_path = []
-                # ans_energy = 0
-                # ans_time = 0
-                current = current_pos
-
-                # fig = plt.figure()
-                # open_loc_pts = np.array([c.get_pos() for c in open_loc])
-                # closed_loc_pts = np.array([c.get_pos() for c in closed_loc])
-
-                # open_loc = np.array(open_loc)
-                # closed_loc = np.array(closed_loc)
-                # plt.plot(open_loc_pts[:,0], open_loc_pts[:,1], 'o')
-                # plt.plot(closed_loc_pts[:,0], closed_loc_pts[:,1], 'o')
-
-                # plt.plot()
+                # im1 = ax1.quiver(w,h, u, v, uv)
 
 
-                while current is not None:
-                    ans_path.append(current.get_pos())
-                    # ans_energy += current.g
-                    # ans_time += current.h
-                    current = current.parent
+                current_pos = open_loc[0]
+                current_idx = 0
+                for idx, item in enumerate(open_loc):
+                    if item.f >= current_pos.f:
+                        current_pos = deepcopy(item)
+                        current_idx = deepcopy(idx)
 
-                np_ans = np.array(ans_path)
-                ax1.plot(np_ans[:,0], np_ans[:,1], '--')
-                plt.show()
-                # return ans_path[::-1], ans_energy, ans_time
-                return ans_path[::-1]
+                        top_score = deepcopy(item.f)
+                        next_pos = deepcopy(item)
 
-            ##Generate children
-            ball = self.calculate_ball(current_pos, step_size)
-            ball_z = np.zeros((ball.shape[0], ball.shape[1])).flatten()
+                    if item.get_pos() == end_root.get_pos():
+                        current_pos = deepcopy(item)
+                        current_idx = deepcopy(idx)
+                        break
 
-            print ('ball: ', ball)
+                ##Take current_pos off the open list, add to closed list
+                open_loc.pop(current_idx)
+                closed_loc.append(current_pos)
+                # print ("TOP SCORE: ", top_score)
+                # print ("next_pos : ", next_pos.get_pos())
 
-            children_pts = []
-            for b in range(len(ball)):
-                children_pts.append(Point(ball[b][0], ball[b][1], ball_z[b], current_pos))
+                if abs(np.linalg.norm([current_pos.get_pos() - point2])) < step_size:
+                    ans_path = []
+                    current = current_pos
 
-            for op in open_loc:
-                ax1.plot(op.get_x(), op.get_y(), 'o')
-                ax1.text(op.get_x(), op.get_y(), str(op.f))
-            for cl in closed_loc:
-                ax1.plot(cl.get_x(), cl.get_y(), 'o')
-                ax1.text(cl.get_x(), cl.get_y(), 'visited: {0}'.format(cl.f))
+                    while current is not None:
+                        ans_path.append(current.get_pos())
+                        current = current.parent
+
+                    np_ans = np.array(ans_path)
+                    fig, ax1 = plt.subplots(figsize=(25, 25))
+                    ax1.plot(point1[0], point1[1], '*')
+                    ax1.text(point1[0]+5, point1[1]+5, 'START')
+                    ax1.plot(point2[0], point2[1], '*')
+                    ax1.text(point2[0]+5, point2[1]+5, 'END')
+                    im1 = ax1.quiver(w,h, u, v, uv)
+
+                    ax1.plot(np_ans[:,0], np_ans[:,1], '--')
+                    # plt.show()
+                    plt.savefig('./H{5}_H{6}_{0}_{1}_{3}-{4}_dist_a{2}.png'.format(point2[0], point2[1], alpha, dist_func, score_func, point1[0], point1[1]))
+                    return ans_path[::-1], step
+
+                ##Generate children
+                ball = self.calculate_ball(current_pos, step_size)
+                ball_z = np.zeros((ball.shape[0], ball.shape[1])).flatten()
+
+                children_pts = []
+                for b in range(len(ball)):
+                    children_pts.append(Point(ball[b][0], ball[b][1], ball_z[b], current_pos))
+
+                # for op in open_loc:
+                #     ax1.plot(op.get_x(), op.get_y(), 'o')
+                #     ax1.text(op.get_x(), op.get_y(), str(op.f))
+                # for cl in closed_loc:
+                #     ax1.plot(cl.get_x(), cl.get_y(), 'o')
+                #     ax1.text(cl.get_x(), cl.get_y(), 'visited: {0}'.format(cl.f))
 
 
-            ##Loop through the children:
-            max_score = -9999
-            for c in children_pts:
-                donotadd_closed_list = False
-                donotadd_open_list = False
-                print ("c: ", c.get_pos())
+                ##Loop through the children:
+                max_score = -9999
+                for c in children_pts:
+                    donotadd_closed_list = False
+                    donotadd_open_list = False
 
-                ##Check if c position already exists in the closed list
-                for closed_child in closed_loc:
-                    if c.get_pos() == closed_child.get_pos():
-                        print ("THIS VALUE WAS FOUND IN THE CLOSED LIST")
-                        print ("c.pos: ", c.get_pos())
-                        all_closed = [closed.get_pos() for closed in closed_loc]
-                        print ('all_closed: ', np.array(all_closed))
+                    ##Check if c position already exists in the closed list
+                    for closed_child in closed_loc:
+                        if c.get_pos() == closed_child.get_pos():
+                            donotadd_closed_list = True
+
+                    if (donotadd_closed_list == False):
+                        if score_func == "currents":
+                            ##Heading angle cost 
+                            toNode = np.vstack([current_pos.get_pos(), c.get_pos()])
+                            ball_score = currents_score(np.array(current_pos.get_pos()), np.array(c.get_pos()), sample_sec, env)
+
+                        if score_func == "thrust":
+                            ##path cost
+                            ptpt = np.vstack((np.array(current_pos.get_pos()), np.array(c.get_pos()) ))
+                            travel_score, travel_time, travel_cost, travel_path = follow_path_waypoints_v2(ptpt, env, desired_speed, sample_sec, *[False])
+                            ball_score = 1-(travel_score/5000.0)
+
                         # pdb.set_trace()
 
-                        donotadd_closed_list = True
+                        ##L1 dist
+                        if dist_func == "L1":
+                            dist = sum(abs(c.get_pos() - point2)) ##manhattan distance
+                            dist_score = dist /max_dist
+                            c.f = alpha*ball_score + (1 - alpha)*(1 - dist_score)
 
-                if (donotadd_closed_list == False):
-                    print ("THIS VALUE WAS NOT IN THE CLOSED LOC LIST. CHECKING OPEN LIST NOW")
-                    toNode = np.vstack([current_pos.get_pos(), c.get_pos()])
-                    ball_score = currents_score(np.array(current_pos.get_pos()), np.array(c.get_pos()), sample_sec, env, largest_dist, alpha)
+                        ##L2 dist
+                        if dist_func == "L2":
+                            dist = abs(np.linalg.norm([c.get_pos()-point2]))
+                            dist_score = dist/max_dist
+                            c.f = alpha*ball_score + (1 - alpha)*(1 - dist_score)
 
-                    c.f = ball_score
+                        ##Log weighting
+                        if dist_func == "Log-L1":
+                            dist = sum(abs(c.get_pos() - point2)) ##manhattan distance
+                            dist_score = dist /max_dist
 
-                    ax1.plot(c.get_x(), c.get_y(), 'o')
-                    ax1.text(c.get_x()+10, c.get_y()+10, 'new: {0}'.format(c.f))
+                            if dist_score <= 0.000001:
+                                dist_score = 1.5
+                            else:
+                                dist_score = -math.log(dist_score)
+                            c.f = alpha*ball_score + (1 - alpha)*(dist_score)
 
-                    # if c.f > max_score:
-                        # top_score = ball_score
-                        # next_pos = c.get_pos()
+                        ##Log L2 weighting
+                        if dist_func == "Log-L2":
+                            dist = abs(np.linalg.norm([c.get_pos()-point2]))
+                            dist_score = dist/max_dist
 
-                    # ax1.plot(c.get_x(), c.get_y(), 'o')
-                    # ax1.text(c.get_x(), c.get_y(), str(ball_score))
-                    # energy, time_sec, est_cost, ig = follow_path_waypoints_v2(toNode,
-                    #                                                     env,
-                    #                                                     desired_speed,
-                    #                                                     sample_sec,
-                    #                                                     *[False])
+                            if dist_score <= 0.000001:
+                                dist_score = 1.5
+                            else:
+                                dist_score = -math.log(dist_score)
+                            c.f = alpha*ball_score + (1 - alpha)*(dist_score)                        
 
-                    # c.g = energy         ###
-                    # c.h = time_sec       ###
-                    # # c.f = c.g + c.h + np.linalg.norm([current_pos.get_pos() - point2])
-                    # c.f = energy + abs(np.linalg.norm([current_pos.get_pos() - point2]))*0.8
+                        ##Wrong dist
+                        # ball_score = currents_score(np.array(current_pos.get_pos()), np.array(c.get_pos()),
+                            # sample_sec, env, max_dist, alpha)
+                        # c.f = ball_score
 
-                ##if this child is already in the open list:
-                for open_node in open_loc:
-                    if (c.get_pos() == open_node.get_pos()) and (c.f < open_node.f):
-                        print ("THIS VALUE WAS FOUND IN THE OPEN LIST")
-                        print ("c.pos: ", c.get_pos())
-                        all_open = [op.get_pos() for op in open_loc]
-                        print ('all_open: ', np.array(all_open))
-                        # pdb.set_trace()
+                        # ax1.plot(c.get_x(), c.get_y(), 'o')
+                        # ax1.text(c.get_x()+10, c.get_y()+10, 'new: {0}'.format(c.f))
 
-                        donotadd_open_list = True
+                    ##if this child is already in the open list:
+                    for open_node in open_loc:
+                        if (c.get_pos() == open_node.get_pos()) and (c.f < open_node.f):
+                            donotadd_open_list = True
 
-                    if (c.get_pos() == open_node.get_pos()) and (c.f > open_node.f):
-                        print ("THIS VALUE WAS FOUND IN THE OPEN LIST BUT SWITCHING OUT F VALUES")
-                        print ("c.pos: ", c.get_pos())
-                        print ("c.f  : ", c.f)
-                        print ("old.f: ", open_node.f)
-                        
-                        replace_idx = open_loc.index(open_node)
-                        open_loc[replace_idx] = c
+                        if (c.get_pos() == open_node.get_pos()) and (c.f > open_node.f):
+                            replace_idx = open_loc.index(open_node)
+                            open_loc[replace_idx] = c
+                            donotadd_open_list = True
 
-                        donotadd_open_list = True
+                    if donotadd_open_list == False:
+                        open_loc.append(c)
 
-                if donotadd_open_list == False:
-                    print ("THIS VALUE WAS NOT FOUND IN THE OPEN LIST. ADDING TO THE OPEN LIST")
-                    open_loc.append(c)
+                step += 1
+                pbar.update(1)
 
-            step += 1
-
-            ax1.text(next_pos.get_x()+15, next_pos.get_y()+15, "Current pos")
-            # plt.savefig('./test_ball/{0}.png'.format(step))
-            plt.show()
-            print ('step: {0} / {1}'.format(step, step_iters))
-            # pdb.set_trace()
+                # ax1.text(next_pos.get_x()+15, next_pos.get_y()+15, "Current pos")
+                # plt.pause(1)
+                # plt.close('all')
+                # plt.show()
+                # print ('step: {0} / {1}'.format(step, step_iters))
 
         print ("DID NOT FIND A SOLUTION")
-        # plt.show()
-        # return [], np.inf, np.inf
-        return []
+        # pbar.close()
+        return np.empty((0,3)), step
 
 
 def calc_nom_soln():
@@ -761,6 +785,7 @@ if __name__ == '__main__':
     h5 = np.array([-1590.5154935 ,   22.5489957  ,     0.        ] )
     h6 = np.array([  104.16639771, -4009.83609744,     0.        ] )
     all_hotspot = [h0, h1, h2, h3, h4, h5, h6]
+    np_all_hotspots = np.array(all_hotspot)
 
     # visualize_multi_current(place_bbox, currents_path1, currents_path2, topo_path, h1, h3)
 
@@ -786,32 +811,247 @@ if __name__ == '__main__':
     # cost_to_waypoint_v2(h0, np.array([100, 0, 0]), 0.0, env, \
     #                     desired_speed, *[True])
 
+    # alpha = 0.2
+    # alpha = 0.5
+    # alpha = 0.8
+
+    
     # htest = Point(500, 500, 0) 
     # htest = np.array([500, 500,0])
-    # htest = np.array([500, -500,0])
     # htest = np.array([-500, 500,0])
-    htest = np.array([-500, -500,0])
-    astar_path = RT.step_to_point(h0, htest, 0.0)
+    # htest = np.array([-500, -500,0])
+    # htest = np.array([-1000, -1000,0])
+    # htest = np.array([-2000, -2000,0])
+    # htest = np.array([-3000, -3000,0])
 
-    optx = np.linspace(h0[0], htest[0], 10).astype(int).reshape(-1,1)
-    opty = np.linspace(h0[1], htest[1], 10).astype(int).reshape(-1,1)
-    optz = np.zeros((len(optx),1))
-    waypoints = np.hstack((optx, opty, optz))
+    # htest = np.array([-800, -200, 0])
+    # htest = np.array([-1800, -1200, 0])
 
+    # htest = np.array([500, -500,0])
+    # htest = np.array([1500, -1500, 0])
 
-    for w in range(len(waypoints)-1):
-        print ("w {0} / {1} waypoints: ".format(w, len(waypoints)))
-        ##get the amount of energy you need to beat for this part of the path
-        all_w = np.vstack([waypoints[w], waypoints[w+1]])
-        ref_energy, ref_time_sec, ref_est_cost, ref_path = follow_path_waypoints_v2(all_w, 
-                                                        env, desired_speed, sample_sec, *[False])
+    # test_points = [
+    # np.array([-1000, -1000,0]),
+    # np.array([-2000, -2000,0]),
+    # np.array([-3000, -3000,0]),
 
-
-    astar_energy, astar_time, meh, meh2 = follow_path_waypoints_v2( astar_path, 
-                                                        env, desired_speed, sample_sec, *[False])
+    # np.array([-800, -200, 0]),
+    # np.array([-1800, -1200, 0])
+    # ]
 
 
 
+    ##PARAMETERS TO CHANGE
+
+    sample_sec = 0.0
+
+    # test_alphas = [0.2, 0.5, 0.8]
+    test_alphas = [0.2, 0.5]
+    # test_alphas = [0.8]
+
+    ##Possible answers:
+    ##dist_func = "L1", "L2", "Log-L1"
+    ##score_func = "currents", "thrust"
+    dist_func = 'L1'
+    # score_func = "thrust"
+    score_func = "currents"
+
+    # start_point = h6
+    # test_points = [h0, h1, h2, h3, h4, h5]
+    start_point = h6
+    test_points = [h4]
+
+    for htest in test_points:
+        print ("START POINT: ", start_point)
+        print ("HTEST: ", htest)
+        print ("ALL HOTSPOT:", np_all_hotspots)
+        print ("Dist_func: ", dist_func)
+        print ("score_func: ", score_func)
+        for alpha in test_alphas:
+            num_points = round(np.linalg.norm([start_point - htest])/2000)
+
+            optx = np.linspace(start_point[0], htest[0], num_points).astype(int).reshape(-1,1)
+            opty = np.linspace(start_point[1], htest[1], num_points).astype(int).reshape(-1,1)
+            optz = np.zeros((len(optx),1))
+            waypoints = np.hstack((optx, opty, optz))
+
+            if num_points <= 1:
+                waypoints = np.vstack((start_point, htest))
+
+            astar_path = np.empty((0,3))
+            astar_iters = 0
+            start = deepcopy(start_point)
+            for w in range(1, len(waypoints)):
+                path, iters = RT.step_to_point(start, waypoints[w], 0.0, alpha, dist_func, score_func)
+                
+                # print ("path: ", path)
+                # print ("iters: ", iters)
+
+                astar_path = np.vstack((astar_path, path))
+                astar_iters += iters
+                start = waypoints[w]
+
+                # print ("iters: ", iters)
+                # print ("path: ", path)
+                # print ("finished w: ", waypoints[w])
+                # print ("waypoints: ", waypoints)
+
+
+            two_pts = np.vstack((start_point,htest))
+            total_ref_energy, total_ref_time, ig, ig2 = follow_path_waypoints_v2(two_pts,
+                                                                env, desired_speed, sample_sec, *[False])
+
+            if len(astar_path)>0:
+                astar_energy, astar_time, meh, meh2 = follow_path_waypoints_v2( np.array(astar_path), 
+                                                                env, desired_speed, sample_sec, *[False])
+                percentage = ((total_ref_energy - astar_energy)/total_ref_energy) * 100.0
+            else:
+                astar_energy = "inf"
+                astar_time = "inf"
+                percentage = "inf"
+
+            print ("ALPHA: ", alpha)
+            print ("REF: ")
+            print ("Energy: ", total_ref_energy)
+            print ("Time  : ", total_ref_time)
+
+            print ()
+            print ("ASTAR")
+            print ("Energy: ", astar_energy)
+            print ("Time  : ", astar_time)
+
+            print ("Percent diff: {0}%".format(percentage))
+
+            fig = plt.figure()
+            plt.plot(two_pts[:,0], two_pts[:,1])
+            plt.plot(two_pts[:,0], two_pts[:,1], 'o')
+            if len(astar_path) > 0:
+                ap = np.array(astar_path)
+                plt.plot(ap[:,0], ap[:,1])
+                plt.plot(ap[:,0], ap[:,1], 'o')
+            plt.title("Nom = (Energy={0}, Time={1}), A*=(Energy={2}, Time={3}".format(total_ref_energy, total_ref_time, astar_energy, astar_time))
+            # plt.show()
+            plt.savefig('./H0_{0}_{1}_{3}-{4}_a{2}_nom_astar.png'.format(htest[0], htest[1], alpha*10, dist_func, score_func))
+
+
+            title_row = ["H0 to {0}".format(str(htest)),"Dist function", "Alpha", "REF Energy", "REF Time", "ASR Energy", "ASR Time", "Iters", "Percent"]
+            results_row = ["htest = {0}".format(str(htest)), dist_func, alpha, total_ref_energy, total_ref_time, astar_energy, astar_time, astar_iters, percentage]
+
+            with open('surface1_RRT_results_data.csv', 'a') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow(title_row)
+                csvwriter.writerow(results_row)
+
+
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
+
+'''
+    ##PARAMETERS TO CHANGE
+
+    sample_sec = 0.0
+
+    # test_alphas = [0.2, 0.5]
+    alpha = 0.5
+    # test_alphas = [0.8]
+
+    ##Possible answers:
+    ##dist_func = "L1", "L2", "Log-L1"
+    ##score_func = "currents", "thrust"
+    dist_func = 'L1'
+    # score_func = "thrust"
+    score_func = "currents"
+
+    # start_point = h0
+    # test_points = [h0, h1, h2, h3, h4, h5,h6]
+
+    start_point = h6
+    test_points = [h4]
+
+    path_costs = np.empty((len(test_points), len(test_points)))
+
+    for start_point in test_points:
+        for htest in test_points:
+            if start_point == htest:
+                astar_path = np.empty((0,3))
+                astar_iters = 0
+
+            print ("START POINT: ", start_point)
+            print ("HTEST: ", htest)
+            print ("ALL HOTSPOT:", np_all_hotspots)
+            print ("Dist_func: ", dist_func)
+            print ("score_func: ", score_func)
+            # for alpha in test_alphas:
+            num_points = round(np.linalg.norm([start_point - htest])/2000)
+
+            optx = np.linspace(start_point[0], htest[0], num_points).astype(int).reshape(-1,1)
+            opty = np.linspace(start_point[1], htest[1], num_points).astype(int).reshape(-1,1)
+            optz = np.zeros((len(optx),1))
+            waypoints = np.hstack((optx, opty, optz))
+
+            if num_points <= 1:
+                waypoints = np.vstack((start_point, htest))
+
+            astar_path = np.empty((0,3))
+            astar_iters = 0
+            start = deepcopy(start_point)
+            for w in range(1, len(waypoints)):
+                path, iters = RT.step_to_point(start, waypoints[w], 0.0, alpha, dist_func, score_func)
+                astar_path = np.vstack((astar_path, path))
+                astar_iters += iters
+                start = waypoints[w]
+
+                # print ("iters: ", iters)
+                # print ("path: ", path)
+                # print ("finished w: ", waypoints[w])
+                # print ("waypoints: ", waypoints)
+
+
+            two_pts = np.vstack((start_point,htest))
+            total_ref_energy, total_ref_time, ig, ig2 = follow_path_waypoints_v2(two_pts,
+                                                                env, desired_speed, sample_sec, *[False])
+
+            if len(astar_path)>0:
+                astar_energy, astar_time, meh, meh2 = follow_path_waypoints_v2( np.array(astar_path), 
+                                                                env, desired_speed, sample_sec, *[False])
+                percentage = ((total_ref_energy - astar_energy)/total_ref_energy) * 100.0
+            else:
+                astar_energy = 99999999999999999
+                astar_time = 99999999999999999
+
+            print ("ALPHA: ", alpha)
+            print ("REF: ")
+            print ("Energy: ", total_ref_energy)
+            print ("Time  : ", total_ref_time)
+
+            print ()
+            print ("ASTAR")
+            print ("Energy: ", astar_energy)
+            print ("Time  : ", astar_time)
+
+            # fig = plt.figure()
+            # plt.plot(two_pts[:,0], two_pts[:,1])
+            # plt.plot(two_pts[:,0], two_pts[:,1], 'o')
+            # if len(astar_path) > 0:
+            #     ap = np.array(astar_path)
+            #     plt.plot(ap[:,0], ap[:,1])
+            #     plt.plot(ap[:,0], ap[:,1], 'o')
+            # plt.title("Nom = (Energy={0}, Time={1}), A*=(Energy={2}, Time={3}".format(total_ref_energy, total_ref_time, astar_energy, astar_time))
+            # # plt.show()
+            # plt.savefig('./H0_{0}_{1}_{3}-{4}_a{2}_nom_astar.png'.format(htest[0], htest[1], alpha*10, dist_func, score_func))
+
+
+            # title_row = ["H0 to {0}".format(str(htest)),"Dist function", "Alpha", "REF Energy", "REF Time", "ASR Energy", "ASR Time", "Iters", "Percent"]
+            # results_row = ["htest = {0}".format(str(htest)), dist_func, alpha, total_ref_energy, total_ref_time, astar_energy, astar_time, astar_iters, percentage]
+
+            # with open('surface1_RRT_results_data.csv', 'a') as csvfile:
+            #     csvwriter = csv.writer(csvfile)
+            #     csvwriter.writerow(title_row)
+            #     csvwriter.writerow(results_row)
+
+
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+'''
 
 
     # step_size = 100

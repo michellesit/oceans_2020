@@ -445,6 +445,7 @@ def calculate_nominal_path_short(pt1, pt2, wpt_spacing, env):
 
 
 
+# def currents_score(input_start_pos, goal_pos, time_now, env, max_dist, alpha):
 def currents_score(input_start_pos, goal_pos, time_now, env):
     time_now_hrs = time_now/3600.0
 
@@ -461,11 +462,11 @@ def currents_score(input_start_pos, goal_pos, time_now, env):
     score = math.acos( ((point_vector_x*current_u) + (point_vector_y*current_v)) / (point_vector_mag*current_mag))
     adjusted_score = 1 - (score/math.pi)
 
-    # print ("dist_score: ", dist_score)
-    # pdb.set_trace()
+    # dist_score = abs(np.linalg.norm([input_start_pos-goal_pos])/max_dist)
     # astar_score = alpha*adjusted_score + (1-alpha)*(1-dist_score)
-    # astar_score = dist_score
+    astar_score = adjusted_score
 
+    # return astar_score
     return adjusted_score
 
 
@@ -610,7 +611,7 @@ def cost_to_waypoint_v2(input_start_pos, goal_pos, time_now, env, \
                   goal_pos[1]], [input_start_pos[2], goal_pos[2]], 'b--')
 
     while (abs(np.linalg.norm([pos - goal_pos])) > threshold2 \
-          and ((abs(pos[0]) <= abs(goal_pos[0])) or (abs(pos[1]) <= abs(goal_pos[1])))
+          and (abs(np.linalg.norm([input_start_pos - goal_pos])) >= abs(np.linalg.norm([goal_pos - pos])))
           and epoch2 < max_num_epoch2) \
           or (first_run == True):
 
@@ -658,6 +659,16 @@ def cost_to_waypoint_v2(input_start_pos, goal_pos, time_now, env, \
         # print ("new pos: ", pos + np.array([traveled_x, traveled_y, 0.0]))
 
         new_pos = pos + np.array([traveled_x, traveled_y, 0.0])
+        if new_pos[0] <= env.xbound[0]:
+            new_pos[0] = env.xbound[0]*np.sign(new_pos[0])
+        if new_pos[0] >= env.xbound[1]:
+            new_pos[0] = env.xbound[1]*np.sign(new_pos[0])
+
+        if new_pos[1] <= env.ybound[0]:
+            new_pos[1] = env.ybound[0]*np.sign(new_pos[1])
+        if new_pos[1] >= env.ybound[1]:
+            new_pos[1] = env.ybound[1]*np.sign(new_pos[1])
+
         path_taken.append(new_pos)
 
         #Visualize uuv pos as it travels to its next waypoint

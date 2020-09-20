@@ -40,7 +40,7 @@ class Compare_Nom_AStar():
         self.uuv = UUV()
         
         #For 4D path planning
-        self.desired_speed = 2.5722     ##meters/second (5 knots)
+        self.desired_speed = 2.5722     ##meters/second (5 knots), 
         self.astar_goal_dist = 20
         # self.astar_goal_dist = 10
         self.uuv_end_threshold = 10

@@ -192,6 +192,7 @@ class Nom_Simulation():
                                                                         self.Env, 
                                                                         self.desired_speed,
                                                                         1,
+                                                                        np_idx,
                                                                         vis_args)
 
             print ("COST TO TRAVEL THIS LEG OF THE TRIP")
