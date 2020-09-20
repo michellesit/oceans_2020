@@ -1,0 +1,26 @@
+class fourD_utils:
+	def follow_path_waypoints : calculates primary info (pos, heading) needed to travel from uuv to each waypoint
+		for each waypoint:
+			cost_to_waypoint_v1
+		**NOTE: UUV POS IS UPDATED AT THE END OF THIS METHOD. 
+
+	def cost_to_waypoint_v1 : given headings and positions, iteratively calculatees the cost of getting to those pos
+		If given trash positions, returns the trash positions it detected
+
+	def follow_path_order : switches off between following paths to the cc areas and searching for trash
+		follow_path_waypoints
+		search_for_trash
+
+	def calculate_nominal_path_short : calculates a path between each hotspot along the seafloor bottom
+
+class cc_utils
+	def calc_mowing_lawn : calculates the mowing lawn/cc pattern
+
+	def search_for_trash : searches for trash along the waypoints
+		follow_path_waypoints
+		if it detects trash along that leg:
+		follow_path_waypoints to the surface
+
+class hs4dpp_check_results:
+	def calc_ball_cost : calculates the eq_cost, energy, and time costs for each pos in a cartesian ball
+		follow_path_waypoints from uuv.pos to each end
